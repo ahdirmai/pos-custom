@@ -21,11 +21,19 @@ import Swal from "sweetalert2";
 
 // User Card for Grid View
 function UserCard({ user, isSelected, onSelect, onDelete }) {
-    const avatarUrl = user.avatar;
-    const initial =
-        user.name?.charAt(0)?.toUpperCase() ||
-        user.email?.charAt(0)?.toUpperCase() ||
-        "?";
+    // Fungsi untuk mendapatkan URL UI Avatars dengan warna dinamis yang senada
+    const getAvatarUrl = (name) => {
+        const uiAvatarsUrl = "https://ui-avatars.com/api/";
+        
+        // Daftar warna HEX yang senada dengan tema primary (Biru/Indigo/Sky)
+        const colors = ['3b82f6', '6366f1', '0ea5e9', '2563eb', '4f46e5'];
+        
+        // Pilih warna berdasarkan index dari jumlah karakter nama agar konsisten
+        const colorIndex = name.length % colors.length;
+        const selectedBg = colors[colorIndex];
+        
+        return `${uiAvatarsUrl}?name=${encodeURIComponent(name)}&background=${selectedBg}&color=fff&bold=true`;
+    };
 
     return (
         <div
@@ -42,17 +50,12 @@ function UserCard({ user, isSelected, onSelect, onDelete }) {
             {/* Header with checkbox */}
             <div className="p-4 flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-lg font-bold overflow-hidden">
-                        {avatarUrl ? (
-                            <img
-                                src={avatarUrl}
-                                alt={user.name}
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            initial
-                        )}
-                    </div>
+                    {/* Menggunakan img dengan fallback ke UI Avatars */}
+                    <img
+                        src={user.avatar || getAvatarUrl(user.name)}
+                        alt={user.name}
+                        className="w-12 h-12 rounded-full object-cover border border-slate-100 dark:border-slate-800 shadow-sm"
+                    />
                     <div>
                         <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">
                             {user.name}
@@ -86,7 +89,7 @@ function UserCard({ user, isSelected, onSelect, onDelete }) {
             </div>
 
             {/* Actions */}
-            <div className="flex border-t border-slate-100 dark:border-slate-800">
+            <div className="flex border-t border-slate-100 dark:border-slate-800 mt-auto">
                 <Link
                     href={route("users.edit", user.id)}
                     className="flex-1 flex items-center justify-center gap-1.5 py-3 text-warning-600 hover:bg-warning-50 dark:hover:bg-warning-950/50 text-sm font-medium transition-colors"

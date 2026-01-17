@@ -10,6 +10,8 @@ import {
     IconBrandWhatsapp,
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
+import Pagination from "@/Components/Dashboard/Pagination";
+
 
 const formatCurrency = (value = 0) =>
     new Intl.NumberFormat("id-ID", {
@@ -18,7 +20,9 @@ const formatCurrency = (value = 0) =>
         minimumFractionDigits: 0,
     }).format(value);
 
+
 export default function ReceivablesIndex({ receivables, filters = {} }) {
+const paginationLinks = receivables?.links ?? [];
     const { flash } = usePage().props;
     const [search, setSearch] = useState(filters.invoice || "");
     const [status, setStatus] = useState(filters.status || "");
@@ -264,6 +268,7 @@ export default function ReceivablesIndex({ receivables, filters = {} }) {
                     </div>
                 </div>
 
+                {/*
                 <div className="flex justify-between items-center text-sm text-slate-500">
                     <div>
                         Menampilkan {rows.length} dari {receivables?.total || 0} data
@@ -284,6 +289,11 @@ export default function ReceivablesIndex({ receivables, filters = {} }) {
                         ))}
                     </div>
                 </div>
+                */}
+                
+                 {paginationLinks.length > 3 && (
+                    <Pagination links={paginationLinks} />
+                )}
             </div>
         </>
     );

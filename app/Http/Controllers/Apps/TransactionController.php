@@ -9,12 +9,18 @@ use App\Models\PaymentSetting;
 use App\Models\Receivable;
 use App\Models\Product;
 use App\Models\Transaction;
+use Laravolt\Indonesia\Models\Province;
+use Laravolt\Indonesia\Models\City;
+use Laravolt\Indonesia\Models\District;
+use Laravolt\Indonesia\Models\Village;
+
 use App\Services\Payments\PaymentGatewayManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+
 
 class TransactionController extends Controller
 {
@@ -85,6 +91,9 @@ class TransactionController extends Controller
         // Get active bank accounts for bank transfer
         $bankAccounts = \App\Models\BankAccount::active()->ordered()->get();
 
+
+        $provinces = Province::select('code', 'name')->orderBy('name')->get();
+
         return Inertia::render('Dashboard/Transactions/Index', [
             'carts'                 => $carts,
             'carts_total'           => $carts_total,
@@ -95,6 +104,7 @@ class TransactionController extends Controller
             'paymentGateways'       => $paymentSetting?->enabledGateways() ?? [],
             'defaultPaymentGateway' => $defaultGateway,
             'bankAccounts'          => $bankAccounts,
+            'provinces' => $provinces,
         ]);
     }
 
@@ -128,47 +138,92 @@ class TransactionController extends Controller
      * @param  mixed $request
      * @return void
      */
+    // public function addToCart(Request $request)
+    // {
+    //     // Cari produk berdasarkan ID yang diberikan
+    //     $product = Product::whereId($request->product_id)->first();
+
+    //     // Jika produk tidak ditemukan, redirect dengan pesan error
+    //     if (! $product) {
+    //         return redirect()->back()->with('error', 'Product not found.');
+    //     }
+
+    //     // Cek stok produk
+    //     if ($product->stock < $request->qty) {
+    //         return redirect()->back()->with('error', 'Out of Stock Product!.');
+    //     }
+
+    //     // Cek keranjang
+    //     $cart = Cart::with('product')
+    //         ->where('product_id', $request->product_id)
+    //         ->where('cashier_id', auth()->user()->id)
+    //         ->first();
+
+    //     if ($cart) {
+    //         // Tingkatkan qty
+    //         $cart->increment('qty', $request->qty);
+
+    //         // Jumlahkan harga * kuantitas
+    //         $cart->price = $cart->product->sell_price * $cart->qty;
+
+    //         $cart->save();
+    //     } else {
+    //         // Insert ke keranjang
+    //         Cart::create([
+    //             'cashier_id' => auth()->user()->id,
+    //             'product_id' => $request->product_id,
+    //             'qty'        => $request->qty,
+    //             'price'      => $request->sell_price * $request->qty,
+    //         ]);
+    //     }
+
+    //     return redirect()->route('transactions.index')->with('success', 'Product Added Successfully!.');
+    // }
+    
     public function addToCart(Request $request)
-    {
-        // Cari produk berdasarkan ID yang diberikan
-        $product = Product::whereId($request->product_id)->first();
+{
+    // Cari produk berdasarkan ID
+    $product = Product::whereId($request->product_id)->first();
 
-        // Jika produk tidak ditemukan, redirect dengan pesan error
-        if (! $product) {
-            return redirect()->back()->with('error', 'Product not found.');
-        }
-
-        // Cek stok produk
-        if ($product->stock < $request->qty) {
-            return redirect()->back()->with('error', 'Out of Stock Product!.');
-        }
-
-        // Cek keranjang
-        $cart = Cart::with('product')
-            ->where('product_id', $request->product_id)
-            ->where('cashier_id', auth()->user()->id)
-            ->first();
-
-        if ($cart) {
-            // Tingkatkan qty
-            $cart->increment('qty', $request->qty);
-
-            // Jumlahkan harga * kuantitas
-            $cart->price = $cart->product->sell_price * $cart->qty;
-
-            $cart->save();
-        } else {
-            // Insert ke keranjang
-            Cart::create([
-                'cashier_id' => auth()->user()->id,
-                'product_id' => $request->product_id,
-                'qty'        => $request->qty,
-                'price'      => $request->sell_price * $request->qty,
-            ]);
-        }
-
-        return redirect()->route('transactions.index')->with('success', 'Product Added Successfully!.');
+    if (! $product) {
+        return redirect()->back()->with('error', 'Product not found.');
     }
+
+    // Cek keranjang milik kasir yang sedang login
+    $cart = Cart::with('product')
+        ->where('product_id', $request->product_id)
+        ->where('cashier_id', auth()->user()->id)
+        ->first();
+
+    // Tentukan total qty yang diinginkan (qty lama di keranjang + qty baru dari request)
+    $currentCartQty = $cart ? $cart->qty : 0;
+    $totalRequestedQty = $currentCartQty + $request->qty;
+
+    // VALIDASI: Cek apakah total permintaan melebihi stok fisik di database
+    if ($product->stock < $totalRequestedQty) {
+    // return response()->json('x');
+return back()->withErrors([
+            'message' => 'Stok tidak mencukupi. Tersedia: ' . $product->stock
+        ]);    }
+
+    if ($cart) {
+        // Jika item sudah ada, update jumlahnya
+        $cart->qty = $totalRequestedQty;
+        // Hitung ulang total harga berdasarkan qty terbaru
+        $cart->price = $product->sell_price * $cart->qty;
+        $cart->save();
+    } else {
+        // Jika item belum ada, buat record baru
+        Cart::create([
+            'cashier_id' => auth()->user()->id,
+            'product_id' => $request->product_id,
+            'qty'        => $request->qty,
+            'price'      => $product->sell_price * $request->qty,
+        ]);
+    }
+
+    return redirect()->route('transactions.index')->with('success', 'Product Added Successfully!.');
+}
 
     /**
      * destroyCart
@@ -197,38 +252,69 @@ class TransactionController extends Controller
      * @param  int $cart_id
      * @return void
      */
+    // public function updateCart(Request $request, $cart_id)
+    // {
+    //     $request->validate([
+    //         'qty' => 'required|integer|min:1',
+    //     ]);
+
+    //     $cart = Cart::with('product')->whereId($cart_id)
+    //         ->where('cashier_id', auth()->user()->id)
+    //         ->first();
+
+    //     if (! $cart) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Cart item not found',
+    //         ], 404);
+    //     }
+
+    //     // Check stock availability
+    //     if ($cart->product->stock < $request->qty) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Stok tidak mencukupi. Tersedia: ' . $cart->product->stock,
+    //         ], 422);
+    //     }
+
+    //     // Update quantity and price
+    //     $cart->qty   = $request->qty;
+    //     $cart->price = $cart->product->sell_price * $request->qty;
+    //     $cart->save();
+
+    //     return back()->with('success', 'Quantity updated successfully');
+    // }
+    
     public function updateCart(Request $request, $cart_id)
-    {
-        $request->validate([
-            'qty' => 'required|integer|min:1',
-        ]);
+{
+    $request->validate([
+        'qty' => 'required|integer|min:1',
+    ]);
 
-        $cart = Cart::with('product')->whereId($cart_id)
-            ->where('cashier_id', auth()->user()->id)
-            ->first();
+    $cart = Cart::with('product')->whereId($cart_id)
+        ->where('cashier_id', auth()->user()->id)
+        ->first();
 
-        if (! $cart) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cart item not found',
-            ], 404);
-        }
-
-        // Check stock availability
-        if ($cart->product->stock < $request->qty) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Stok tidak mencukupi. Tersedia: ' . $cart->product->stock,
-            ], 422);
-        }
-
-        // Update quantity and price
-        $cart->qty   = $request->qty;
-        $cart->price = $cart->product->sell_price * $request->qty;
-        $cart->save();
-
-        return back()->with('success', 'Quantity updated successfully');
+    // Gunakan redirect back dengan error agar ditangkap oleh Inertia
+    if (! $cart) {
+        return back()->withErrors(['message' => 'Item keranjang tidak ditemukan']);
     }
+
+    // Check stock availability
+    if ($cart->product->stock < $request->qty) {
+        // Mengirimkan pesan error spesifik ke session/errors
+        return back()->withErrors([
+            'message' => 'Stok tidak mencukupi. Tersedia: ' . $cart->product->stock
+        ]);
+    }
+
+    // Update quantity and price
+    $cart->qty   = $request->qty;
+    $cart->price = $cart->product->sell_price * $request->qty;
+    $cart->save();
+
+    return back()->with('success', 'Quantity updated successfully');
+}
 
     /**
      * holdCart - Hold current cart items for later

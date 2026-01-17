@@ -126,15 +126,15 @@ class DashboardController extends Controller
             });
 
         $topLocations = Transaction::join('customers', 'transactions.customer_id', '=', 'customers.id')
-            ->select('customers.village_name', DB::raw('COUNT(*) as orders'))
-            ->whereNotNull('customers.village_name')
-            ->groupBy('customers.village_name')
+            ->select('customers.regency_name', DB::raw('COUNT(*) as orders'))
+            ->whereNotNull('customers.regency_name')
+            ->groupBy('customers.regency_name')
             ->orderByDesc('orders')
-            ->take(5)
+            ->take(10)
             ->get()
             ->map(function ($row) {
                 return [
-                    'name'   => $row->village_name ?? 'Lainnya',
+                    'name'   => $row->regency_name ?? 'Lainnya',
                     'orders' => (int) $row->orders,
                 ];
             });

@@ -246,6 +246,13 @@ body {
   border-color: rgb(var(--color-primary-600));
 }
 
+ .to-indigo-700 {
+    --tw-gradient-to: #40f4fb var(--tw-gradient-to-position)
+ }
+ .from-indigo-500 {
+    --tw-gradient-from: #005a8b var(--tw-gradient-from-position)
+ }
+
 /* Pulse animation for cart */
 @keyframes pulse-subtle {
   0%, 100% {

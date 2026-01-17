@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { BarcodeLabelGrid } from "./BarcodeLabel";
+import { BarcodeLabelGrid, labelSizes } from "./BarcodeLabel";
 import {
     IconX,
     IconPrinter,
@@ -29,6 +29,9 @@ export default function BarcodePrintModal({
         const printContent = printRef.current;
         if (!printContent) return;
 
+        // Get current label size
+        const currentSize = labelSizes[size] || labelSizes["70x50"];
+
         const printWindow = window.open("", "_blank");
         printWindow.document.write(`
             <!DOCTYPE html>
@@ -38,8 +41,8 @@ export default function BarcodePrintModal({
                 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
                 <style>
                     @page {
-                        size: A4;
-                        margin: 5mm;
+                        size: ${currentSize.width} ${currentSize.height};
+                        margin: 0;
                     }
                     body {
                         font-family: Arial, sans-serif;
@@ -47,8 +50,9 @@ export default function BarcodePrintModal({
                         padding: 0;
                     }
                     .barcode-grid {
-                        display: grid;
-                        gap: 2mm;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0;
                     }
                     .barcode-label {
                         border: 1px solid #ccc;
@@ -57,8 +61,11 @@ export default function BarcodePrintModal({
                         flex-direction: column;
                         align-items: center;
                         justify-content: center;
-                        page-break-inside: avoid;
+                        page-break-after: always;
                         background: white;
+                        width: ${currentSize.width};
+                        height: ${currentSize.height};
+                        box-sizing: border-box;
                     }
                 </style>
             </head>
@@ -70,8 +77,8 @@ export default function BarcodePrintModal({
                         if (code) {
                             JsBarcode(svg, code, {
                                 format: "CODE128",
-                                width: 2,
-                                height: 50,
+                                width: ${currentSize.barcodeWidth},
+                                height: ${currentSize.barcodeHeight},
                                 displayValue: true,
                                 fontSize: 12,
                                 margin: 5,
@@ -216,7 +223,7 @@ export default function BarcodePrintModal({
                     className="p-4 overflow-auto"
                     style={{ maxHeight: "400px" }}
                 >
-                    <p className="text-xs text-slate-500 mb-3">Preview:</p>
+                    <p className="text-xs text-slate-500 mb-3">Preview (1 label per halaman):</p>
                     <div
                         ref={printRef}
                         className="bg-white p-4 border border-dashed border-slate-300 rounded-lg"

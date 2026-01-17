@@ -21,7 +21,7 @@ class ProductController extends Controller
         //get products
         $products = Product::when(request()->search, function ($products) {
             $products = $products->where('title', 'like', '%' . request()->search . '%');
-        })->with('category')->latest()->paginate(5);
+        })->with('category')->latest()->paginate(12);
 
         //return inertia
         return Inertia::render('Dashboard/Products/Index', [
@@ -58,13 +58,13 @@ class ProductController extends Controller
          */
         $request->validate([
             'barcode' => 'required|unique:products,barcode',
-            'sku' => 'required|unique:products,sku',
-            'title' => 'required',
+'sku'         => 'nullable|unique:products,sku',
+'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
-            'buy_price' => 'required',
-            'sell_price' => 'required',
-            'stock' => 'required',
+            'buy_price'   => 'required|numeric|min:0',
+    'sell_price'  => 'required|numeric|min:0',
+    'stock'       => 'required|integer|min:0',
         ]);
         //upload image
         $image = $request->file('image');
@@ -118,13 +118,13 @@ class ProductController extends Controller
          */
         $request->validate([
             'barcode' => 'required|unique:products,barcode,' . $product->id,
-            'sku' => 'required|unique:products,sku,' . $product->id,
+            'sku' => 'nullable|unique:products,sku,' . $product->id,
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
-            'buy_price' => 'required',
-            'sell_price' => 'required',
-            'stock' => 'required',
+            'buy_price'   => 'required|numeric|min:0',
+    'sell_price'  => 'required|numeric|min:0',
+    'stock'       => 'required|integer|min:0',
         ]);
 
         //check image update

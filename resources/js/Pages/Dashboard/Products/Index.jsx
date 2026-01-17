@@ -40,131 +40,116 @@ function ProductCard({
     const rowNumber = index + 1 + (currentPage - 1) * perPage;
     const lowStock = product.stock > 0 && product.stock <= 5;
     const outOfStock = product.stock === 0;
+    
+    const profit = product.sell_price - product.buy_price;
 
     return (
         <div
-            className={`group bg-white dark:bg-slate-900 rounded-2xl border overflow-hidden hover:shadow-lg transition-all duration-200 ${
+            className={`group bg-white dark:bg-slate-900 rounded-xl border overflow-hidden hover:shadow-xl transition-all duration-300 ${
                 isSelected
-                    ? "border-primary-500 ring-2 ring-primary-500/20"
+                    ? "border-primary-500 ring-2 ring-primary-500/10"
                     : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
             }`}
         >
-            {/* Product Image */}
-            <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            {/* Image Section - Radius disesuaikan */}
+            <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden m-1.5 rounded-lg">
                 {/* Checkbox */}
-                <div className="absolute top-2 left-2 z-10">
+                <div className="absolute top-1 left-1 z-10">
                     <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => onToggle(product)}
-                        className="w-5 h-5 rounded border-2 border-white bg-white/80 text-primary-500 focus:ring-primary-500 cursor-pointer shadow-sm"
+                        className="w-4 h-4 rounded border-2 border-white bg-white/80 text-primary-500 focus:ring-primary-500 cursor-pointer shadow-sm transition-transform active:scale-90"
                     />
                 </div>
+
+                {/* Profit Badge */}
+                {profit > 0 && (
+                    <div className="absolute bottom-2 left-2 z-10">
+                        <span className="px-2 py-1 text-[10px] font-bold bg-emerald-500 text-white rounded-md shadow-sm backdrop-blur-md">
+                            Profit: {formatCurrency(profit)}
+                        </span>
+                    </div>
+                )}
+
                 {product.image ? (
                     <img
                         src={getProductImageUrl(product.image)}
                         alt={product.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         loading="lazy"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                        <IconPhoto
-                            size={48}
-                            className="text-slate-300 dark:text-slate-600"
-                            strokeWidth={1}
-                        />
+                        <IconPhoto size={40} className="text-slate-300 dark:text-slate-600" strokeWidth={1} />
                     </div>
                 )}
 
-                {/* Stock Badge */}
-                <div className="absolute top-2 right-2">
+                {/* Stock Tag */}
+                <div className="absolute top-1 right-1">
                     {outOfStock ? (
-                        <span className="px-2 py-1 text-xs font-semibold bg-danger-500 text-white rounded-full">
+                        <span className="px-2 py-0.5 text-[9px] font-bold bg-red-500 text-white rounded-md uppercase tracking-wider">
                             Habis
                         </span>
-                    ) : lowStock ? (
-                        <span className="px-2 py-1 text-xs font-semibold bg-warning-500 text-white rounded-full">
-                            Stok: {product.stock}
-                        </span>
                     ) : (
-                        <span className="px-2 py-1 text-xs font-medium bg-slate-900/60 text-white rounded-full">
+                        <span className={`px-2 py-0.5 text-[9px] font-bold rounded-md uppercase tracking-wider ${
+                            lowStock ? "bg-amber-500 text-white animate-pulse" : "bg-slate-900/60 text-white"
+                        }`}>
                             Stok: {product.stock}
                         </span>
                     )}
                 </div>
 
-                {/* Action Buttons Overlay */}
-                <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                {/* Actions Overlay */}
+                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[1px]">
                     <Link
                         href={route("products.edit", product.id)}
-                        className="p-2.5 rounded-xl bg-white text-warning-600 hover:bg-warning-50 shadow-lg transition-colors"
+                        className="p-2 rounded-lg bg-white text-amber-600 hover:bg-amber-50 shadow-lg transition-all active:scale-95"
                     >
                         <IconPencilCog size={18} />
                     </Link>
                     <Button
                         type={"delete"}
                         icon={<IconTrash size={18} />}
-                        className={
-                            "p-2.5 rounded-xl bg-white text-danger-600 hover:bg-danger-50 shadow-lg"
-                        }
+                        className="p-2 rounded-lg bg-white text-red-600 hover:bg-red-50 shadow-lg transition-all active:scale-95"
                         url={route("products.destroy", product.id)}
                     />
                 </div>
             </div>
 
-            {/* Product Info */}
-            <div className="p-3 sm:p-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-400 rounded-md truncate">
-                        {product.category?.name || "Kategori"}
+            {/* Details Section */}
+            <div className="p-3 pt-0">
+                <div className="mb-1">
+                    <span className="text-[9px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-tight bg-primary-50 dark:bg-primary-900/30 px-1.5 py-0.5 rounded-md">
+                        {product.category?.name || "No Category"}
                     </span>
                 </div>
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 line-clamp-2 mb-1">
+                
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-1 mb-2 group-hover:text-primary-600 transition-colors">
                     {product.title}
                 </h3>
-                {(product.barcode || product.sku) && (
-                    <div className="space-y-0.5 mb-2">
-                        {product.barcode && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                                Barcode: {product.barcode}
-                            </p>
-                        )}
-                        {product.sku && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                                SKU: {product.sku}
-                            </p>
-                        )}
-                    </div>
-                )}
 
-                {/* Price Section - Mobile Friendly */}
-                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    {/* Sell Price - Prominent */}
-                    <p className="text-base sm:text-lg font-bold text-primary-600 dark:text-primary-400">
-                        {formatCurrency(product.sell_price)}
-                    </p>
-                    {/* Buy Price - Subtle */}
-                    <div className="flex items-center justify-between mt-1">
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
-                            Modal: {formatCurrency(product.buy_price)}
+                <div className="space-y-2.5">
+                    <div>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-none mb-1">Harga Jual</p>
+                        <p className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                            {formatCurrency(product.sell_price)}
                         </p>
-                        {/* Profit Indicator */}
-                        {product.sell_price > product.buy_price && (
-                            <span className="text-xs font-medium text-success-600 dark:text-success-400">
-                                +
-                                {formatCurrency(
-                                    product.sell_price - product.buy_price
-                                )}
-                            </span>
-                        )}
                     </div>
+
+                    {product.barcode && (
+                        <div className="flex items-center gap-1.5 py-1 px-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                            <IconBarcode size={14} className="text-slate-400" />
+                            <span className="text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 truncate">
+                                {product.barcode}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
-
 export default function Index({ products }) {
     const { roles, permissions, errors } = usePage().props;
     const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
@@ -316,7 +301,7 @@ export default function Index({ products }) {
             {products.data.length > 0 ? (
                 viewMode === "grid" ? (
                     /* Grid View */
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
                         {products.data.map((product, i) => (
                             <ProductCard
                                 key={product.id}

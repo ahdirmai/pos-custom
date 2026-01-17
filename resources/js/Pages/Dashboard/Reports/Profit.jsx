@@ -61,7 +61,7 @@ const ProfitReport = ({
     cashiers,
     customers,
 }) => {
-    const [showFilters, setShowFilters] = useState(false);
+    const [showFilters, setShowFilters] = useState(true);
     const [filterData, setFilterData] = useState({
         ...defaultFilters,
         ...filters,

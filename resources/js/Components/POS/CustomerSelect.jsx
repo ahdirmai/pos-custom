@@ -121,9 +121,9 @@ export default function CustomerSelect({
                                     <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
                                         {selected.name}
                                     </p>
-                                    {selected.phone && (
+                                    {selected.regency_name && (
                                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                            {selected.phone}
+                                            {selected.regency_name}
                                         </p>
                                     )}
                                 </>
@@ -146,6 +146,7 @@ export default function CustomerSelect({
                         <CustomerHistoryButton
                             customerId={selected.id}
                             customerName={selected.name}
+                            customerRegency={selected.regency_name}
                         />
                     )}
 
@@ -237,7 +238,7 @@ export default function CustomerSelect({
                                                         {customer.name}
                                                     </p>
                                                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                                        {customer.phone ||
+                                                        {customer.regency_name ||
                                                             customer.email ||
                                                             "-"}
                                                     </p>

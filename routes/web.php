@@ -18,12 +18,13 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin'       => Route::has('login'),
-        'canRegister'    => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion'     => PHP_VERSION,
-    ]);
+    return redirect()->route('login');
+    // return Inertia::render('Welcome', [
+    //     'canLogin'       => Route::has('login'),
+    //     'canRegister'    => Route::has('register'),
+    //     'laravelVersion' => Application::VERSION,
+    //     'phpVersion'     => PHP_VERSION,
+    // ]);
 });
 
 Route::get('/dashboard/access', function () {
@@ -103,7 +104,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     //route transaction store
     Route::post('/transactions/store', [TransactionController::class, 'store'])->middleware('permission:transactions-access')->name('transactions.store');
     Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->middleware('permission:transactions-access')->name('transactions.print');
-    Route::get('/transactions/history', [TransactionController::class, 'history'])->middleware('permission:transactions-access')->name('transactions.history');
+    Route::get('/transactions-history', [TransactionController::class, 'history'])->middleware('permission:transactions-access')->name('transactions.history');
     // receivables (nota barang)
     Route::get('/receivables', [\App\Http\Controllers\Apps\ReceivableController::class, 'index'])->middleware('permission:receivables-access')->name('receivables.index');
     Route::get('/receivables/{receivable}', [\App\Http\Controllers\Apps\ReceivableController::class, 'show'])->middleware('permission:receivables-access')->name('receivables.show');

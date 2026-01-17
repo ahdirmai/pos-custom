@@ -22,7 +22,7 @@ class RoleController extends Controller
             ->when(request()->search, fn($query) => $query->where('name', 'like', '%' . request()->search . '%'))
             ->select('id', 'name')
             ->latest()
-            ->paginate(7)
+            ->paginate(8)
             ->withQueryString();
 
         // get all permission data

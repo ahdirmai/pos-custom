@@ -143,7 +143,7 @@ export default function Index({ categories }) {
             {categories.data.length > 0 ? (
                 viewMode === "grid" ? (
                     /* Grid View */
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6  gap-4">
                         {categories.data.map((category) => (
                             <CategoryCard
                                 key={category.id}

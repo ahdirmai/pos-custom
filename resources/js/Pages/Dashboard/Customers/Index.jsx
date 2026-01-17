@@ -19,64 +19,62 @@ import Pagination from "@/Components/Dashboard/Pagination";
 
 // Customer Card for Grid View
 function CustomerCard({ customer }) {
+    
+    const getAvatarUrl = (name) => {
+        // Daftar warna background yang bagus (opsional, agar warna terkontrol)
+        const colors = ['4e73df', '1cc88a', '36b9cc', 'f6c23e', 'e74a3b', '5a5c69', '6f42c1'];
+        // Pilih warna berdasarkan index dari panjang nama atau karakter pertama
+        const colorIndex = name.length % colors.length;
+        const selectedBg = colors[colorIndex];
+        
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${selectedBg}&color=fff&bold=true`;
+    };
     return (
-        <div className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200">
+        <div className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 flex flex-col h-full">
             {/* Avatar & Name */}
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                    {customer.avatar ? (
-                        <img
-                            src={customer.avatar}
-                            alt={customer.name}
-                            className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0"
-                        />
-                    ) : (
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center text-white text-lg font-semibold flex-shrink-0">
-                            {customer.name.charAt(0).toUpperCase()}
-                        </div>
-                    )}
-                    <div>
-                        <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">
-                            {customer.name}
-                        </h3>
-                    </div>
+            <div className="flex items-center gap-3 mb-4">
+                <img
+                    // Gunakan avatar dari database, jika tidak ada gunakan UI Avatars
+                    src={customer.avatar || getAvatarUrl(customer.name)}
+                    alt={customer.name}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {customer.name}
+                    </h3>
                 </div>
             </div>
 
             {/* Contact Info */}
-            <div className="space-y-2 mb-4">
+            <div className="space-y-2 mb-4 flex-1">
                 {customer.no_telp && (
-                    <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                        <IconPhone size={16} />
-                        <span>{customer.no_telp}</span>
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        <IconPhone size={14} className="flex-shrink-0" />
+                        <span className="truncate">{customer.no_telp}</span>
                     </div>
                 )}
                 {customer.address && (
-                    <div className="flex items-start gap-2 text-sm text-slate-500 dark:text-slate-400">
-                        <IconMapPin
-                            size={16}
-                            className="flex-shrink-0 mt-0.5"
-                        />
+                    <div className="flex items-start gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        <IconMapPin size={14} className="flex-shrink-0 mt-0.5" />
                         <span className="line-clamp-2">{customer.address}</span>
                     </div>
                 )}
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            {/* Actions - Responsive Layout */}
+            <div className="flex flex-col xl:flex-row gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <Link
                     href={route("customers.edit", customer.id)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-warning-100 text-warning-600 hover:bg-warning-200 dark:bg-warning-900/50 dark:text-warning-400 text-sm font-medium transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-warning-100 text-warning-600 hover:bg-warning-200 dark:bg-warning-900/50 dark:text-warning-400 text-xs sm:text-sm font-medium transition-colors"
                 >
-                    <IconPencilCog size={16} />
+                    <IconPencilCog size={14} />
                     <span>Edit</span>
                 </Link>
                 <Button
                     type={"delete"}
-                    icon={<IconTrash size={16} />}
-                    className={
-                        "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-danger-100 text-danger-600 hover:bg-danger-200 dark:bg-danger-900/50 dark:text-danger-400 text-sm font-medium"
-                    }
+                    icon={<IconTrash size={14} />}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-danger-100 text-danger-600 hover:bg-danger-200 dark:bg-danger-900/50 dark:text-danger-400 text-xs sm:text-sm font-medium"
                     url={route("customers.destroy", customer.id)}
                     label="Hapus"
                 />
@@ -155,7 +153,7 @@ export default function Index({ customers }) {
             {customers.data.length > 0 ? (
                 viewMode === "grid" ? (
                     /* Grid View */
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                         {customers.data.map((customer) => (
                             <CustomerCard
                                 key={customer.id}

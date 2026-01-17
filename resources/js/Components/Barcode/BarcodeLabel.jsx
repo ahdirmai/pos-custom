@@ -2,6 +2,28 @@ import React, { useRef } from "react";
 import JsBarcode from "jsbarcode";
 import { useEffect } from "react";
 
+// Export sizes untuk digunakan di BarcodePrintModal
+export const labelSizes = {
+    "50x30": {
+        width: "50mm",
+        height: "30mm",
+        barcodeWidth: 1.5,
+        barcodeHeight: 40,
+    },
+    "70x50": {
+        width: "70mm",
+        height: "50mm",
+        barcodeWidth: 2,
+        barcodeHeight: 50,
+    },
+    "100x50": {
+        width: "100mm",
+        height: "50mm",
+        barcodeWidth: 2.5,
+        barcodeHeight: 60,
+    },
+};
+
 /**
  * BarcodeLabel Component
  * Supports multiple sizes: 50x30mm (default), 70x50mm, 100x50mm
@@ -15,27 +37,7 @@ export default function BarcodeLabel({
 }) {
     const barcodeRef = useRef(null);
 
-    const sizes = {
-        "50x30": {
-            width: "50mm",
-            height: "30mm",
-            barcodeWidth: 1.5,
-            barcodeHeight: 40,
-        },
-        "70x50": {
-            width: "70mm",
-            height: "50mm",
-            barcodeWidth: 2,
-            barcodeHeight: 50,
-        },
-        "100x50": {
-            width: "100mm",
-            height: "50mm",
-            barcodeWidth: 2.5,
-            barcodeHeight: 60,
-        },
-    };
-
+    const sizes = labelSizes;
     const currentSize = sizes[size] || sizes["50x30"];
 
     useEffect(() => {
@@ -110,6 +112,7 @@ export default function BarcodeLabel({
 
 /**
  * Generate multiple barcode labels for printing
+ * Modified to display 1 label per row
  */
 export function BarcodeLabelGrid({
     products = [],
@@ -124,18 +127,12 @@ export function BarcodeLabelGrid({
         Array(copies).fill(product)
     );
 
-    const gridCols = {
-        "50x30": "repeat(4, 50mm)",
-        "70x50": "repeat(3, 70mm)",
-        "100x50": "repeat(2, 100mm)",
-    };
-
     return (
         <div
             className="barcode-grid"
             style={{
-                display: "grid",
-                gridTemplateColumns: gridCols[size] || gridCols["50x30"],
+                display: "flex",
+                flexDirection: "column",
                 gap: "2mm",
             }}
         >

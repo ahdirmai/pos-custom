@@ -160,31 +160,58 @@ export default function Index({
     }, [isCashPayment, payable]);
 
     // Handle add product to cart
+    // const handleAddToCart = async (product) => {
+    //     if (!product?.id) return;
+
+    //     setAddingProductId(product.id);
+
+    //     router.post(
+    //         route("transactions.addToCart"),
+    //         {
+    //             product_id: product.id,
+    //             sell_price: product.sell_price,
+    //             qty: 1,
+    //         },
+    //         {
+    //             preserveScroll: true,
+    //             onSuccess: () => {
+    //                 toast.success(`${product.title} ditambahkan`);
+    //                 setAddingProductId(null);
+    //             },
+    //             onError: () => {
+    //                 toast.error("Gagal menambahkan produk");
+    //                 setAddingProductId(null);
+    //             },
+    //         }
+    //     );
+    // };
     const handleAddToCart = async (product) => {
-        if (!product?.id) return;
+    if (!product?.id) return;
 
-        setAddingProductId(product.id);
+    setAddingProductId(product.id);
 
-        router.post(
-            route("transactions.addToCart"),
-            {
-                product_id: product.id,
-                sell_price: product.sell_price,
-                qty: 1,
+    router.post(
+        route("transactions.addToCart"),
+        {
+            product_id: product.id,
+            // sell_price dihapus karena backend harus ambil dari database
+            qty: 1,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success(`${product.title} ditambahkan ke keranjang`);
+                setAddingProductId(null);
             },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success(`${product.title} ditambahkan`);
-                    setAddingProductId(null);
-                },
-                onError: () => {
-                    toast.error("Gagal menambahkan produk");
-                    setAddingProductId(null);
-                },
-            }
-        );
-    };
+            onError: (errors) => {
+                // Mengambil pesan error pertama dari server jika ada
+                const message = Object.values(errors)[0] || "Gagal menambahkan produk";
+                toast.error(message);
+                setAddingProductId(null);
+            },
+        }
+    );
+};
 
     // Handle update cart quantity
     const [updatingCartId, setUpdatingCartId] = useState(null);

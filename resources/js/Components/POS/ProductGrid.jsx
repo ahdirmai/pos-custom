@@ -15,6 +15,84 @@ const formatPrice = (value = 0) =>
     });
 
 // Single Product Card
+
+// function ProductCard({ product, onAddToCart, isAdding }) {
+//     const hasStock = product.stock > 0;
+//     const lowStock = product.stock > 0 && product.stock <= 5;
+
+//     return (
+//         <button
+//             onClick={() => hasStock && onAddToCart(product)}
+//             disabled={!hasStock || isAdding}
+//             className={`
+//                 group relative flex flex-col bg-white dark:bg-slate-900
+//                 rounded-2xl border border-slate-200 dark:border-slate-800
+//                 overflow-hidden transition-all duration-200
+//                 ${
+//                     hasStock
+//                         ? "hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+//                         : "opacity-60 cursor-not-allowed"
+//                 }
+//             `}
+//         >
+//             {/* Product Image */}
+//             <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden">
+//                 {product.image ? (
+//                     <img
+//                         src={getProductImageUrl(product.image)}
+//                         alt={product.title}
+//                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+//                         loading="lazy"
+//                     />
+//                 ) : (
+//                     <div className="w-full h-full flex items-center justify-center">
+//                         <IconPhoto
+//                             size={32}
+//                             className="text-slate-300 dark:text-slate-600"
+//                         />
+//                     </div>
+//                 )}
+
+//                 {/* Stock Badge */}
+//                 {lowStock && (
+//                     <span className="absolute top-2 right-2 px-2 py-0.5 text-xs font-medium bg-warning-100 text-warning-700 dark:bg-warning-900/50 dark:text-warning-400 rounded-full">
+//                         Sisa {product.stock}
+//                     </span>
+//                 )}
+
+//                 {/* Out of Stock Overlay */}
+//                 {!hasStock && (
+//                     <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
+//                         <span className="px-3 py-1 bg-danger-500 text-white text-xs font-semibold rounded-full">
+//                             Habis
+//                         </span>
+//                     </div>
+//                 )}
+
+//                 {/* Hover Add Indicator (centered on image) */}
+//                 {hasStock && (
+//                     <div className="absolute inset-0 bg-primary-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
+//                         <div className="bg-primary-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+//                             + Tambah
+//                         </div>
+//                     </div>
+//                 )}
+//             </div>
+
+//             {/* Product Info */}
+//             <div className="flex-1 p-3 flex flex-col justify-between min-h-[80px]">
+//                 <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-2 leading-tight">
+//                     {product.title}
+//                 </h3>
+//                 <p className="mt-2 text-base font-bold text-primary-600 dark:text-primary-400">
+//                     {formatPrice(product.sell_price)}
+//                 </p>
+//             </div>
+
+//         </button>
+//     );
+// }
+// Single Product Card
 function ProductCard({ product, onAddToCart, isAdding }) {
     const hasStock = product.stock > 0;
     const lowStock = product.stock > 0 && product.stock <= 5;
@@ -26,7 +104,7 @@ function ProductCard({ product, onAddToCart, isAdding }) {
             className={`
                 group relative flex flex-col bg-white dark:bg-slate-900
                 rounded-2xl border border-slate-200 dark:border-slate-800
-                overflow-hidden transition-all duration-200
+                overflow-hidden transition-all duration-200 text-left
                 ${
                     hasStock
                         ? "hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
@@ -34,7 +112,7 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                 }
             `}
         >
-            {/* Product Image */}
+            {/* Product Image Section */}
             <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 {product.image ? (
                     <img
@@ -45,53 +123,73 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                        <IconPhoto
-                            size={32}
-                            className="text-slate-300 dark:text-slate-600"
-                        />
+                        <IconPhoto size={32} className="text-slate-300 dark:text-slate-600" />
                     </div>
                 )}
 
-                {/* Stock Badge */}
-                {lowStock && (
-                    <span className="absolute top-2 right-2 px-2 py-0.5 text-xs font-medium bg-warning-100 text-warning-700 dark:bg-warning-900/50 dark:text-warning-400 rounded-full">
-                        Sisa {product.stock}
-                    </span>
-                )}
-
-                {/* Out of Stock Overlay */}
-                {!hasStock && (
-                    <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
-                        <span className="px-3 py-1 bg-danger-500 text-white text-xs font-semibold rounded-full">
+                {/* --- BADGE STOK (POJOK KANAN ATAS) --- */}
+                <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
+                    {!hasStock ? (
+                        <span className="px-2 py-1 bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm">
                             Habis
                         </span>
-                    </div>
-                )}
+                    ) : lowStock ? (
+                        <span className="px-2 py-1 bg-orange-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm animate-pulse">
+                            Sisa {product.stock}
+                        </span>
+                    ) : (
+                        <span className="px-2 py-1 bg-slate-800/80 backdrop-blur-sm text-white text-[10px] font-medium rounded-lg shadow-sm">
+                            Stok: {product.stock}
+                        </span>
+                    )}
+                </div>
 
-                {/* Hover Add Indicator (centered on image) */}
+                {/* Hover Add Indicator Overlay */}
                 {hasStock && (
-                    <div className="absolute inset-0 bg-primary-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
-                        <div className="bg-primary-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                            + Tambah
+                    <div className="absolute inset-0 bg-primary-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                         <div className="bg-primary-500 text-white p-2 rounded-full shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
+                            <IconPlus size={20} />
                         </div>
                     </div>
                 )}
             </div>
 
             {/* Product Info */}
-            <div className="flex-1 p-3 flex flex-col justify-between min-h-[80px]">
-                <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-2 leading-tight">
-                    {product.title}
-                </h3>
-                <p className="mt-2 text-base font-bold text-primary-600 dark:text-primary-400">
-                    {formatPrice(product.sell_price)}
-                </p>
-            </div>
+            <div className="p-3 flex-1 flex flex-col">
+  <div className="flex items-start mb-1">
+    <span className="px-2 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 rounded uppercase">
+      {product.category?.name || "Produk"}
+    </span>
+  </div>
 
+  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 line-clamp-2">
+    {product.title}
+  </h3>
+
+  {(product.barcode || product.sku) && (
+    <div className="space-y-0.5">
+      {product.barcode && (
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
+          Barcode: {product.barcode}
+        </p>
+      )}
+      {product.sku && (
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
+          SKU: {product.sku}
+        </p>
+      )}
+    </div>
+  )}
+
+  <div className="mt-auto pt-2 border-t border-slate-50 dark:border-slate-800">
+    <p className="text-base font-bold text-primary-600 dark:text-primary-400">
+      {formatPrice(product.sell_price)}
+    </p>
+  </div>
+</div>
         </button>
     );
 }
-
 // Category Tab Button
 function CategoryTab({ category, isActive, onClick }) {
     return (

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\SoftDeletes; // 1. Import trait
 class Customer extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes; // 2. Gunakan trait;
     
     /**
      * fillable
@@ -27,4 +28,23 @@ class Customer extends Model
         'village_id',
         'village_name',
     ];
+    
+    protected function noTelp(): Attribute
+{
+    return Attribute::make(
+        get: function ($value) {
+            // 1. Jika awalan 62, ubah menjadi 0
+            if (str_starts_with($value, '62')) {
+                return '0' . substr($value, 2);
+            }
+
+            // 2. Jika awalan 8 (tidak ada 0 atau 62), tambahkan 0 di depannya
+            if (str_starts_with($value, '8')) {
+                return '0' . $value;
+            }
+
+            return $value;
+        },
+    );
+}
 }

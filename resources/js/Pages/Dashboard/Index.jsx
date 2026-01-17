@@ -1,6 +1,6 @@
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link } from "@inertiajs/react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Chart from "chart.js/auto";
 import {
     IconBox,
@@ -77,7 +77,7 @@ function TargetCard({ title, current, target, icon: Icon }) {
     const isAchieved = percentage >= 100;
 
     return (
-        <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-[#005a8b] to-[#40f4fb] text-white shadow-lg">
             {/* Background Pattern */}
             <div className="absolute top-0 right-0 w-32 h-32 opacity-20">
                 <Icon
@@ -206,8 +206,14 @@ export default function Dashboard({
 }) {
     const chartRef = useRef(null);
     const chartInstance = useRef(null);
+    const [showAllLocations, setShowAllLocations] = useState(false);
+    
+    // Tambahkan Ref baru untuk Pie Chart
+    const pieChartRef = useRef(null);
+    const pieChartInstance = useRef(null);
 
     const chartData = useMemo(() => revenueTrend ?? [], [revenueTrend]);
+    const displayedLocations = showAllLocations ? topLocations : topLocations.slice(0, 5);
 
     // Setup chart
     useEffect(() => {
@@ -298,6 +304,63 @@ export default function Dashboard({
 
         return () => chartInstance.current?.destroy();
     }, [chartData]);
+    
+    // Setup PieChart
+    useEffect(() => {
+        if (!pieChartRef.current || topProducts.length === 0) return;
+
+        if (pieChartInstance.current) {
+            pieChartInstance.current.destroy();
+        }
+
+        const ctx = pieChartRef.current.getContext("2d");
+        
+        pieChartInstance.current = new Chart(ctx, {
+            type: "doughnut", // Anda bisa menggunakan 'pie' atau 'doughnut'
+            data: {
+                labels: topProducts.map((p) => p.name),
+                datasets: [
+                    {
+                        data: topProducts.map((p) => p.qty),
+                        backgroundColor: [
+                            "#6366f1", // Indigo
+                            "#10b981", // Success/Green
+                            "#f59e0b", // Warning/Amber
+                            "#3b82f6", // Blue
+                            "#8b5cf6", // Purple
+                        ],
+                        borderWidth: 2,
+                        borderColor: "transparent",
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: { size: 11 },
+                            color: "#94a3b8",
+                        },
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.label}: ${ctx.raw} terjual`,
+                        },
+                    },
+                },
+                cutout: "65%", // Memberikan lubang di tengah (untuk doughnut)
+            },
+        });
+
+        return () => pieChartInstance.current?.destroy();
+    }, [topProducts]);
+    
+   
 
     return (
         <>
@@ -396,7 +459,7 @@ export default function Dashboard({
                 {/* 4-Column Bottom Widgets */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Top Products */}
-                    <ListCard
+                    {/* <ListCard
                         title="Produk Terlaris"
                         subtitle="Best seller"
                         icon={IconBox}
@@ -434,6 +497,20 @@ export default function Dashboard({
                                 ))}
                             </div>
                         )}
+                    </ListCard>
+                    */}
+                    
+                    <ListCard
+                        title="Produk Terlaris"
+                        subtitle="Berdasarkan kuantitas"
+                        icon={IconBox}
+                        emptyMessage="Belum ada data"
+                    >
+                        {topProducts.length > 0 ? (
+                            <div className="h-64">
+                                <canvas ref={pieChartRef} />
+                            </div>
+                        ) : null}
                     </ListCard>
 
                     {/* Slow Moving Products */}
@@ -500,34 +577,28 @@ export default function Dashboard({
                         )}
                     </ListCard>
 
-                    {/* Top Locations */}
-                    <ListCard
-                        title="Lokasi Terbanyak"
-                        subtitle="Berdasar kelurahan transaksi"
-                        icon={IconMapPin}
-                        emptyMessage="Belum ada data"
-                    >
+                    {/* Top Locations 
+                    */}
+                    <ListCard title="Lokasi Terbanyak" subtitle="Kabupaten/Kota transaksi" icon={IconMapPin} emptyMessage="Belum ada data">
                         {topLocations.length > 0 && (
-                            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {topLocations.map((loc, index) => (
-                                    <li
-                                        key={index}
-                                        className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <span className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 text-sm font-semibold flex items-center justify-center">
-                                                {index + 1}
-                                            </span>
-                                            <span className="text-sm text-slate-700 dark:text-slate-300 truncate max-w-[120px]">
-                                                {loc.name}
-                                            </span>
-                                        </div>
-                                        <span className="text-xs text-slate-500 font-semibold">
-                                            {loc.orders}x
-                                            </span>
+                            <div className="flex flex-col h-full">
+                                <ul className="divide-y divide-slate-100 dark:divide-slate-800 flex-grow">
+                                    {displayedLocations.map((loc, i) => (
+                                        <li key={i} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                                            <div className="flex items-center gap-3">
+                                                <span className="w-6 h-6 rounded-full bg-primary-50 dark:bg-primary-900/30 text-primary-600 text-[10px] font-bold flex items-center justify-center">{i + 1}</span>
+                                                <span className="text-sm text-slate-700 dark:text-slate-300">{loc.name}</span>
+                                            </div>
+                                            <span className="text-xs text-slate-500">{loc.orders}x</span>
                                         </li>
                                     ))}
-                            </ul>
+                                </ul>
+                                {topLocations.length > 5 && (
+                                    <button onClick={() => setShowAllLocations(!showAllLocations)} className="w-full mt-4 py-2 text-xs font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors border-t border-slate-100 dark:border-slate-800">
+                                        {showAllLocations ? 'Sembunyikan' : 'Lihat Selengkapnya'}
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </ListCard>
                 </div>
