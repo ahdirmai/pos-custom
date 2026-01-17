@@ -18,6 +18,7 @@ class Product extends Model
      */
     protected $fillable = [
         'image',
+        'is_pph23',
         'barcode',
         'sku',
         'title',

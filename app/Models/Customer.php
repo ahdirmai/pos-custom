@@ -19,6 +19,7 @@ class Customer extends Model
         'name',
         'no_telp',
         'address',
+        'npwp',
         'province_id',
         'province_name',
         'regency_id',

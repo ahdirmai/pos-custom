@@ -133,6 +133,13 @@ export default function Menu() {
                     icon: <IconChartBarPopular size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["profits-access"]),
                 },
+                {
+                    title: "Laporan PPh 23",
+                    href: route("reports.pph23.index"),
+                    active: url.startsWith("/dashboard/reports/pph23"),
+                    icon: <IconFileCertificate size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["reports-access"]),
+                },
             ],
         },
         {
