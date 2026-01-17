@@ -151,6 +151,7 @@ const autoBarcode = `${data.sku.toUpperCase()}-${randomDigits}`;
                                     errors={errors.category_id}
                                     searchable={true}
                                     displayKey="name"
+                                    valueKey="id"
                                 />
 
                                 <Input
@@ -170,7 +171,7 @@ const autoBarcode = `${data.sku.toUpperCase()}-${randomDigits}`;
                                         <button 
                                             type="button"
                                             onClick={handleGenerateBarcode}
-                                            className={`text-[10px] uppercase font-bold px-2 py-1 rounded transition-all active:scale-95 ${
+                                            className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded transition-all active:scale-95 ${
                                                 !data.sku 
                                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
                                                 : 'text-primary-500 bg-primary-50 hover:bg-primary-100 dark:bg-primary-950/30'
