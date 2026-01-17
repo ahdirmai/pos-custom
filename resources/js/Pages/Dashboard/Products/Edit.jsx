@@ -172,6 +172,7 @@ export default function Edit({ categories, product }) {
                                     errors={errors.category_id}
                                     searchable={true}
                                     displayKey="name"
+                                    valueKey="id"
                                 />
 
                                 <Input
@@ -237,6 +238,7 @@ export default function Edit({ categories, product }) {
                                     onChange={(e) => setData("buy_price", e.target.value)}
                                     errors={errors.buy_price}
                                     placeholder="0"
+                                    icon={<IconCurrencyDollar size={16} />}
                                 />
                                 <Input
                                     type="number"
@@ -245,6 +247,7 @@ export default function Edit({ categories, product }) {
                                     onChange={(e) => setData("sell_price", e.target.value)}
                                     errors={errors.sell_price}
                                     placeholder="0"
+                                    icon={<IconCurrencyDollar size={16} />}
                                 />
                                 <Input
                                     type="number"

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, useForm, usePage, Link } from "@inertiajs/react";
 import Input from "@/Components/Dashboard/Input";
+import InputSelect from "@/Components/Dashboard/InputSelect";
 import Textarea from "@/Components/Dashboard/TextArea";
 import toast from "react-hot-toast";
 import {
@@ -34,8 +35,8 @@ export default function Create() {
     // --- LOGIC FETCH DATA WILAYAH ---
 
     // 1. Handle Ganti Provinsi
-    const handleProvinceChange = async (e) => {
-        const provinceId = e.target.value;
+    const handleProvinceChange = async (selectedProvince) => {
+        const provinceId = selectedProvince ? selectedProvince.code : "";
         
         // Reset state di bawahnya & set nilai baru
         setData(currentData => ({
@@ -65,8 +66,8 @@ export default function Create() {
     };
 
     // 2. Handle Ganti Kota/Kabupaten
-    const handleRegencyChange = async (e) => {
-        const regencyId = e.target.value;
+    const handleRegencyChange = async (selectedRegency) => {
+        const regencyId = selectedRegency ? selectedRegency.code : "";
 
         setData(currentData => ({
             ...currentData,
@@ -91,8 +92,8 @@ export default function Create() {
     };
 
     // 3. Handle Ganti Kecamatan
-    const handleDistrictChange = async (e) => {
-        const districtId = e.target.value;
+    const handleDistrictChange = async (selectedDistrict) => {
+        const districtId = selectedDistrict ? selectedDistrict.code : "";
 
         setData(currentData => ({
             ...currentData,
@@ -115,8 +116,8 @@ export default function Create() {
     };
 
     // 4. Handle Ganti Kelurahan
-    const handleVillageChange = (e) => {
-        setData("village_id", e.target.value);
+    const handleVillageChange = (selectedVillage) => {
+        setData("village_id", selectedVillage ? selectedVillage.code : "");
     };
 
     // --- SUBMIT FORM ---
@@ -181,97 +182,91 @@ export default function Create() {
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Provinsi */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        Provinsi
-                                    </label>
-                                    <select
-                                        value={data.province_id}
-                                        onChange={handleProvinceChange}
-                                        className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm focus:border-primary-500 focus:ring-primary-500"
-                                    >
-                                        <option value="">Pilih Provinsi</option>
-                                        {provinces.map((prov) => (
-                                            <option key={prov.code} value={prov.code}>
-                                                {prov.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.province_id && (
-                                        <p className="text-xs text-red-500 mt-1">{errors.province_id}</p>
-                                    )}
-                                </div>
+                                <InputSelect
+                                    label="Provinsi"
+                                    placeholder="Pilih Provinsi"
+                                    data={provinces}
+                                    selected={provinces.find(p => p.code == data.province_id) || null}
+                                    setSelected={handleProvinceChange}
+                                    errors={errors.province_id}
+                                    searchable={true}
+                                    valueKey="code"
+                                    displayKey="name"
+                                />
 
                                 {/* Kota/Kabupaten */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        Kota/Kabupaten
-                                    </label>
-                                    <select
-                                        value={data.regency_id}
-                                        onChange={handleRegencyChange}
-                                        className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm focus:border-primary-500 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        disabled={!data.province_id}
-                                    >
-                                        <option value="">Pilih Kota/Kabupaten</option>
-                                        {regencies.map((item) => (
-                                            <option key={item.code} value={item.code}>
-                                                {item.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.regency_id && (
-                                        <p className="text-xs text-red-500 mt-1">{errors.regency_id}</p>
-                                    )}
-                                </div>
+                                {data.province_id ? (
+                                    <InputSelect
+                                        label="Kota/Kabupaten"
+                                        placeholder="Pilih Kota/Kabupaten"
+                                        data={regencies}
+                                        selected={regencies.find(r => r.code == data.regency_id) || null}
+                                        setSelected={handleRegencyChange}
+                                        errors={errors.regency_id}
+                                        searchable={true}
+                                        valueKey="code"
+                                        displayKey="name"
+                                    />
+                                ) : (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                            Kota/Kabupaten
+                                        </label>
+                                        <div className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-4 flex items-center text-sm text-slate-400">
+                                            Pilih Provinsi Terlebih Dahulu
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Kecamatan */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        Kecamatan
-                                    </label>
-                                    <select
-                                        value={data.district_id}
-                                        onChange={handleDistrictChange}
-                                        className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm focus:border-primary-500 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        disabled={!data.regency_id}
-                                    >
-                                        <option value="">Pilih Kecamatan</option>
-                                        {districts.map((item) => (
-                                            <option key={item.code} value={item.code}>
-                                                {item.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.district_id && (
-                                        <p className="text-xs text-red-500 mt-1">{errors.district_id}</p>
-                                    )}
-                                </div>
+                                {data.regency_id ? (
+                                    <InputSelect
+                                        label="Kecamatan"
+                                        placeholder="Pilih Kecamatan"
+                                        data={districts}
+                                        selected={districts.find(d => d.code == data.district_id) || null}
+                                        setSelected={handleDistrictChange}
+                                        errors={errors.district_id}
+                                        searchable={true}
+                                        valueKey="code"
+                                        displayKey="name"
+                                    />
+                                ) : (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                            Kecamatan
+                                        </label>
+                                        <div className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-4 flex items-center text-sm text-slate-400">
+                                            Pilih Kota/Kabupaten Terlebih Dahulu
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Kelurahan */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        Kelurahan / Desa
-                                    </label>
-                                    <select
-                                        value={data.village_id}
-                                        onChange={handleVillageChange}
-                                        className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm focus:border-primary-500 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        disabled={!data.district_id}
-                                    >
-                                        <option value="">Pilih Kelurahan</option>
-                                        {villages.map((item) => (
-                                            <option key={item.code} value={item.code}>
-                                                {item.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.village_id && (
-                                        <p className="text-xs text-red-500 mt-1">{errors.village_id}</p>
-                                    )}
-                                </div>
+                                {data.district_id ? (
+                                    <InputSelect
+                                        label="Kelurahan / Desa"
+                                        placeholder="Pilih Kelurahan"
+                                        data={villages}
+                                        selected={villages.find(v => v.code == data.village_id) || null}
+                                        setSelected={handleVillageChange}
+                                        errors={errors.village_id}
+                                        searchable={true}
+                                        valueKey="code"
+                                        displayKey="name"
+                                    />
+                                ) : (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                            Kelurahan / Desa
+                                        </label>
+                                        <div className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-4 flex items-center text-sm text-slate-400">
+                                            Pilih Kecamatan Terlebih Dahulu
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Alamat Lengkap */}

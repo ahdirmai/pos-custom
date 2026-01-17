@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { usePage } from "@inertiajs/react";
+import InputSelect from "@/Components/Dashboard/InputSelect";
 import {
     IconUserPlus,
     IconX,
@@ -35,8 +36,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
 
     // --- LOGIC FETCH WILAYAH ---
 
-    const handleProvinceChange = async (e) => {
-        const provinceId = e.target.value;
+    const handleProvinceChange = async (selectedProvince) => {
+        const provinceId = selectedProvince ? selectedProvince.code : "";
         setForm(prev => ({
             ...prev,
             province_id: provinceId,
@@ -60,8 +61,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
         }
     };
 
-    const handleRegencyChange = async (e) => {
-        const regencyId = e.target.value;
+    const handleRegencyChange = async (selectedRegency) => {
+        const regencyId = selectedRegency ? selectedRegency.code : "";
         setForm(prev => ({
             ...prev,
             regency_id: regencyId,
@@ -83,8 +84,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
         }
     };
 
-    const handleDistrictChange = async (e) => {
-        const districtId = e.target.value;
+    const handleDistrictChange = async (selectedDistrict) => {
+        const districtId = selectedDistrict ? selectedDistrict.code : "";
         setForm(prev => ({
             ...prev,
             district_id: districtId,
@@ -101,6 +102,13 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
             } catch (error) {
                 console.error("Gagal ambil kelurahan", error);
             }
+        }
+    };
+
+    const handleVillageChange = (selectedVillage) => {
+        setForm(prev => ({ ...prev, village_id: selectedVillage ? selectedVillage.code : "" }));
+        if (errors.village_id) {
+            setErrors((prev) => ({ ...prev, village_id: null }));
         }
     };
 
@@ -252,76 +260,93 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
                     {/* Baris 2: Provinsi & Kota */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Provinsi
-                            </label>
-                            <select
-                                value={form.province_id}
-                                onChange={handleProvinceChange}
-                                className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:border-primary-500 focus:ring-4 focus:ring-primary-500/20 transition-all"
-                            >
-                                <option value="">Pilih Provinsi</option>
-                                {provinces.map((prov) => (
-                                    <option key={prov.code} value={prov.code}>{prov.name}</option>
-                                ))}
-                            </select>
-                            {errors.province_id && <p className="mt-1 text-xs text-red-500">{errors.province_id}</p>}
+                            <InputSelect
+                                label="Provinsi"
+                                placeholder="Pilih Provinsi"
+                                data={provinces}
+                                selected={provinces.find(p => p.code == form.province_id) || null}
+                                setSelected={handleProvinceChange}
+                                errors={errors.province_id}
+                                searchable={true}
+                                valueKey="code"
+                                displayKey="name"
+                            />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Kota/Kabupaten
-                            </label>
-                            <select
-                                value={form.regency_id}
-                                onChange={handleRegencyChange}
-                                disabled={!form.province_id}
-                                className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:border-primary-500 focus:ring-4 focus:ring-primary-500/20 disabled:opacity-50 transition-all"
-                            >
-                                <option value="">Pilih Kota/Kab</option>
-                                {regencies.map((item) => (
-                                    <option key={item.code} value={item.code}>{item.name}</option>
-                                ))}
-                            </select>
-                            {errors.regency_id && <p className="mt-1 text-xs text-red-500">{errors.regency_id}</p>}
+                            {form.province_id ? (
+                                <InputSelect
+                                    label="Kota/Kabupaten"
+                                    placeholder="Pilih Kota/Kabupaten"
+                                    data={regencies}
+                                    selected={regencies.find(r => r.code == form.regency_id) || null}
+                                    setSelected={handleRegencyChange}
+                                    errors={errors.regency_id}
+                                    searchable={true}
+                                    valueKey="code"
+                                    displayKey="name"
+                                />
+                            ) : (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        Kota/Kabupaten
+                                    </label>
+                                    <div className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm flex items-center text-slate-400">
+                                        Pilih Provinsi Dulu
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Baris 3: Kec & Kel */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Kecamatan
-                            </label>
-                            <select
-                                value={form.district_id}
-                                onChange={handleDistrictChange}
-                                disabled={!form.regency_id}
-                                className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:border-primary-500 focus:ring-4 focus:ring-primary-500/20 disabled:opacity-50 transition-all"
-                            >
-                                <option value="">Pilih Kecamatan</option>
-                                {districts.map((item) => (
-                                    <option key={item.code} value={item.code}>{item.name}</option>
-                                ))}
-                            </select>
-                            {errors.district_id && <p className="mt-1 text-xs text-red-500">{errors.district_id}</p>}
+                            {form.regency_id ? (
+                                <InputSelect
+                                    label="Kecamatan"
+                                    placeholder="Pilih Kecamatan"
+                                    data={districts}
+                                    selected={districts.find(d => d.code == form.district_id) || null}
+                                    setSelected={handleDistrictChange}
+                                    errors={errors.district_id}
+                                    searchable={true}
+                                    valueKey="code"
+                                    displayKey="name"
+                                />
+                            ) : (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        Kecamatan
+                                    </label>
+                                    <div className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm flex items-center text-slate-400">
+                                        Pilih Kota/Kab Dulu
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Kelurahan
-                            </label>
-                            <select
-                                name="village_id"
-                                value={form.village_id}
-                                onChange={handleChange}
-                                disabled={!form.district_id}
-                                className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:border-primary-500 focus:ring-4 focus:ring-primary-500/20 disabled:opacity-50 transition-all"
-                            >
-                                <option value="">Pilih Kelurahan</option>
-                                {villages.map((item) => (
-                                    <option key={item.code} value={item.code}>{item.name}</option>
-                                ))}
-                            </select>
-                            {errors.village_id && <p className="mt-1 text-xs text-red-500">{errors.village_id}</p>}
+                            {form.district_id ? (
+                                <InputSelect
+                                    label="Kelurahan"
+                                    placeholder="Pilih Kelurahan"
+                                    data={villages}
+                                    selected={villages.find(v => v.code == form.village_id) || null}
+                                    setSelected={handleVillageChange}
+                                    errors={errors.village_id}
+                                    searchable={true}
+                                    valueKey="code"
+                                    displayKey="name"
+                                />
+                            ) : (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        Kelurahan
+                                    </label>
+                                    <div className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm flex items-center text-slate-400">
+                                        Pilih Kecamatan Dulu
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 

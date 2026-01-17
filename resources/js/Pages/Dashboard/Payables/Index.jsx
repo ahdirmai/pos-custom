@@ -9,6 +9,7 @@ import {
     IconPlus,
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
+import InputSelect from "@/Components/Dashboard/InputSelect";
 
 const formatCurrency = (value = 0) =>
     new Intl.NumberFormat("id-ID", {
@@ -29,10 +30,24 @@ const formatDate = (value) => {
 };
 
 export default function PayablesIndex({ payables, filters = {}, suppliers = [] }) {
+    const statusOptions = [
+        { id: "unpaid", name: "Belum Lunas" },
+        { id: "partial", name: "Parsial" },
+        { id: "paid", name: "Lunas" },
+        { id: "overdue", name: "Jatuh Tempo" },
+    ];
     const { flash } = usePage().props;
     const [search, setSearch] = useState(filters.invoice || "");
     const [status, setStatus] = useState(filters.status || "");
     const [supplierId, setSupplierId] = useState(filters.supplier || "");
+    
+    // State helpers for InputSelect to show selected object
+    const [selectedFilterStatus, setSelectedFilterStatus] = useState(
+        statusOptions.find(opt => opt.id === filters.status) || null
+    );
+    const [selectedFilterSupplier, setSelectedFilterSupplier] = useState(
+        suppliers.find(s => s.id == filters.supplier) || null
+    );
     const { data, setData, post, processing, reset, errors } = useForm({
         supplier_id: "",
         document_number: "",
@@ -103,18 +118,15 @@ export default function PayablesIndex({ payables, filters = {}, suppliers = [] }
                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                             Supplier
                         </label>
-                        <select
-                            value={data.supplier_id}
-                            onChange={(e) => setData("supplier_id", e.target.value)}
-                            className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                        >
-                            <option value="">Umum</option>
-                            {suppliers.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                    {s.name}
-                                </option>
-                            ))}
-                        </select>
+                        <InputSelect
+                            placeholder="Pilih Supplier"
+                            data={suppliers}
+                            selected={suppliers.find(s => s.id == data.supplier_id) || null}
+                            setSelected={(val) => setData("supplier_id", val ? val.id : "")}
+                            searchable={true}
+                            displayKey="name"
+                            valueKey="id"
+                        />
                     </div>
                     <div>
                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -194,35 +206,35 @@ export default function PayablesIndex({ payables, filters = {}, suppliers = [] }
                         />
                     </div>
                     <div className="w-full">
-                        <select
-                            value={supplierId}
-                            onChange={(e) => setSupplierId(e.target.value)}
-                            className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                        >
-                            <option value="">Semua Supplier</option>
-                            {suppliers.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                    {s.name}
-                                </option>
-                            ))}
-                        </select>
+                        <InputSelect
+                            placeholder="Semua Supplier"
+                            data={suppliers}
+                            selected={selectedFilterSupplier}
+                            setSelected={(val) => {
+                                setSelectedFilterSupplier(val);
+                                setSupplierId(val ? val.id : "");
+                            }}
+                            searchable={true}
+                            displayKey="name"
+                            valueKey="id"
+                        />
                     </div>
                     <div className="relative w-full">
                         <IconCalendar
                             size={18}
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                         />
-                        <select
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)}
-                            className="w-full h-11 pl-10 pr-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                        >
-                            <option value="">Semua Status</option>
-                            <option value="unpaid">Belum Lunas</option>
-                            <option value="partial">Parsial</option>
-                            <option value="paid">Lunas</option>
-                            <option value="overdue">Jatuh Tempo</option>
-                        </select>
+                        <InputSelect
+                            placeholder="Semua Status"
+                            data={statusOptions}
+                            selected={selectedFilterStatus}
+                            setSelected={(val) => {
+                                setSelectedFilterStatus(val);
+                                setStatus(val ? val.id : "");
+                            }}
+                            displayKey="name"
+                            valueKey="id"
+                        />
                     </div>
                     <button
                         type="submit"

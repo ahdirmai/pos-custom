@@ -11,6 +11,7 @@ import {
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 import Pagination from "@/Components/Dashboard/Pagination";
+import InputSelect from "@/Components/Dashboard/InputSelect";
 
 
 const formatCurrency = (value = 0) =>
@@ -23,9 +24,23 @@ const formatCurrency = (value = 0) =>
 
 export default function ReceivablesIndex({ receivables, filters = {} }) {
 const paginationLinks = receivables?.links ?? [];
+    const statusOptions = [
+        { id: "unpaid", name: "Belum Lunas" },
+        { id: "partial", name: "Parsial" },
+        { id: "paid", name: "Lunas" },
+        { id: "overdue", name: "Jatuh Tempo" },
+    ];
     const { flash } = usePage().props;
     const [search, setSearch] = useState(filters.invoice || "");
     const [status, setStatus] = useState(filters.status || "");
+    const [selectedStatus, setSelectedStatus] = useState(
+        statusOptions.find(opt => opt.id === filters.status) || null
+    );
+
+    const handleStatusChange = (val) => {
+        setSelectedStatus(val);
+        setStatus(val ? val.id : "");
+    }
 
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
@@ -128,17 +143,14 @@ const paginationLinks = receivables?.links ?? [];
                             size={18}
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                         />
-                        <select
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)}
-                            className="w-full h-11 pl-10 pr-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-                        >
-                            <option value="">Semua Status</option>
-                            <option value="unpaid">Belum Lunas</option>
-                            <option value="partial">Parsial</option>
-                            <option value="paid">Lunas</option>
-                            <option value="overdue">Jatuh Tempo</option>
-                        </select>
+                        <InputSelect
+                            placeholder="Semua Status"
+                            data={statusOptions}
+                            selected={selectedStatus}
+                            setSelected={handleStatusChange}
+                            displayKey="name"
+                            valueKey="id"
+                        />
                     </div>
                     <button
                         type="submit"

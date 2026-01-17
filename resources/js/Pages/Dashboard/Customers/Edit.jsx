@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, useForm, usePage, Link } from "@inertiajs/react";
 import Input from "@/Components/Dashboard/Input";
+import InputSelect from "@/Components/Dashboard/InputSelect";
 import Textarea from "@/Components/Dashboard/TextArea";
 import toast from "react-hot-toast";
 import { IconUsers, IconDeviceFloppy, IconArrowLeft } from "@tabler/icons-react";
@@ -163,107 +164,62 @@ export default function Edit({ customer }) {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Provinsi
-                                </label>
-                                <select
-                                    value={data.province_id}
-                                    onChange={(e) =>
-                                        setData("province_id", e.target.value)
-                                    }
-                                    className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm"
-                                >
-                                    <option value="">Pilih Provinsi</option>
-                                    {provinces.map((prov) => (
-                                        <option key={prov.code} value={prov.code}>
-                                            {prov.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.province_id && (
-                                    <p className="text-xs text-danger-500 mt-1">
-                                        {errors.province_id}
-                                    </p>
-                                )}
+                                <InputSelect
+                                    label="Provinsi"
+                                    placeholder="Pilih Provinsi"
+                                    data={provinces}
+                                    selected={provinces.find(p => p.code == data.province_id) || null}
+                                    setSelected={(val) => setData("province_id", val ? val.code : "")}
+                                    errors={errors.province_id}
+                                    searchable={true}
+                                    valueKey="code"
+                                    displayKey="name"
+                                />
                             </div>
                             <div>
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Kota/Kabupaten
-                                </label>
-                                <select
-                                    value={data.regency_id}
-                                    onChange={(e) =>
-                                        setData("regency_id", e.target.value)
-                                    }
-                                    className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm"
+                                <InputSelect
+                                    label="Kota/Kabupaten"
+                                    placeholder="Pilih Kota/Kabupaten"
+                                    data={regencyList}
+                                    selected={regencyList.find(r => r.code == data.regency_id) || null}
+                                    setSelected={(val) => setData("regency_id", val ? val.code : "")}
+                                    errors={errors.regency_id}
+                                    searchable={true}
+                                    valueKey="code"
+                                    displayKey="name"
                                     disabled={!data.province_id}
-                                >
-                                    <option value="">Pilih Kota/Kabupaten</option>
-                                    {regencyList.map((item) => (
-                                        <option key={item.code} value={item.code}>
-                                            {item.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.regency_id && (
-                                    <p className="text-xs text-danger-500 mt-1">
-                                        {errors.regency_id}
-                                    </p>
-                                )}
+                                />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Kecamatan
-                                </label>
-                                <select
-                                    value={data.district_id}
-                                    onChange={(e) =>
-                                        setData("district_id", e.target.value)
-                                    }
-                                    className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm"
+                                <InputSelect
+                                    label="Kecamatan"
+                                    placeholder="Pilih Kecamatan"
+                                    data={districtList}
+                                    selected={districtList.find(d => d.code == data.district_id) || null}
+                                    setSelected={(val) => setData("district_id", val ? val.code : "")}
+                                    errors={errors.district_id}
+                                    searchable={true}
+                                    valueKey="code"
+                                    displayKey="name"
                                     disabled={!data.regency_id}
-                                >
-                                    <option value="">Pilih Kecamatan</option>
-                                    {districtList.map((item) => (
-                                        <option key={item.code} value={item.code}>
-                                            {item.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.district_id && (
-                                    <p className="text-xs text-danger-500 mt-1">
-                                        {errors.district_id}
-                                    </p>
-                                )}
+                                />
                             </div>
                             <div>
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Kelurahan
-                                </label>
-                                <select
-                                    value={data.village_id}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setData("village_id", val);
-                                    }}
-                                    className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm"
+                                <InputSelect
+                                    label="Kelurahan"
+                                    placeholder="Pilih Kelurahan"
+                                    data={villageList}
+                                    selected={villageList.find(v => v.code == data.village_id) || null}
+                                    setSelected={(val) => setData("village_id", val ? val.code : "")}
+                                    errors={errors.village_id}
+                                    searchable={true}
+                                    valueKey="code"
+                                    displayKey="name"
                                     disabled={!data.district_id}
-                                >
-                                    <option value="">Pilih Kelurahan</option>
-                                    {villageList.map((item) => (
-                                        <option key={item.code} value={item.code}>
-                                            {item.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.village_id && (
-                                    <p className="text-xs text-danger-500 mt-1">
-                                        {errors.village_id}
-                                    </p>
-                                )}
+                                />
                             </div>
                         </div>
                         <Textarea

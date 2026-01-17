@@ -10,6 +10,7 @@ import {
     IconCash,
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
+import InputSelect from "@/Components/Dashboard/InputSelect";
 
 export default function Payment({ setting, supportedGateways = [] }) {
     const { flash } = usePage().props;
@@ -44,6 +45,12 @@ export default function Payment({ setting, supportedGateways = [] }) {
         return false;
     };
 
+    const gatewayOptions = supportedGateways.map(gw => ({
+        ...gw,
+        disabled: !isGatewaySelectable(gw.value),
+        label: !isGatewaySelectable(gw.value) ? `${gw.label} (Nonaktif)` : gw.label
+    }));
+
     return (
         <>
             <Head title="Pengaturan Payment" />
@@ -70,33 +77,15 @@ export default function Payment({ setting, supportedGateways = [] }) {
                         membuka halaman transaksi.
                     </p>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            Pilih Gateway
-                        </label>
-                        <select
-                            value={data.default_gateway}
-                            onChange={(e) =>
-                                setData("default_gateway", e.target.value)
-                            }
-                            className="w-full h-11 px-4 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                        >
-                            {supportedGateways.map((gw) => (
-                                <option
-                                    key={gw.value}
-                                    value={gw.value}
-                                    disabled={!isGatewaySelectable(gw.value)}
-                                >
-                                    {gw.label}
-                                    {!isGatewaySelectable(gw.value) &&
-                                        " (nonaktif)"}
-                                </option>
-                            ))}
-                        </select>
-                        {errors?.default_gateway && (
-                            <small className="text-xs text-danger-500 mt-1">
-                                {errors.default_gateway}
-                            </small>
-                        )}
+                        <InputSelect
+                            label="Pilih Gateway"
+                            data={gatewayOptions}
+                            selected={gatewayOptions.find(gw => gw.value === data.default_gateway) || null}
+                            setSelected={(val) => setData("default_gateway", val ? val.value : "")}
+                            errors={errors?.default_gateway}
+                            displayKey="label"
+                            valueKey="value"
+                        />
                     </div>
                 </div>
 

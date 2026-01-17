@@ -11,7 +11,8 @@ export default function InputSelect({
     placeholder, 
     multiple = false, 
     searchable = false, 
-    displayKey = 'name' 
+    displayKey = 'name',
+    valueKey = 'id'
 }) {
     const [search, setSearch] = useState('')
     const filteredData = data.filter(item =>
@@ -25,7 +26,7 @@ export default function InputSelect({
                     {label}
                 </label>
             )}
-            <Listbox value={selected} onChange={setSelected} multiple={multiple} by="id">
+            <Listbox value={selected} onChange={setSelected} multiple={multiple} by={valueKey}>
                 {({ open }) => (
                     <div className="relative">
                         <Listbox.Button className='w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all flex justify-between items-center gap-2 text-sm'>
@@ -53,9 +54,11 @@ export default function InputSelect({
                                 />
                             )}
                             {filteredData.map((item) => (
-                                <Listbox.Option key={item.id} value={item}>
-                                    {({ selected }) => (
-                                        <div className='text-sm cursor-pointer px-3 py-2 rounded-lg flex items-center gap-2 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors'>
+                                <Listbox.Option key={item[valueKey]} value={item} disabled={item.disabled}>
+                                    {({ selected, disabled }) => (
+                                        <div className={`text-sm cursor-pointer px-3 py-2 rounded-lg flex items-center gap-2 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors ${
+                                            disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                                        }`}>
                                             {selected ? (
                                                 <IconCircleFilled size={16} strokeWidth={1.5} className='text-primary-500 flex-shrink-0' />
                                             ) : (
