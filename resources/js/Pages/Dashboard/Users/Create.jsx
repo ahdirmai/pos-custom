@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Head, usePage, useForm, Link } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import {
@@ -6,11 +6,14 @@ import {
     IconDeviceFloppy,
     IconArrowLeft,
     IconShield,
+    IconUser,
+    IconMail,
+    IconLock,
 } from "@tabler/icons-react";
 import Input from "@/Components/Dashboard/Input";
 import Checkbox from "@/Components/Dashboard/Checkbox";
+import ImageUploadZone from "@/Components/Dashboard/ImageUploadZone";
 import toast from "react-hot-toast";
-import { useState } from "react";
 
 export default function Create() {
     const { roles } = usePage().props;
@@ -36,6 +39,19 @@ export default function Create() {
         setData("selectedRoles", items);
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setData("avatar", file);
+            setAvatarPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleImageRemove = () => {
+        setData("avatar", null);
+        setAvatarPreview(null);
+    };
+
     const submit = (e) => {
         e.preventDefault();
         post(route("users.store"), {
@@ -51,7 +67,7 @@ export default function Create() {
             <div className="mb-6">
                 <Link
                     href={route("users.index")}
-                    className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600 mb-3"
+                    className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600 mb-3 transition-colors"
                 >
                     <IconArrowLeft size={16} />
                     Kembali ke Pengguna
@@ -62,150 +78,132 @@ export default function Create() {
                 </h1>
             </div>
 
-            <form onSubmit={submit}>
-                <div className="max-w-2xl space-y-6">
+            <form onSubmit={submit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
                     {/* Account Info */}
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
-                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
+                            <IconUser size={20} className="text-primary-500" />
                             Informasi Akun
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    Avatar
-                                </label>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-14 h-14 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex items-center justify-center text-slate-600 font-semibold">
-                                        {avatarPreview ? (
-                                            <img
-                                                src={avatarPreview}
-                                                alt="Preview"
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <span>
-                                                {data.name
-                                                    ? data.name
-                                                          .charAt(0)
-                                                          .toUpperCase()
-                                                    : "?"}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <Input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files[0];
-                                            if (file) {
-                                                setData("avatar", file);
-                                                setAvatarPreview(
-                                                    URL.createObjectURL(file)
-                                                );
-                                            }
-                                        }}
-                                        errors={errors.avatar}
-                                    />
-                                </div>
-                            </div>
+                        
+                        <div className="space-y-5">
                             <Input
                                 type="text"
                                 label="Nama Lengkap"
-                                placeholder="Masukkan nama"
+                                placeholder="Masukkan nama lengkap"
                                 value={data.name}
-                                onChange={(e) =>
-                                    setData("name", e.target.value)
-                                }
+                                onChange={(e) => setData("name", e.target.value)}
                                 errors={errors.name}
+                                icon={<IconUser size={20} />}
                             />
+                            
                             <Input
                                 type="email"
-                                label="Email"
+                                label="Alamat Email"
                                 placeholder="email@example.com"
                                 value={data.email}
-                                onChange={(e) =>
-                                    setData("email", e.target.value)
-                                }
+                                onChange={(e) => setData("email", e.target.value)}
                                 errors={errors.email}
+                                icon={<IconMail size={20} />}
                             />
-                            <Input
-                                type="password"
-                                label="Kata Sandi"
-                                placeholder="Minimal 8 karakter"
-                                value={data.password}
-                                onChange={(e) =>
-                                    setData("password", e.target.value)
-                                }
-                                errors={errors.password}
-                            />
-                            <Input
-                                type="password"
-                                label="Konfirmasi Kata Sandi"
-                                placeholder="Ulangi kata sandi"
-                                value={data.password_confirmation}
-                                onChange={(e) =>
-                                    setData(
-                                        "password_confirmation",
-                                        e.target.value
-                                    )
-                                }
-                                errors={errors.password_confirmation}
-                            />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <Input
+                                    type="password"
+                                    label="Kata Sandi"
+                                    placeholder="Minimal 8 karakter"
+                                    value={data.password}
+                                    onChange={(e) => setData("password", e.target.value)}
+                                    errors={errors.password}
+                                    icon={<IconLock size={20} />}
+                                />
+                                <Input
+                                    type="password"
+                                    label="Konfirmasi Kata Sandi"
+                                    placeholder="Ulangi kata sandi"
+                                    value={data.password_confirmation}
+                                    onChange={(e) => setData("password_confirmation", e.target.value)}
+                                    errors={errors.password_confirmation}
+                                    icon={<IconLock size={20} />}
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Roles */}
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
-                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-                            <IconShield size={16} />
-                            Akses Group
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
+                            <IconShield size={20} className="text-primary-500" />
+                            Akses Group & Peran
                         </h3>
-                        <div className="flex flex-wrap gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {roles.map((role, i) => (
                                 <label
                                     key={i}
-                                    className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
+                                    className={`flex items-center gap-3 px-5 py-4 rounded-xl border cursor-pointer transition-all duration-200 ${
                                         data.selectedRoles.includes(role.name)
-                                            ? "border-primary-500 bg-primary-50 dark:bg-primary-950/50"
-                                            : "border-slate-200 dark:border-slate-700 hover:border-primary-300"
+                                            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-sm"
+                                            : "border-slate-200 dark:border-slate-700 hover:border-primary-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                                     }`}
                                 >
                                     <Checkbox
                                         value={role.name}
                                         onChange={setSelectedRoles}
-                                        checked={data.selectedRoles.includes(
-                                            role.name
-                                        )}
+                                        checked={data.selectedRoles.includes(role.name)}
                                     />
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">
-                                        {role.name}
-                                    </span>
+                                    <div>
+                                        <span className="block text-sm font-bold text-slate-700 dark:text-slate-200 capitalize">
+                                            {role.name}
+                                        </span>
+                                        <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                            Akses sebagai {role.name}
+                                        </span>
+                                    </div>
                                 </label>
                             ))}
                         </div>
                         {errors.selectedRoles && (
-                            <p className="text-xs text-danger-500 mt-3">
-                                {errors.selectedRoles}
+                            <p className="text-sm text-red-500 mt-3 flex items-center gap-1">
+                                <IconShield size={16} /> {errors.selectedRoles}
                             </p>
                         )}
                     </div>
+                </div>
 
-                    {/* Submit */}
-                    <div className="flex justify-end gap-3">
-                        <Link
-                            href={route("users.index")}
-                            className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-colors"
-                        >
-                            Batal
-                        </Link>
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors disabled:opacity-50"
-                        >
-                            <IconDeviceFloppy size={18} />
-                            {processing ? "Menyimpan..." : "Simpan"}
-                        </button>
+                <div className="contents lg:block lg:col-span-1 lg:space-y-6">
+                    {/* Avatar Upload */}
+                    <div className="order-first lg:order-none w-full">
+                        <ImageUploadZone
+                            title="Foto Profil"
+                            imagePreview={avatarPreview}
+                            onImageChange={handleImageChange}
+                            onImageRemove={handleImageRemove}
+                            error={errors.avatar}
+                        />
+                    </div>
+
+                    {/* Action Card */}
+                    <div className="order-last lg:order-none w-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">
+                            Aksi
+                        </h3>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-bold transition-all disabled:opacity-70 shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40"
+                            >
+                                <IconDeviceFloppy size={20} />
+                                {processing ? "Menyimpan..." : "Simpan Pengguna"}
+                            </button>
+                            <Link
+                                href={route("users.index")}
+                                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-colors"
+                            >
+                                Batal
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </form>
