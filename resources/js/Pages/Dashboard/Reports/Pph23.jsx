@@ -61,8 +61,10 @@ const SummaryCard = ({ title, value, description, icon, gradient }) => (
 const Pph23Report = ({ reports, filters, customers, summary }) => {
     const [showFilters, setShowFilters] = useState(true);
     const [filterData, setFilterData] = useState({
-        ...defaultFilters,
-        ...filters,
+        start_date: filters.start_date || "",
+        end_date: filters.end_date || "",
+        invoice: filters.invoice || "",
+        customer_id: filters.customer_id || "",
     });
     const [expandedRows, setExpandedRows] = useState({});
 
@@ -75,7 +77,12 @@ const Pph23Report = ({ reports, filters, customers, summary }) => {
     };
 
     useEffect(() => {
-        setFilterData({ ...defaultFilters, ...filters });
+        setFilterData({
+            start_date: filters.start_date || "",
+            end_date: filters.end_date || "",
+            invoice: filters.invoice || "",
+            customer_id: filters.customer_id || "",
+        });
     }, [filters]);
 
     const handleChange = (field, value) =>
