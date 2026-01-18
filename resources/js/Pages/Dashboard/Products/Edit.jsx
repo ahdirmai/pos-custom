@@ -309,17 +309,17 @@ export default function Edit({ categories, product }) {
                             <div className="flex gap-3 w-full sm:w-auto">
                                 <Link
                                     href={route("products.index")}
-                                    className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold transition-all text-center text-sm"
+                                    className="flex-1 sm:flex-none px-6 py-2 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold transition-all text-center text-sm"
                                 >
                                     Batal
                                 </Link>
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-10 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-bold shadow-xl shadow-primary-500/25 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-10 py-2 sm:py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-bold shadow-xl shadow-primary-500/25 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <IconDeviceFloppy size={20} />
-                                    {processing ? "Menyimpan..." : "Update Produk"}
+                                    {processing ? "Menyimpan..." : "Update"}
                                 </button>
                             </div>
                         </div>
