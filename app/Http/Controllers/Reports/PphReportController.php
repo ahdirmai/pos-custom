@@ -40,7 +40,8 @@ class PphReportController extends Controller
             });
             $totalDppJasa = $serviceItems->sum(fn ($item) => $item->price);
             $hasNpwp = ! empty($transaction->customer->npwp);
-            $rate = $hasNpwp ? 0.02 : 0.04;
+            // $rate = $hasNpwp ? 0.02 : 0.04;
+            $rate = 0.02;
             $pphAmount = $totalDppJasa * $rate;
 
             return [
@@ -165,7 +166,8 @@ class PphReportController extends Controller
 
         $totalDppJasa = $serviceItems->sum(fn ($item) => $item->price);
         $hasNpwp = ! empty($transaction->customer->npwp);
-        $rate = $hasNpwp ? 0.02 : 0.04;
+        // $rate = $hasNpwp ? 0.02 : 0.04;
+        $rate = 0.02;
 
         // All items for display
         $allItems = $transaction->details->map(function ($item) use ($rate) {

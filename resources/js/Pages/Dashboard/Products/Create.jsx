@@ -29,6 +29,7 @@ export default function Create({ categories }) {
         buy_price: "",
         sell_price: "",
         stock: "",
+        is_pph23: false,
     });
 
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -233,9 +234,26 @@ const autoBarcode = `${data.sku.toUpperCase()}-${randomDigits}`;
                                     label="Stok Awal"
                                     value={data.stock}
                                     onChange={(e) => setData("stock", e.target.value)}
-                                    errors={errors.stock}
                                     placeholder="0"
                                 />
+                                <div className="md:col-span-3 pt-2">
+                                    <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:border-primary-200 dark:hover:border-primary-800 transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.is_pph23}
+                                            onChange={(e) => setData("is_pph23", e.target.checked)}
+                                            className="mt-1 w-4 h-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
+                                        />
+                                        <div>
+                                            <span className="block text-sm font-bold text-slate-800 dark:text-slate-200">
+                                                Kenakan PPh 23 
+                                            </span>
+                                            <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                                Aktifkan opsi ini jika produk adalah yang dikenakan pemotongan PPh 23 (2%).
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
 
                             {/* Profit Estimation Panel */}

@@ -123,6 +123,11 @@ function ProductCard({
                     <span className="text-[9px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-tight bg-primary-50 dark:bg-primary-900/30 px-1.5 py-0.5 rounded-md">
                         {product.category?.name || "No Category"}
                     </span>
+                    {product.is_pph23 === 1 && (
+                        <span className="ml-1 text-[9px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-tight bg-orange-50 dark:bg-orange-900/30 px-1.5 py-0.5 rounded-md border border-orange-200 dark:border-orange-800">
+                            PPh 23
+                        </span>
+                    )}
                 </div>
                 
                 <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-1 mb-2 group-hover:text-primary-600 transition-colors">
@@ -359,8 +364,13 @@ export default function Index({ products }) {
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
                                                         {product.title}
+                                                        {product.is_pph23 === 1 && (
+                                                            <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 px-1.5 py-0.5 rounded border border-orange-200 dark:border-orange-800">
+                                                                PPh 23
+                                                            </span>
+                                                        )}
                                                     </p>
                                                     <div className="text-xs text-slate-500 dark:text-slate-400 space-y-0.5">
                                                         {product.barcode && (

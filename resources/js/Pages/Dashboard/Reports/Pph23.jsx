@@ -336,10 +336,10 @@ const Pph23Report = ({ reports, filters, customers, summary }) => {
                                                         <div className="font-medium text-slate-900 dark:text-white">
                                                             {row.customer_name}
                                                         </div>
-                                                        <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                                        {/* <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                                                             <span className="opacity-75">NPWP:</span>
                                                             <span className="font-mono">{row.customer_npwp}</span>
-                                                        </div>
+                                                        </div> */}
                                                     </td>
                                                     <td className="px-6 py-5 text-right text-sm font-medium text-red-500 dark:text-red-400">
                                                         {row.discount > 0 ? `-${formatCurrency(row.discount)}` : '-'}
