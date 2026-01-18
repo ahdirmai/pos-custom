@@ -23,7 +23,7 @@ export default function Store({ settings }) {
         store_email: settings.store_email || "",
         store_website: settings.store_website || "",
         store_city: settings.store_city || "",
-        _method: "PUT",
+        _method: "POST",
     });
 
     const [logoPreview, setLogoPreview] = useState(
