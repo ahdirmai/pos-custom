@@ -39,7 +39,7 @@
                 </td>
                 <td width="180pt" style="text-align:right;vertical-align:top;">
                     <div class="text-muted" style="font-size:7pt;">INVOICE</div>
-                    <div class="text-bold" style="font-size:20pt;color:#000;line-height:1.1;">{{ $transaction->invoice }}</div>
+                    <div class="text-bold" style="font-size:18pt;color:#000;line-height:1.1;">{{ $transaction->invoice }}</div>
                     <div class="text-small">{{ $formatDate($transaction->created_at) }}</div>
                 </td>
             </tr>
