@@ -695,7 +695,7 @@ export default function Index({
                                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
                                     Metode Pembayaran
                                 </label>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="flex gap-2 overflow-x-auto pb-1">
                                     {paymentOptions.map((method) => (
                                         <button
                                             key={method.value}
@@ -704,7 +704,7 @@ export default function Index({
                                                 setPaymentMethod(method.value)
                                             }
                                             disabled={payLater}
-                                            className={`p-3 rounded-xl border-2 transition-all flex items-center gap-2 ${
+                                            className={`flex-1 min-w-fit p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
                                                 paymentMethod === method.value && !payLater
                                                     ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30"
                                                     : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
