@@ -139,6 +139,10 @@ class CategoryController extends Controller
         //find by ID
         $category = Category::findOrFail($id);
 
+        if($category->products()->count() > 0) {
+            return back()->with('error', 'Kategori tidak dapat dihapus karena masih memiliki data produk!');
+        }
+
         //remove image
         Storage::disk('local')->delete('public/category/' . basename($category->image));
 
