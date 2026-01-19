@@ -109,7 +109,7 @@ class SupplierController extends Controller
         $supplier = Supplier::findOrFail($id);
 
         if ($supplier->payables()->count() > 0) {
-            return back()->with('error', 'Supplier tidak dapat d hapus karena masih memiliki data hutang!');
+            return back()->with('error', 'Supplier tidak dapat dihapus karena masih memiliki data hutang!');
         }
 
         // delete supplier

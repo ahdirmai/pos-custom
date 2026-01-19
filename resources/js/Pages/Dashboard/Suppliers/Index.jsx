@@ -11,7 +11,8 @@ import {
     IconMapPin,
     IconCreditCard,
     IconDatabaseOff,
-    IconX
+    IconX,
+    IconAlertTriangle
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 import Search from "@/Components/Dashboard/Search";
@@ -117,7 +118,10 @@ function SupplierCard({ supplier, onEdit, onDelete }) {
 export default function SuppliersIndex({ suppliers, filters = {} }) {
     const { flash } = usePage().props;
     const [isModalOpen, setIsModalOpen] = useState(false);
+
     const [editingSupplier, setEditingSupplier] = useState(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [supplierToDelete, setSupplierToDelete] = useState(null);
 
     const { data, setData, post, put, delete: destroy, processing, reset, errors, clearErrors } = useForm({
         name: "",
@@ -182,9 +186,22 @@ export default function SuppliersIndex({ suppliers, filters = {} }) {
         }
     };
 
-    const remove = (id) => {
-        if (!confirm("Yakin ingin menghapus supplier ini? Tindakan tidak bisa dibatalkan.")) return;
-        destroy(route("suppliers.destroy", id), { preserveScroll: true });
+    const openDeleteModal = (id) => {
+        setSupplierToDelete(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+        setSupplierToDelete(null);
+    };
+
+    const confirmDelete = () => {
+        destroy(route("suppliers.destroy", supplierToDelete), {
+            preserveScroll: true,
+            onSuccess: () => closeDeleteModal(),
+            onError: () => closeDeleteModal(),
+        });
     };
 
     const rows = suppliers.data || [];
@@ -241,7 +258,7 @@ export default function SuppliersIndex({ suppliers, filters = {} }) {
                                 key={sup.id}
                                 supplier={sup}
                                 onEdit={openEditModal}
-                                onDelete={remove}
+                                onDelete={openDeleteModal}
                             />
                         ))}
                     </div>
@@ -308,7 +325,7 @@ export default function SuppliersIndex({ suppliers, filters = {} }) {
                                                     />
                                                     <Button
                                                         type="button"
-                                                        onClick={() => remove(sup.id)}
+                                                        onClick={() => openDeleteModal(sup.id)}
                                                         icon={<IconTrash size={16} strokeWidth={1.5} />}
                                                         className="border bg-danger-100 border-danger-200 text-danger-600 hover:bg-danger-200 dark:bg-danger-900/50 dark:border-danger-800 dark:text-danger-400"
                                                     />
@@ -464,6 +481,51 @@ export default function SuppliersIndex({ suppliers, filters = {} }) {
                         </button>
                     </div>
                 </form>
+            </SimpleModal>
+
+
+            {/* Delete Confirmation Modal */}
+            <SimpleModal
+                show={isDeleteModalOpen}
+                onClose={closeDeleteModal}
+                title="Hapus Supplier"
+            >
+                <div className="flex flex-col items-center text-center p-2">
+                    <div className="w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
+                        <IconAlertTriangle size={36} strokeWidth={1.5} />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+                        Konfirmasi Hapus
+                    </h3>
+                    <p className="text-slate-500 dark:text-slate-400 mb-6">
+                        Apakah Anda yakin ingin menghapus supplier ini? Data yang dihapus tidak dapat dikembalikan.
+                    </p>
+                    <div className="flex gap-3 w-full">
+                        <button
+                            type="button"
+                            onClick={closeDeleteModal}
+                            disabled={processing}
+                            className="flex-1 h-11 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="button"
+                            onClick={confirmDelete}
+                            disabled={processing}
+                            className="flex-1 h-11 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm shadow-lg shadow-rose-500/20 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+                        >
+                            {processing ? (
+                                "Menghapus..."
+                            ) : (
+                                <>
+                                    <IconTrash size={18} />
+                                    <span>Hapus</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
             </SimpleModal>
         </>
     );
