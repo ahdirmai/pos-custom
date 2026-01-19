@@ -5,96 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan PPh 23</title>
     <style>
-        /* Pengaturan Ukuran Kertas F4 */
-        @page {
-            size: 210mm 330mm;
-            margin: 15mm;
-        }
-
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            font-size: 8.5pt; /* Tulisan diperkecil */
-            color: #333;
-            margin: 0;
-            padding: 0;
-            line-height: 1.4;
-        }
-
-        .header { 
-            text-align: center; 
-            margin-bottom: 15px; 
-            border-bottom: 2px solid #444;
-            padding-bottom: 10px;
-        }
-        .header h2 { margin: 0; text-transform: uppercase; color: #2c3e50; font-size: 20pt; }
-        .header p { margin: 3px 0 0; color: #7f8c8d; font-size: 9pt; }
-
-        /* Styling Tabel dengan Radius */
-        .table-container {
-            border-radius: 8px;
-            overflow: hidden; /* Memastikan radius terlihat */
-            border: 1px solid #cbd5e0;
-        }
-
-        table { 
-            width: 100%; 
-            border-collapse: separate; /* Penting untuk radius */
-            border-spacing: 0; 
-        }
-
-        th { 
-            background-color: #2d3748; 
-            color: white; 
-            text-transform: uppercase;
-            font-size: 8pt;
-            letter-spacing: 0.5px;
-            padding: 10px 8px;
-        }
-
-        td { 
-            padding: 8px; 
-            border-bottom: 1px solid #edf2f7;
-            border-right: 1px solid #edf2f7;
-        }
-
-        td:last-child, th:last-child { border-right: none; }
-
-        /* Beda Warna Baris (Zebra) */
-        tbody tr:nth-child(even) { background-color: #f8fafc; }
-        tbody tr:nth-child(odd) { background-color: #ffffff; }
-        tbody tr:hover { background-color: #f1f5f9; }
-
+        @page { size: 215mm 330mm; margin: 30px; }
+        @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; src: url("{{ public_path('inter/Inter_24pt-Regular.ttf') }}") format('truetype') }
+        @font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; src: url("{{ public_path('inter/Inter_24pt-Bold.ttf') }}") format('truetype') }
+        
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
+        body { font-family: 'Inter', 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 0; color: #1e293b; background-color: #fff; line-height: 1.4; font-size: 10px; }
+        
+        /* Layout Helpers */
+        .w-full { width: 100%; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .font-bold { font-weight: bold; }
+        
+        /* Header */
+        .header-table td { vertical-align: top; }
+        .logo-box { width: 70px; height: 70px; margin-right: 15px; }
+        .store-name { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .store-address { font-size: 11px; color: #64748b; margin-top: 4px; max-width: 350px; }
+        
+        .badge-nota { background: #4aa377; color: #fff; padding:2px 15px 5px; font-size: 14px; font-weight: 700; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+        .report-title { font-size: 24px; margin-top: -5px; margin-bottom: 0px; font-weight: 700; color: #1e293b; }
+        .report-period { font-size: 12px; color: #64748b; margin-top: 5px;}
 
+        /* Table Styles */
+        .table-container { margin-top: 20px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        th { background-color: #4aa377; color: white; text-transform: uppercase; font-size: 9px; padding: 10px 8px; text-align: left;}
+        td { padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 9px; }
+        tbody tr:nth-child(even) { background-color: #f8fafc; }
+        
         /* Footer/Total Style */
-        .total-row td { 
-            font-weight: bold; 
-            background-color: #edf2f7 !important; 
-            color: #2d3748;
-            border-top: 2px solid #cbd5e0;
-        }
+        .total-row td { font-weight: bold; background-color: #f1f5f9 !important; color: #1e293b; border-top: 2px solid #cbd5e0; }
+        
+        /* Badge */
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 8px; font-weight: bold; }
+        .bg-green { background-color: #def7ec; color: #03543f; }
+        .bg-orange { background-color: #fef3c7; color: #92400e; }
+        .no-data { padding: 20px; color: #94a3b8; font-style: italic; }
 
-        /* Badge Style */
-        .badge { 
-            display: inline-block; 
-            padding: 2px 8px; 
-            border-radius: 12px; 
-            font-size: 7.5pt; 
-            font-weight: bold;
-        }
-        .bg-green { background-color: #def7ec; color: #03543f; border: 1px solid #84e1bc; }
-        .bg-orange { background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
-
-        .no-data { padding: 20px; color: #a0aec0; font-style: italic; }
+        /* Footer Info */
+        .footer-info { margin-top: 15px; font-size: 8px; color: #94a3b8; text-align: right; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>Laporan PPh 23</h2>
-        <p>Periode: {{ \Carbon\Carbon::parse($start_date)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($end_date)->format('d/m/Y') }}</p>
-    </div>
+    <!-- HEADER -->
+    <table class="w-full header-table">
+        <tr>
+            <td>
+                <table border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td class="logo-box">
+                            @php $logo = $store['logo_data'] ?: $store['logo']; @endphp
+                            @if($logo)
+                                <img src="{{ $logo }}" style="max-width: 100px; max-height: 100px;">
+                            @else
+                                <div style="background: #4aa377; color: white; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 20px;">
+                                    {{ substr($store['name'], 0, 2) }}
+                                </div>
+                            @endif
+                        </td>
+                        <td>
+                            <h1 class="store-name">{{ $store['name'] }}</h1>
+                            <div class="store-address">
+                                {{ $store['address'] }}<br>
+                                <strong>Telp:</strong> {{ $store['phone'] ?? '-' }} &nbsp; <strong>Email:</strong> {{ $store['email'] }}
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td class="text-right">
+                <span class="badge-nota">LAPORAN PAJAK</span>
+                <h2 class="report-title">PPH 23</h2>
+                <div class="report-period">
+                    Periode: {{ \Carbon\Carbon::parse($start_date)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($end_date)->format('d/m/Y') }}
+                </div>
+            </td>
+        </tr>
+    </table>
 
     <div class="table-container">
         <table>
@@ -143,7 +132,7 @@
         </table>
     </div>
 
-    <div style="margin-top: 15px; font-size: 7pt; color: #718096; text-align: right;">
+    <div class="footer-info">
         * Dicetak secara otomatis pada {{ date('d/m/Y H:i') }}
     </div>
 </body>

@@ -1,185 +1,148 @@
+@php
+    $fontFamily = "'Inter', 'Helvetica', 'Arial', sans-serif";
+    $primaryColor = "#4aa377"; // Hijau SRI
+    $accentColor = "#a80000";  // Merah SRI
+    $textColor = "#1e293b";
+    $mutedColor = "#64748b";
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <title>Cetak Hutang - {{ $payable->document_number }}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        @page { size: 215mm 330mm; margin: 30px; }
+        @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; src: url("{{ public_path('inter/Inter_24pt-Regular.ttf') }}") format('truetype') }
+        @font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; src: url("{{ public_path('inter/Inter_24pt-Bold.ttf') }}") format('truetype') }
         
-        @page { size: 215mm 330mm; margin: 15mm; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
+        body { font-family: {!! $fontFamily !!}; margin: 0; padding: 0; color: {{ $textColor }}; background-color: #fff; line-height: 1.4; font-size: 12px; }
         
-        body {
-            font-family: 'Inter', Helvetica, Arial, sans-serif;
-            color: #000;
-            margin: 0;
-            padding: 0;
-            background: #fff;
-            font-size: 10.5pt;
-            line-height: 1.3;
-        }
-
+        /* Layout Helpers */
+        .w-full { width: 100%; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
-        .font-bold { font-weight: 700; }
-        .muted { color: #666; font-size: 8.5pt; }
-
-        /* Header Style */
-        header { margin-bottom: 15px; }
-        .header-table { width: 100%; border-collapse: collapse; }
-        .header-logo { width: 50px; padding-right: 12px; }
-        .company-details h1 { margin: 0; font-size: 14pt; text-transform: uppercase; letter-spacing: 0.5px; }
-        .company-details p { margin: 1px 0; font-size: 8.5pt; color: #444; }
+        .font-bold { font-weight: bold; }
         
-        .doc-title { margin: 0; font-size: 24pt; letter-spacing: 4px; color: #f0f0f0; font-weight: 800; line-height: 1; }
-        .doc-number { font-size: 10pt; font-weight: 700; margin-top: 3px; }
-
-        /* Grid Info */
-        .info-grid { display: table; width: 100%; margin-bottom: 25px; }
-        .col { display: table-cell; vertical-align: top; }
-        .col-left { width: 65%; }
-        .col-right { width: 35%; }
+        /* Header */
+        .header-table td { vertical-align: top; }
+        .logo-box { width: 70px; height: 70px; margin-right: 15px; }
+        .store-name { font-size: 22px; font-weight: 700; color: {{ $textColor }}; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .store-address { font-size: 11px; color: {{ $mutedColor }}; margin-top: 4px; max-width: 350px; }
         
-        .box-title { 
-            font-size: 8.5pt; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            letter-spacing: 0.8px; 
-            color: #555;
-            margin-bottom: 6px; 
-        }
+        .badge-nota { background: {{ $accentColor }}; color: #fff; padding:2px 15px 5px; font-size: 14px; font-weight: 700; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+        .invoice-number { font-size: 35px; margin-top:-10px;margin-bottom:-10px;font-weight: 700; color: {{ $textColor }}}
+        .invoice-date { font-size: 15px;color: {{ $mutedColor }}; }
 
-        .supplier-name { font-size: 12pt; font-weight: 800; margin-bottom: 2px; }
+        /* Info Box */
+        .info-container { margin-top: 25px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+        .info-table { border-collapse: collapse; }
+        .info-table td { padding: 12px 15px; width: 50%; vertical-align: top; }
+        .info-label { font-size: 10px; text-transform: uppercase; color: {{ $mutedColor }}; font-weight: 700; margin-bottom: 4px; }
+        .info-value { font-size: 13px; font-weight: 700; }
+        .info-subvalue { font-size: 12px; color: {{ $mutedColor }}; margin-top: 2px; }
 
-        /* Financial Summary (Kecil & Abu-abu) */
-        .financial-summary {
-            border: 1px solid #d1d5db; /* Warna abu-abu halus */
-            border-radius: 8px;
-            padding: 10px 12px;
-            background-color: #fff;
-            width: 230px; /* Ukuran kotak lebih ramping */
-            float: right;
-        }
+        /* Summary Box in Info */
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .summary-label { font-size: 12px; color: {{ $mutedColor }}; }
+        .summary-val { font-size: 13px; font-weight: 700; }
 
-        .summary-row {
-            display: table;
-            width: 100%;
-            margin-bottom: 4px;
-        }
+        /* Main Table Items */
+        .items-table{width:100%;border-collapse:separate;border-spacing:0;margin-top:20px;border-radius:8px;overflow:hidden}
+        .items-table thead th { background: {{ $primaryColor }}; color: #fff; padding: 12px 10px; font-size: 11px; text-transform: uppercase; text-align: left; }
+        .items-table tbody td { padding: 12px 10px; font-size: 12px; border-bottom: 1px solid #f1f5f9; }
+        .items-table tbody tr:nth-child(even) { background-color: #f8fafc; }
 
-        .summary-row span { display: table-cell; vertical-align: middle; }
-        .summary-row .label { font-size: 9pt; color: #4b5563; }
-        .summary-row .value { text-align: right; font-size: 10pt; font-weight: 700; font-variant-numeric: tabular-nums; }
-        .dept{color:#c2410c;font-size:17px !important}
-
-        .line-divider { border-top: 1px solid #f3f4f6; margin: 6px 0; }
-        .line-bold { border-top: 1px solid #d1d5db; margin: 6px 0; }
-
-        /* Table Style */
-        table.main-table { width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        table.main-table th { 
-            background-color: #1e293b; 
-            color: #ffffff; 
-            padding: 8px 10px; 
-            text-align: left; 
-            font-size: 8.5pt; 
-            text-transform: uppercase;
-            border-bottom: 2px solid #0f172a;
-        }
-        table.main-table td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; font-size: 9.5pt; }
-
-        /* Signature Area */
-        .signature-section { display: table; width: 100%; margin-top: 40px; }
-        .sig-box { display: table-cell; width: 33.3%; text-align: center; }
-        .sig-space { height: 60px; }
-        .sig-line { display: inline-block; width: 75%; border-top: 1px solid #000; padding-top: 4px; font-weight: 700; font-size: 9pt; }
-
-        .page-footer {
-            margin-top: 30px;
-            border-top: 1px dashed #e2e8f0;
-            padding-top: 8px;
-            font-size: 7.5pt;
-            color: #94a3b8;
-        }
-
-        @media print {
-            .no-print { display: none; }
-            .financial-summary { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
+        /* Footer Section */
+        .footer-content { margin-top: 40px; }
+        .signature-table { width: 100%; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+        .contact-info { font-size: 11px; color: {{ $mutedColor }}; line-height: 1.6; }
+        .contact-info strong { color: {{ $textColor }}; }
+        
+        .signature-box { text-align: center; width: 200px; float: right; }
+        .signature-name { margin-top: 80px; font-weight: 700; border-top: 1px solid {{ $textColor }}; padding-top: 5px; font-size: 13px; }
     </style>
 </head>
 <body>
+    <!-- HEADER -->
+    <table class="w-full header-table">
+        <tr>
+            <td>
+                <table border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td class="logo-box">
+                           @php $logo = $store['logo_data'] ?: $store['logo']; @endphp
+                            @if($logo)
+                                <img src="{{ $logo }}" style="max-width: 100px; max-height: 100px;">
+                            @else
+                                <div style="background: {{ $primaryColor }}; color: white; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 20px;">
+                                    {{ substr($store['name'], 0, 2) }}
+                                </div>
+                            @endif
+                        </td>
+                        <td>
+                            <h1 class="store-name">{{ $store['name'] }}</h1>
+                            <div class="store-address">
+                                {{ $store['address'] }}<br>
+                                <strong>Telp:</strong> {{ $store['phone'] ?? '-' }} &nbsp; <strong>Email:</strong> {{ $store['email'] }}
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td class="text-right">
+                <span class="badge-nota">TAGIHAN HUTANG</span>
+                <h2 class="invoice-number">{{ $payable->document_number }}</h2>
+                <div class="invoice-date">Jatuh Tempo: {{ $payable->due_date ? \Carbon\Carbon::parse($payable->due_date)->format('d/m/Y') : '-' }}</div>
+            </td>
+        </tr>
+    </table>
 
-    <header>
-        <table class="header-table">
+    <!-- INFO CONTAINER -->
+    <div class="info-container">
+        <table class="w-full info-table">
             <tr>
+                <td style="border-right: 1px solid #e2e8f0;">
+                    <div class="info-label">Info Supplier / Penagih</div>
+                    <div class="info-value">{{ $payable->supplier->name ?? 'Tanpa Nama' }}</div>
+                    <div class="info-subvalue">
+                         {{ $payable->supplier->address ?? '-' }}<br>
+                        {{ $payable->supplier->phone ?? '-' }}
+                    </div>
+                </td>
                 <td>
-                    <table style="border:none;">
+                    <div class="info-label">Ringkasan Tagihan</div>
+                    <table class="w-full" style="font-size: 12px;">
                         <tr>
-                            <td class="header-logo">
-                                @if ($store['logo_data'] ?? false)
-                                    <img src="{{ $store['logo_data'] }}" style="max-width:45pt;">
-                                @else
-                                    <div style="font-size:20pt; font-weight:800; background:#334155; color:#fff; width:45px; height:45px; text-align:center; line-height:45px; border-radius:6px;">{{ substr($store['name'],0,1) }}</div>
-                                @endif
-                            </td>
-                            <td class="company-details">
-                                <h1>{{ $store['name'] }}</h1>
-                                <p>{{ $store['address'] }}</p>
-                                <p>Telp: {{ $store['phone'] }}</p>
+                            <td style="padding:2px 0; color:{{ $mutedColor }}">Total Tagihan</td>
+                            <td style="padding:2px 0; text-align:right" class="font-bold">Rp {{ number_format($payable->total, 0, ',', '.') }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:2px 0; color:{{ $mutedColor }}">Sudah Dibayar</td>
+                            <td style="padding:2px 0; text-align:right; color: {{ $primaryColor }}" class="font-bold">(-) Rp {{ number_format($payable->paid, 0, ',', '.') }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-top:8px; border-top: 1px dashed #cbd5e1; font-weight: 700;">SISA HUTANG</td>
+                            <td style="padding-top:8px; border-top: 1px dashed #cbd5e1; text-align:right; color: {{ $accentColor }}; font-size: 14px;" class="font-bold">
+                                Rp {{ number_format(max(0, $payable->total - $payable->paid), 0, ',', '.') }}
                             </td>
                         </tr>
                     </table>
                 </td>
-                <td class="text-right" style="vertical-align: top;">
-                    <h1 class="doc-title">HUTANG</h1>
-                    <div class="doc-number">NO: {{ $payable->document_number }}</div>
-                    <div class="muted">Tempo: {{ $payable->due_date ? \Carbon\Carbon::parse($payable->due_date)->format('d/m/Y') : '-' }}</div>
-                </td>
             </tr>
         </table>
-        <div style="border-top: 1.5px solid #334155; margin-top: 8px;"></div>
-    </header>
-
-    <div class="info-grid">
-        <div class="col col-left">
-            <div class="box-title">Supplier / Penagih</div>
-            <div class="supplier-name">{{ $payable->supplier->name ?? 'Tanpa Nama' }}</div>
-            <div class="muted">
-                {{ $payable->supplier->address ?? '-' }}<br>
-                {{ $payable->supplier->phone ?? '-' }}
-            </div>
-        </div>
-
-        <div class="col col-right">
-            <div class="financial-summary">
-                <div class="summary-row">
-                    <span class="label">Total Tagihan:</span>
-                    <span class="value">Rp {{ number_format($payable->total, 0, ',', '.') }}</span>
-                </div>
-                
-                <div class="line-divider"></div>
-                
-                <div class="summary-row" style="color: #16a34a;">
-                    <span class="label">Sudah Dibayar:</span>
-                    <span class="value">(-) Rp {{ number_format($payable->paid, 0, ',', '.') }}</span>
-                </div>
-
-                <div class="line-bold"></div>
-
-                <div class="summary-row" style="margin-top: 5px;">
-                    <span class="label" style="font-weight: 700;">SISA NOTA:</span>
-                    <span class="value dept" >Rp {{ number_format(max(0, $payable->total - $payable->paid), 0, ',', '.') }}</span>
-                </div>
-            </div>
-        </div>
     </div>
 
-    <div class="box-title">Rincian Pembayaran</div>
-    <table class="main-table">
+    <div style="margin-top: 25px; margin-bottom: 10px; font-weight: 700; color: {{ $textColor }}; text-transform: uppercase; font-size: 13px;">
+        Rincian Pembayaran
+    </div>
+
+    <!-- TABLE ITEMS -->
+    <table class="items-table">
         <thead>
             <tr>
-                <th class="text-center" style="width: 30px;">No</th>
-                <th>Tanggal</th>
+                <th class="text-center" style="width: 50px;">No</th>
+                <th>Tanggal Bayar</th>
                 <th>Keterangan / Metode</th>
                 <th class="text-right">Jumlah Bayar</th>
             </tr>
@@ -187,49 +150,51 @@
         <tbody>
             @forelse($payable->payments as $index => $pay)
                 <tr>
-                    <td class="text-center muted">{{ $index + 1 }}</td>
-                    <td>{{ \Carbon\Carbon::parse($pay->paid_at)->format('d/m/Y') }}</td>
+                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td>{{ \Carbon\Carbon::parse($pay->paid_at)->format('d/m/Y H:i') }}</td>
                     <td>
-                        <span class="font-bold">{{ strtoupper($pay->method) }}</span>
-                        @if($pay->note) <span class="muted">- {{ $pay->note }}</span> @endif
+                        <div class="font-bold">{{ strtoupper($pay->method ?? '-') }}</div>
+                        @if($pay->note) <div style="font-size: 11px; color: {{ $mutedColor }}">{{ $pay->note }}</div> @endif
                     </td>
                     <td class="text-right font-bold">
                         Rp {{ number_format($pay->amount, 0, ',', '.') }}
                     </td>
                 </tr>
-            @empty
+             @empty
                 <tr>
-                    <td colspan="4" class="text-center muted" style="padding: 20px;">Belum ada riwayat pembayaran.</td>
+                    <td colspan="4" class="text-center" style="padding: 20px; color: {{ $mutedColor }}; font-style: italic;">Belum ada riwayat pembayaran.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
-    <div class="signature-section">
-        <div class="sig-box">
-            <div class="muted">Dibuat Oleh,</div>
-            <div class="sig-space"></div>
-            <div class="sig-line">Admin</div>
-        </div>
-        <div class="sig-box"></div>
-        <div class="sig-box">
-            <div class="muted">Hormat Kami,</div>
-            <div class="sig-space"></div>
-            <div class="sig-line">{{ $payable->supplier->name ?? 'Supplier' }}</div>
-        </div>
-    </div>
-
-    <div class="page-footer">
-        <table style="width: 100%; border:none;">
+    <!-- FOOTER -->
+    <div class="footer-content">
+        <table class="signature-table">
             <tr>
-                <td>Dicetak pada: {{ now()->format('d/m/Y H:i') }}</td>
-                <td class="text-right">
-                    <img src="{{ $barcode }}" style="height: 25px; vertical-align: middle;">
-                    <span style="margin-left: 8px; font-weight: 700;">{{ $payable->document_number }}</span>
+                <td style="vertical-align: top;">
+                    <div class="contact-info">
+                        <strong>HUBUNGI KAMI:</strong><br>
+                        {{ $store['phone'] }}<br>
+                        {{ $store['email'] }}
+                    </div>
+                    <div style="margin-top:15px;text-align:left;">
+                        @if($barcode)
+                            <img src="{{ $barcode }}" alt="barcode" style="height:25px;display:block;">
+                            <span style="display:block;margin-top:4px;font-size:11px;color:{{ $mutedColor }};">{{ $payable->document_number }}</span>
+                        @endif
+                    </div>
+                </td>
+                <td style="vertical-align: top;">
+                    <div class="signature-box">
+                        <div style="font-size: 12px; color: {{ $mutedColor }}">Hormat Kami,</div>
+                        <div class="signature-name">
+                            {{ $store['name'] }}
+                        </div>
+                    </div>
                 </td>
             </tr>
         </table>
     </div>
-
 </body>
 </html>

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Reports;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Transaction;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -71,35 +70,6 @@ class PphReportController extends Controller
             'customers' => Customer::select('id', 'name')->orderBy('name')->get(),
             'summary' => $summary,
         ]);
-    }
-
-    public function exportPdf(Request $request)
-    {
-        $filters = array_merge([
-            'start_date' => now()->startOfMonth()->format('Y-m-d'),
-            'end_date' => now()->endOfMonth()->format('Y-m-d'),
-        ], $request->all());
-
-        $query = Transaction::with(['customer', 'details.product', 'cashier'])
-            ->whereHas('details.product', fn ($q) => $q->where('is_pph23', true));
-
-        $query = $this->applyFilters($query, $filters);
-
-        $transactions = $query->latest()->get()->map(fn ($t) => $this->transformTransaction($t));
-
-        // Calculate totals for PDF
-        $totalDpp = $transactions->sum('total_dpp_jasa');
-        $totalPph = $transactions->sum('pph23_amount');
-
-        $pdf = Pdf::loadView('reports.pph23_pdf', [
-            'transactions' => $transactions,
-            'start_date' => $filters['start_date'],
-            'end_date' => $filters['end_date'],
-            'total_dpp' => $totalDpp,
-            'total_pph' => $totalPph,
-        ]);
-
-        return $pdf->stream('laporan-pph23.pdf');
     }
 
     public function exportExcel(Request $request)

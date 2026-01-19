@@ -154,7 +154,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('/reports/sales', [SalesReportController::class, 'index'])->middleware('permission:reports-access')->name('reports.sales.index');
     Route::get('/reports/profits', [ProfitReportController::class, 'index'])->middleware('permission:profits-access')->name('reports.profits.index');
     Route::get('/reports/pph23', [PphReportController::class, 'index'])->middleware('permission:reports-access')->name('reports.pph23.index');
-    Route::get('/reports/pph23/export/pdf', [PphReportController::class, 'exportPdf'])->middleware('permission:reports-access')->name('reports.pph23.export.pdf');
+    Route::get('/reports/pph23/export/pdf', [\App\Http\Controllers\DocumentController::class, 'pphPdf'])->middleware('permission:reports-access')->name('reports.pph23.export.pdf');
     Route::get('/reports/pph23/export/excel', [PphReportController::class, 'exportExcel'])->middleware('permission:reports-access')->name('reports.pph23.export.excel');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
