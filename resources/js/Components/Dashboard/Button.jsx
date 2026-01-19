@@ -28,14 +28,34 @@ export default function Button({
             cancelButtonText: "Batal",
         }).then((result) => {
             if (result.isConfirmed) {
-                destroy(url);
-
-                Swal.fire({
-                    title: "Berhasil!",
-                    text: "Data berhasil dihapus!",
-                    icon: "success",
-                    showConfirmButton: false,
-                    timer: 1500,
+                destroy(url, {
+                    onSuccess: (page) => {
+                        // Check if there's an error from the server
+                        if (page.props.flash.error) {
+                            Swal.fire({
+                                title: "Gagal!",
+                                text: page.props.flash.error,
+                                icon: "error",
+                                showConfirmButton: true,
+                            });
+                        } else {
+                            Swal.fire({
+                                title: "Berhasil!",
+                                text: "Data berhasil dihapus!",
+                                icon: "success",
+                                showConfirmButton: false,
+                                timer: 1500,
+                            });
+                        }
+                    },
+                    onError: (errors) => {
+                        Swal.fire({
+                            title: "Gagal!",
+                            text: "Terjadi kesalahan saat menghapus data.",
+                            icon: "error",
+                            showConfirmButton: true,
+                        });
+                    }
                 });
             }
         });
