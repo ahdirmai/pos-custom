@@ -641,9 +641,28 @@ class TransactionController extends Controller
 
         $transactions = $query->paginate(10)->withQueryString();
 
+        // Calculate summary stats (All Time)
+        $statsQuery = Transaction::query();
+
+        if (! $request->user()->isSuperAdmin()) {
+            $statsQuery->where('cashier_id', $request->user()->id);
+        }
+
+        $stats = $statsQuery->selectRaw("
+                count(case when payment_status = 'paid' then 1 end) as paid_count,
+                sum(case when payment_status = 'paid' then grand_total else 0 end) as paid_total,
+                count(case when payment_status = 'pending' then 1 end) as pending_count,
+                sum(case when payment_status = 'pending' then grand_total else 0 end) as pending_total
+            ")
+            ->first();
+
         return Inertia::render('Dashboard/Transactions/History', [
             'transactions' => $transactions,
             'filters' => $filters,
+            'totalTransactions' => $stats->paid_count ?? 0,
+            'totalSales' => $stats->paid_total ?? 0,
+            'pendingTransactions' => $stats->pending_count ?? 0,
+            'pendingSales' => $stats->pending_total ?? 0,
         ]);
     }
 
