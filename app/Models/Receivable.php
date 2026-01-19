@@ -48,4 +48,16 @@ class Receivable extends Model
     {
         return max(0, ($this->total ?? 0) - ($this->paid ?? 0));
     }
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (Receivable $receivable) {
+            if ($receivable->status !== 'paid' && $receivable->due_date) {
+                app(\App\Services\NotificationService::class)->sendDebtAlert($receivable, 'receivable');
+            }
+        });
+    }
 }

@@ -11,49 +11,34 @@ class NotificationController extends Controller
     /**
      * Mark a single low-stock notification as read for the current user.
      */
-    public function markLowStockRead(Request $request)
+    /**
+     * Mark a single notification as read.
+     */
+    public function markAsRead(Request $request)
     {
         $request->validate([
-            'product_id' => ['required', 'exists:products,id'],
+            'id' => ['required', 'uuid', 'exists:notifications,id'],
         ]);
 
-        ProductNotificationRead::updateOrCreate(
-            [
-                'user_id'    => $request->user()->id,
-                'product_id' => $request->product_id,
-            ],
-            []
-        );
+        $notification = $request->user()
+            ->notifications()
+            ->where('id', $request->id)
+            ->first();
 
-        return back()->with('status', 'notification-read');
+        if ($notification) {
+            $notification->markAsRead();
+        }
+
+        return back();
     }
 
     /**
-     * Mark all low-stock notifications as read for the current user.
+     * Mark all notifications as read.
      */
-    public function markAllLowStockRead(Request $request)
+    public function markAllAsRead(Request $request)
     {
-        $productIds = Product::where('stock', '<=', 0)->pluck('id')->all();
+        $request->user()->unreadNotifications->markAsRead();
 
-        if (count($productIds) === 0) {
-            return back();
-        }
-
-        $payload = collect($productIds)->map(function ($productId) use ($request) {
-            return [
-                'user_id'    => $request->user()->id,
-                'product_id' => $productId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        });
-
-        ProductNotificationRead::upsert(
-            $payload->toArray(),
-            ['user_id', 'product_id'],
-            ['updated_at']
-        );
-
-        return back()->with('status', 'notification-read-all');
+        return back();
     }
 }

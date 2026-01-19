@@ -32,66 +32,22 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $lowStockNotifications = [];
-        $receivableNotifications = [];
-        $payableNotifications = [];
+        $notifications = [];
 
         if ($request->user()) {
-            $userId = $request->user()->id;
-            $lowStockNotifications = Product::where('stock', '<=', 0)
-                ->whereNotExists(function ($query) use ($userId) {
-                    $query->selectRaw(1)
-                        ->from('product_notification_reads as pr')
-                        ->whereColumn('pr.product_id', 'products.id')
-                        ->where('pr.user_id', $userId)
-                        // Only hide if the notification was read after the last product update
-                        ->whereColumn('pr.updated_at', '>=', 'products.updated_at');
-                })
-                ->orderByDesc('updated_at')
-                ->limit(10)
-                ->get(['id', 'title', 'stock', 'updated_at'])
-                ->map(function ($product) {
+            $notifications = $request->user()->unreadNotifications()
+                ->latest()
+                ->limit(20)
+                ->get()
+                ->map(function ($n) {
+                    $localData = is_string($n->data) ? json_decode($n->data, true) : $n->data;
                     return [
-                        'id' => $product->id,
-                        'title' => $product->title,
-                        'stock' => (int) $product->stock,
-                        'time' => optional($product->updated_at)->diffForHumans(),
-                    ];
-                });
-
-            $receivableNotifications = Receivable::whereNot('status', 'paid')
-                ->whereNotNull('due_date')
-                ->whereDate('due_date', '<=', now()->addDays(3))
-                ->orderBy('due_date')
-                ->limit(5)
-                ->get(['id', 'invoice', 'customer_id', 'due_date', 'total', 'paid', 'status'])
-                ->map(function ($item) {
-                    $remaining = max(0, ($item->total ?? 0) - ($item->paid ?? 0));
-
-                    return [
-                        'id' => $item->id,
-                        'title' => "Piutang: {$item->invoice}",
-                        'subtitle' => 'Sisa '.number_format($remaining, 0, ',', '.'),
-                        'time' => optional($item->due_date)->diffForHumans(),
-                        'status' => $item->status,
-                    ];
-                });
-
-            $payableNotifications = Payable::whereNot('status', 'paid')
-                ->whereNotNull('due_date')
-                ->whereDate('due_date', '<=', now()->addDays(3))
-                ->orderBy('due_date')
-                ->limit(5)
-                ->get(['id', 'document_number', 'due_date', 'total', 'paid', 'status'])
-                ->map(function ($item) {
-                    $remaining = max(0, ($item->total ?? 0) - ($item->paid ?? 0));
-
-                    return [
-                        'id' => $item->id,
-                        'title' => "Hutang: {$item->document_number}",
-                        'subtitle' => 'Sisa '.number_format($remaining, 0, ',', '.'),
-                        'time' => optional($item->due_date)->diffForHumans(),
-                        'status' => $item->status,
+                        'id' => $n->id,
+                        'type' => str_contains($n->type, 'StockAlert') ? 'stock' : 
+                                 (str_contains($n->type, 'DebtAlert') && ($localData['type'] ?? '') === 'receivable' ? 'receivable' : 'payable'),
+                        'data' => $localData,
+                        'created_at' => $n->created_at->diffForHumans(),
+                        'read_at' => $n->read_at,
                     ];
                 });
         }
@@ -122,9 +78,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
-            'lowStockNotifications' => $lowStockNotifications,
-            'receivableNotifications' => $receivableNotifications,
-            'payableNotifications' => $payableNotifications,
+            'notifications' => $notifications ?? [],
             'storeProfile' => $storeProfile,
         ];
     }

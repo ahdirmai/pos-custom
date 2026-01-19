@@ -9,25 +9,53 @@ import {
     IconCurrencyDollar,
     IconX,
 } from "@tabler/icons-react";
-import { usePage, router } from "@inertiajs/react";
+import { usePage, router, Link } from "@inertiajs/react";
 
 export default function Notification() {
-    const {
-        lowStockNotifications = [],
-        receivableNotifications = [],
-        payableNotifications = [],
-    } = usePage().props;
+    const { notifications = [] } = usePage().props;
 
     const mapItems = (items) =>
-        items.map((item) => ({
-            ...item,
-            type: item.type || "stock",
-            icon:
-                item.type === "receivable" ? (
+        items.map((item) => {
+            const isStock = item.type === 'stock';
+            const isRecv = item.type === 'receivable';
+            const isPay = item.type === 'payable';
+
+            let title = "";
+            let subtitle = "";
+
+            if (isStock) {
+                // Check level: 'empty' vs 'low'
+                const isEmpty = item.data.lvl === 'empty';
+                title = isEmpty ? `Stok habis: ${item.data.name}` : `Stok menipis: ${item.data.name}`;
+                subtitle = `Stok: ${item.data.qty}`;
+            } else {
+                // Debt
+                const typeLabel = isRecv ? "Piutang" : "Hutang";
+                title = `${typeLabel}: ${item.data.inv_id}`;
+                subtitle = `${item.data.name} • Rp ${new Intl.NumberFormat('id-ID').format(item.data.amt)}`;
+            }
+
+            let url = "#";
+            if (isStock) {
+                url = route('products.edit', item.data.p_id);
+            } else if (isRecv) {
+                url = route('receivables.show', item.data.ref_id);
+            } else if (isPay) {
+                url = route('payables.show', item.data.ref_id);
+            }
+
+            return {
+                id: item.id,
+                title: title,
+                subtitle: subtitle,
+                time: item.created_at,
+                type: item.type,
+                url: url,
+                icon: isRecv ? (
                     <span className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
                         <IconReceipt size={18} strokeWidth={1.5} />
                     </span>
-                ) : item.type === "payable" ? (
+                ) : isPay ? (
                     <span className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
                         <IconCurrencyDollar size={18} strokeWidth={1.5} />
                     </span>
@@ -36,36 +64,10 @@ export default function Notification() {
                         <IconPackage size={18} strokeWidth={1.5} />
                     </span>
                 ),
-        }));
+            };
+        });
 
-    const mergeData = () => [
-        ...mapItems(
-            lowStockNotifications.map((n) => ({
-                ...n,
-                id: `stock-${n.id}`,
-                originalId: n.id,
-                title: `Stok habis: ${n.title}`,
-                subtitle: `Stok: ${n.stock}`,
-                type: "stock",
-            }))
-        ),
-        ...mapItems(
-            receivableNotifications.map((n) => ({
-                ...n,
-                id: `recv-${n.id}`,
-                type: "receivable",
-            }))
-        ),
-        ...mapItems(
-            payableNotifications.map((n) => ({
-                ...n,
-                id: `pay-${n.id}`,
-                type: "payable",
-            }))
-        ),
-    ];
-
-    const [data, setData] = useState(mergeData());
+    const [data, setData] = useState(mapItems(notifications));
     const [isMobile, setIsMobile] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const notificationRef = useRef(null);
@@ -92,25 +94,22 @@ export default function Notification() {
     }, []);
 
     useEffect(() => {
-        setData(mergeData());
-    }, [lowStockNotifications, receivableNotifications, payableNotifications]);
+        setData(mapItems(notifications));
+    }, [notifications]);
 
     const handleMarkRead = (id) => {
         setData((prev) => prev.filter((item) => item.id !== id));
-        const item = data.find((d) => d.id === id);
-        if (item?.type === "stock") {
-            router.post(
-                route("notifications.stock.read"),
-                { product_id: item.originalId || id },
-                { preserveScroll: true, preserveState: true }
-            );
-        }
+        router.post(
+            route("notifications.read"),
+            { id: id },
+            { preserveScroll: true, preserveState: true }
+        );
     };
 
     const handleMarkAllRead = () => {
         setData([]);
         router.post(
-            route("notifications.stock.readAll"),
+            route("notifications.readAll"),
             {},
             { preserveScroll: true, preserveState: true }
         );
@@ -126,7 +125,8 @@ export default function Notification() {
                 </div>
             )}
             {data.map((item) => (
-                <div
+                <Link
+                    href={item.url}
                     className="flex items-start gap-2.5 md:gap-3 p-3 md:p-4 rounded-xl md:rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-sm transition-all group"
                     key={item.id}
                 >
@@ -140,13 +140,17 @@ export default function Notification() {
                         </div>
                     </div>
                     <button
-                        onClick={() => handleMarkRead(item.id)}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleMarkRead(item.id);
+                        }}
                         className="flex-shrink-0 p-1.5 md:p-2 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
                         title="Tandai dibaca"
                     >
                         <IconCircleCheck size={18} strokeWidth={1.5} />
                     </button>
-                </div>
+                </Link>
             ))}
         </div>
     );
