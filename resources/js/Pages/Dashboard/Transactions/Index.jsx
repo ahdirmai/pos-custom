@@ -30,6 +30,7 @@ import {
     IconCreditCard,
     IconBuildingBank,
     IconAlertTriangle,
+    IconTruck,
 } from "@tabler/icons-react";
 
 const formatPrice = (value = 0) =>
@@ -147,6 +148,11 @@ export default function Index({
                 value: "cash",
                 label: "Tunai",
                 description: "Pembayaran tunai langsung di kasir.",
+            },
+            {
+                value: "cod",
+                label: "COD",
+                description: "Bayar di tempat (Cash On Delivery).",
             },
             ...options,
         ];
@@ -715,6 +721,8 @@ export default function Index({
                                             >
                                                 {method.value === "cash" ? (
                                                     <IconCash size={16} />
+                                                ) : method.value === "cod" ? (
+                                                    <IconTruck size={16} />
                                                 ) : method.value ===
                                                   "bank_transfer" ? (
                                                     <IconBuildingBank
@@ -877,7 +885,7 @@ export default function Index({
                             {/* Shipping Cost Input */}
                             <div>
                                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                    Ongkos Kirim (Rp)
+                                    {paymentMethod === "cod" ? "Ongkos COD (Rp)" : "Ongkos Kirim (Rp)"}
                                 </label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">

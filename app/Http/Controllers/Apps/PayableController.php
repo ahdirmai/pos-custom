@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Apps;
 
 use App\Http\Controllers\Controller;
@@ -16,11 +17,11 @@ class PayableController extends Controller
     public function index(Request $request)
     {
         $filters = [
-            'status'   => $request->input('status'),
+            'status' => $request->input('status'),
             'supplier' => $request->input('supplier'),
-            'invoice'  => $request->input('invoice'),
+            'invoice' => $request->input('invoice'),
             'due_from' => $request->input('due_from'),
-            'due_to'   => $request->input('due_to'),
+            'due_to' => $request->input('due_to'),
         ];
 
         $query = Payable::with('supplier:id,name')
@@ -32,7 +33,7 @@ class PayableController extends Controller
         })->when($filters['supplier'], function ($q, $supplier) {
             $q->where('supplier_id', $supplier);
         })->when($filters['invoice'], function ($q, $invoice) {
-            $q->where('document_number', 'like', '%' . $invoice . '%');
+            $q->where('document_number', 'like', '%'.$invoice.'%');
         })->when($filters['due_from'], function ($q, $date) {
             $q->whereDate('due_date', '>=', $date);
         })->when($filters['due_to'], function ($q, $date) {
@@ -44,14 +45,15 @@ class PayableController extends Controller
             if ($item->status !== 'paid' && $item->due_date && now()->gt($item->due_date)) {
                 $item->status = 'overdue';
             }
+
             return $item;
         });
 
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Dashboard/Payables/Index', [
-            'payables'  => $payables,
-            'filters'   => $filters,
+            'payables' => $payables,
+            'filters' => $filters,
             'suppliers' => $suppliers,
         ]);
     }
@@ -61,16 +63,16 @@ class PayableController extends Controller
         $data = $request->validate([
             'supplier_id' => ['nullable', 'exists:suppliers,id'],
             'document_number' => ['nullable', 'string', 'max:100'],
-            'total'       => ['required', 'numeric', 'min:1'],
-            'due_date'    => ['nullable', 'date'],
-            'note'        => ['nullable', 'string'],
+            'total' => ['required', 'numeric', 'min:1'],
+            'due_date' => ['nullable', 'date'],
+            'note' => ['nullable', 'string'],
         ]);
 
         if (! $data['document_number']) {
-            $data['document_number'] = 'INV-' . Str::upper(Str::random(8));
+            $data['document_number'] = 'INV-'.Str::upper(Str::random(8));
         }
         $data['status'] = 'unpaid';
-        $data['paid']   = 0;
+        $data['paid'] = 0;
 
         Payable::create($data);
 
@@ -79,10 +81,44 @@ class PayableController extends Controller
             ->with('success', 'Hutang supplier berhasil dibuat.');
     }
 
+    public function update(Request $request, Payable $payable)
+    {
+        $data = $request->validate([
+            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'document_number' => ['nullable', 'string', 'max:100'],
+            'total' => ['required', 'numeric', 'min:1'],
+            'due_date' => ['nullable', 'date'],
+            'note' => ['nullable', 'string'],
+        ]);
+
+        // Calculate new status based on existing paid amount
+        $paid = $payable->paid ?? 0;
+        $remaining = max(0, $data['total'] - $paid);
+
+        if ($remaining <= 0) {
+            $data['status'] = 'paid';
+        } elseif ($paid > 0) {
+            $data['status'] = 'partial';
+        } else {
+            $data['status'] = 'unpaid';
+        }
+
+        // Check for overdue if not paid
+        if ($data['status'] !== 'paid' && $data['due_date'] && now()->gt($data['due_date'])) {
+            $data['status'] = 'overdue';
+        }
+
+        $payable->update($data);
+
+        return redirect()
+            ->route('payables.index')
+            ->with('success', 'Data hutang berhasil diperbarui.');
+    }
+
     public function show(Payable $payable)
     {
         $payable->load([
-            'supplier:id,name,phone,email,address',
+            'supplier:id,name,phone,email,address,bank_name,account_number,account_name',
             'payments' => function ($query) {
                 $query->orderByDesc('paid_at')->with(['bankAccount:id,bank_name,account_number,account_name,logo', 'user:id,name']);
             },
@@ -90,7 +126,7 @@ class PayableController extends Controller
         $bankAccounts = BankAccount::active()->ordered()->get(['id', 'bank_name', 'account_number', 'account_name', 'logo']);
 
         return Inertia::render('Dashboard/Payables/Show', [
-            'payable'      => $payable,
+            'payable' => $payable,
             'bankAccounts' => $bankAccounts,
         ]);
     }
@@ -98,11 +134,11 @@ class PayableController extends Controller
     public function pay(Request $request, Payable $payable)
     {
         $validated = $request->validate([
-            'amount'          => ['required', 'numeric', 'min:1'],
-            'paid_at'         => ['required', 'date'],
-            'method'          => ['required', 'string', 'max:30'],
+            'amount' => ['required', 'numeric', 'min:1'],
+            'paid_at' => ['required', 'date'],
+            'method' => ['required', 'string', 'max:30'],
             'bank_account_id' => ['nullable', 'exists:bank_accounts,id'],
-            'note'            => ['nullable', 'string', 'max:500'],
+            'note' => ['nullable', 'string', 'max:500'],
         ]);
 
         $remaining = $payable->remaining;
@@ -112,18 +148,18 @@ class PayableController extends Controller
 
         DB::transaction(function () use ($validated, $payable, $request) {
             PayablePayment::create([
-                'payable_id'      => $payable->id,
-                'paid_at'         => $validated['paid_at'],
-                'amount'          => $validated['amount'],
-                'method'          => $validated['method'],
+                'payable_id' => $payable->id,
+                'paid_at' => $validated['paid_at'],
+                'amount' => $validated['amount'],
+                'method' => $validated['method'],
                 'bank_account_id' => $validated['bank_account_id'] ?? null,
-                'note'            => $validated['note'] ?? null,
-                'user_id'         => $request->user()->id,
+                'note' => $validated['note'] ?? null,
+                'user_id' => $request->user()->id,
             ]);
 
-            $payable->paid      = ($payable->paid ?? 0) + $validated['amount'];
-            $remaining          = max(0, ($payable->total ?? 0) - ($payable->paid ?? 0));
-            $payable->status    = $remaining <= 0 ? 'paid' : 'partial';
+            $payable->paid = ($payable->paid ?? 0) + $validated['amount'];
+            $remaining = max(0, ($payable->total ?? 0) - ($payable->paid ?? 0));
+            $payable->status = $remaining <= 0 ? 'paid' : 'partial';
             if ($payable->status !== 'paid' && $payable->due_date && now()->gt($payable->due_date)) {
                 $payable->status = 'overdue';
             }

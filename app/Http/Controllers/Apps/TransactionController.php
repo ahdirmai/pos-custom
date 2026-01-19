@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Apps;
 
 use App\Exceptions\PaymentGatewayException;
@@ -6,21 +7,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Customer;
 use App\Models\PaymentSetting;
-use App\Models\Receivable;
 use App\Models\Product;
+use App\Models\Receivable;
 use App\Models\Transaction;
-use Laravolt\Indonesia\Models\Province;
-use Laravolt\Indonesia\Models\City;
-use Laravolt\Indonesia\Models\District;
-use Laravolt\Indonesia\Models\Village;
-
 use App\Services\Payments\PaymentGatewayManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-
+use Laravolt\Indonesia\Models\Province;
 
 class TransactionController extends Controller
 {
@@ -48,17 +44,18 @@ class TransactionController extends Controller
             ->groupBy('hold_id')
             ->map(function ($items, $holdId) {
                 $first = $items->first();
+
                 return [
-                    'hold_id'     => $holdId,
-                    'label'       => $first->hold_label,
-                    'held_at'     => $first->held_at?->toISOString(),
+                    'hold_id' => $holdId,
+                    'label' => $first->hold_label,
+                    'held_at' => $first->held_at?->toISOString(),
                     'items_count' => $items->sum('qty'),
-                    'total'       => $items->sum('price'),
+                    'total' => $items->sum('price'),
                 ];
             })
             ->values();
 
-        //get all customers
+        // get all customers
         $customers = Customer::latest()->get();
 
         // get all products with categories for product grid
@@ -91,19 +88,18 @@ class TransactionController extends Controller
         // Get active bank accounts for bank transfer
         $bankAccounts = \App\Models\BankAccount::active()->ordered()->get();
 
-
         $provinces = Province::select('code', 'name')->orderBy('name')->get();
 
         return Inertia::render('Dashboard/Transactions/Index', [
-            'carts'                 => $carts,
-            'carts_total'           => $carts_total,
-            'heldCarts'             => $heldCarts,
-            'customers'             => $customers,
-            'products'              => $products,
-            'categories'            => $categories,
-            'paymentGateways'       => $paymentSetting?->enabledGateways() ?? [],
+            'carts' => $carts,
+            'carts_total' => $carts_total,
+            'heldCarts' => $heldCarts,
+            'customers' => $customers,
+            'products' => $products,
+            'categories' => $categories,
+            'paymentGateways' => $paymentSetting?->enabledGateways() ?? [],
             'defaultPaymentGateway' => $defaultGateway,
-            'bankAccounts'          => $bankAccounts,
+            'bankAccounts' => $bankAccounts,
             'provinces' => $provinces,
         ]);
     }
@@ -111,31 +107,31 @@ class TransactionController extends Controller
     /**
      * searchProduct
      *
-     * @param  mixed $request
+     * @param  mixed  $request
      * @return void
      */
     public function searchProduct(Request $request)
     {
-        //find product by barcode
+        // find product by barcode
         $product = Product::where('barcode', $request->barcode)->first();
 
         if ($product) {
             return response()->json([
                 'success' => true,
-                'data'    => $product,
+                'data' => $product,
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'data'    => null,
+            'data' => null,
         ]);
     }
 
     /**
      * addToCart
      *
-     * @param  mixed $request
+     * @param  mixed  $request
      * @return void
      */
     // public function addToCart(Request $request)
@@ -179,56 +175,57 @@ class TransactionController extends Controller
 
     //     return redirect()->route('transactions.index')->with('success', 'Product Added Successfully!.');
     // }
-    
+
     public function addToCart(Request $request)
-{
-    // Cari produk berdasarkan ID
-    $product = Product::whereId($request->product_id)->first();
+    {
+        // Cari produk berdasarkan ID
+        $product = Product::whereId($request->product_id)->first();
 
-    if (! $product) {
-        return redirect()->back()->with('error', 'Product not found.');
+        if (! $product) {
+            return redirect()->back()->with('error', 'Product not found.');
+        }
+
+        // Cek keranjang milik kasir yang sedang login
+        $cart = Cart::with('product')
+            ->where('product_id', $request->product_id)
+            ->where('cashier_id', auth()->user()->id)
+            ->first();
+
+        // Tentukan total qty yang diinginkan (qty lama di keranjang + qty baru dari request)
+        $currentCartQty = $cart ? $cart->qty : 0;
+        $totalRequestedQty = $currentCartQty + $request->qty;
+
+        // VALIDASI: Cek apakah total permintaan melebihi stok fisik di database
+        if ($product->stock < $totalRequestedQty) {
+            // return response()->json('x');
+            return back()->withErrors([
+                'message' => 'Stok tidak mencukupi. Tersedia: '.$product->stock,
+            ]);
+        }
+
+        if ($cart) {
+            // Jika item sudah ada, update jumlahnya
+            $cart->qty = $totalRequestedQty;
+            // Hitung ulang total harga berdasarkan qty terbaru
+            $cart->price = $product->sell_price * $cart->qty;
+            $cart->save();
+        } else {
+            // Jika item belum ada, buat record baru
+            Cart::create([
+                'cashier_id' => auth()->user()->id,
+                'product_id' => $request->product_id,
+                'qty' => $request->qty,
+                'price' => $product->sell_price * $request->qty,
+            ]);
+        }
+
+        return redirect()->route('transactions.index')->with('success', 'Product Added Successfully!.');
     }
-
-    // Cek keranjang milik kasir yang sedang login
-    $cart = Cart::with('product')
-        ->where('product_id', $request->product_id)
-        ->where('cashier_id', auth()->user()->id)
-        ->first();
-
-    // Tentukan total qty yang diinginkan (qty lama di keranjang + qty baru dari request)
-    $currentCartQty = $cart ? $cart->qty : 0;
-    $totalRequestedQty = $currentCartQty + $request->qty;
-
-    // VALIDASI: Cek apakah total permintaan melebihi stok fisik di database
-    if ($product->stock < $totalRequestedQty) {
-    // return response()->json('x');
-return back()->withErrors([
-            'message' => 'Stok tidak mencukupi. Tersedia: ' . $product->stock
-        ]);    }
-
-    if ($cart) {
-        // Jika item sudah ada, update jumlahnya
-        $cart->qty = $totalRequestedQty;
-        // Hitung ulang total harga berdasarkan qty terbaru
-        $cart->price = $product->sell_price * $cart->qty;
-        $cart->save();
-    } else {
-        // Jika item belum ada, buat record baru
-        Cart::create([
-            'cashier_id' => auth()->user()->id,
-            'product_id' => $request->product_id,
-            'qty'        => $request->qty,
-            'price'      => $product->sell_price * $request->qty,
-        ]);
-    }
-
-    return redirect()->route('transactions.index')->with('success', 'Product Added Successfully!.');
-}
 
     /**
      * destroyCart
      *
-     * @param  mixed $request
+     * @param  mixed  $request
      * @return void
      */
     public function destroyCart($cart_id)
@@ -237,6 +234,7 @@ return back()->withErrors([
 
         if ($cart) {
             $cart->delete();
+
             return back();
         } else {
             // Handle case where no cart is found (e.g., redirect with error message)
@@ -248,8 +246,8 @@ return back()->withErrors([
     /**
      * updateCart - Update cart item quantity
      *
-     * @param  mixed $request
-     * @param  int $cart_id
+     * @param  mixed  $request
+     * @param  int  $cart_id
      * @return void
      */
     // public function updateCart(Request $request, $cart_id)
@@ -284,42 +282,41 @@ return back()->withErrors([
 
     //     return back()->with('success', 'Quantity updated successfully');
     // }
-    
+
     public function updateCart(Request $request, $cart_id)
-{
-    $request->validate([
-        'qty' => 'required|integer|min:1',
-    ]);
-
-    $cart = Cart::with('product')->whereId($cart_id)
-        ->where('cashier_id', auth()->user()->id)
-        ->first();
-
-    // Gunakan redirect back dengan error agar ditangkap oleh Inertia
-    if (! $cart) {
-        return back()->withErrors(['message' => 'Item keranjang tidak ditemukan']);
-    }
-
-    // Check stock availability
-    if ($cart->product->stock < $request->qty) {
-        // Mengirimkan pesan error spesifik ke session/errors
-        return back()->withErrors([
-            'message' => 'Stok tidak mencukupi. Tersedia: ' . $cart->product->stock
+    {
+        $request->validate([
+            'qty' => 'required|integer|min:1',
         ]);
+
+        $cart = Cart::with('product')->whereId($cart_id)
+            ->where('cashier_id', auth()->user()->id)
+            ->first();
+
+        // Gunakan redirect back dengan error agar ditangkap oleh Inertia
+        if (! $cart) {
+            return back()->withErrors(['message' => 'Item keranjang tidak ditemukan']);
+        }
+
+        // Check stock availability
+        if ($cart->product->stock < $request->qty) {
+            // Mengirimkan pesan error spesifik ke session/errors
+            return back()->withErrors([
+                'message' => 'Stok tidak mencukupi. Tersedia: '.$cart->product->stock,
+            ]);
+        }
+
+        // Update quantity and price
+        $cart->qty = $request->qty;
+        $cart->price = $cart->product->sell_price * $request->qty;
+        $cart->save();
+
+        return back()->with('success', 'Quantity updated successfully');
     }
-
-    // Update quantity and price
-    $cart->qty   = $request->qty;
-    $cart->price = $cart->product->sell_price * $request->qty;
-    $cart->save();
-
-    return back()->with('success', 'Quantity updated successfully');
-}
 
     /**
      * holdCart - Hold current cart items for later
      *
-     * @param  Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function holdCart(Request $request)
@@ -343,25 +340,25 @@ return back()->withErrors([
         }
 
         // Generate unique hold ID
-        $holdId = 'HOLD-' . strtoupper(uniqid());
-        $label  = $request->label ?: 'Transaksi ' . now()->format('H:i');
+        $holdId = 'HOLD-'.strtoupper(uniqid());
+        $label = $request->label ?: 'Transaksi '.now()->format('H:i');
 
         // Mark all active cart items as held
         Cart::where('cashier_id', $userId)
             ->active()
             ->update([
-                'hold_id'    => $holdId,
+                'hold_id' => $holdId,
                 'hold_label' => $label,
-                'held_at'    => now(),
+                'held_at' => now(),
             ]);
 
-        return back()->with('success', 'Transaksi ditahan: ' . $label);
+        return back()->with('success', 'Transaksi ditahan: '.$label);
     }
 
     /**
      * resumeCart - Resume a held cart
      *
-     * @param  string $holdId
+     * @param  string  $holdId
      * @return \Illuminate\Http\JsonResponse
      */
     public function resumeCart($holdId)
@@ -396,9 +393,9 @@ return back()->withErrors([
         Cart::where('cashier_id', $userId)
             ->forHold($holdId)
             ->update([
-                'hold_id'    => null,
+                'hold_id' => null,
                 'hold_label' => null,
-                'held_at'    => null,
+                'held_at' => null,
             ]);
 
         return back()->with('success', 'Transaksi dilanjutkan');
@@ -407,7 +404,7 @@ return back()->withErrors([
     /**
      * clearHold - Delete a held cart
      *
-     * @param  string $holdId
+     * @param  string  $holdId
      * @return \Illuminate\Http\JsonResponse
      */
     public function clearHold($holdId)
@@ -453,24 +450,25 @@ return back()->withErrors([
             ->groupBy('hold_id')
             ->map(function ($items, $holdId) {
                 $first = $items->first();
+
                 return [
-                    'hold_id'     => $holdId,
-                    'label'       => $first->hold_label,
-                    'held_at'     => $first->held_at,
+                    'hold_id' => $holdId,
+                    'label' => $first->hold_label,
+                    'held_at' => $first->held_at,
                     'items_count' => $items->sum('qty'),
-                    'total'       => $items->sum('price'),
-                    'items'       => $items->map(fn($item) => [
-                        'id'      => $item->id,
+                    'total' => $items->sum('price'),
+                    'items' => $items->map(fn ($item) => [
+                        'id' => $item->id,
                         'product' => $item->product,
-                        'qty'     => $item->qty,
-                        'price'   => $item->price,
+                        'qty' => $item->qty,
+                        'price' => $item->price,
                     ]),
                 ];
             })
             ->values();
 
         return response()->json([
-            'success'    => true,
+            'success' => true,
             'held_carts' => $heldCarts,
         ]);
     }
@@ -478,12 +476,12 @@ return back()->withErrors([
     /**
      * store
      *
-     * @param  mixed $request
+     * @param  mixed  $request
      * @return void
      */
     public function store(Request $request, PaymentGatewayManager $paymentGatewayManager)
     {
-        $isPayLater     = $request->boolean('pay_later');
+        $isPayLater = $request->boolean('pay_later');
         $paymentGateway = $isPayLater ? null : $request->input('payment_gateway');
         if ($paymentGateway) {
             $paymentGateway = strtolower($paymentGateway);
@@ -496,7 +494,7 @@ return back()->withErrors([
                 ->with('error', 'Tanggal jatuh tempo wajib diisi untuk nota barang.');
         }
 
-        if ($paymentGateway) {
+        if ($paymentGateway && $paymentGateway !== 'cod') {
             $paymentSetting = PaymentSetting::first();
 
             if (! $paymentSetting || ! $paymentSetting->isGatewayReady($paymentGateway)) {
@@ -512,10 +510,10 @@ return back()->withErrors([
             $random .= rand(0, 1) ? rand(0, 9) : chr(rand(ord('a'), ord('z')));
         }
 
-        $invoice       = 'TRX-' . Str::upper($random);
+        $invoice = 'TRX-'.Str::upper($random);
         $isCashPayment = empty($paymentGateway) && ! $isPayLater;
-        $cashAmount    = $isCashPayment ? $request->cash : 0;
-        $changeAmount  = $isCashPayment ? $request->change : 0;
+        $cashAmount = $isCashPayment ? $request->cash : 0;
+        $changeAmount = $isCashPayment ? $request->change : 0;
 
         $transaction = DB::transaction(function () use (
             $request,
@@ -527,16 +525,16 @@ return back()->withErrors([
             $isPayLater
         ) {
             $transaction = Transaction::create([
-                'cashier_id'      => auth()->user()->id,
-                'customer_id'     => $request->customer_id,
-                'invoice'         => $invoice,
-                'cash'            => $cashAmount,
-                'change'          => $changeAmount,
-                'discount'        => $request->discount,
-                'shipping_cost'   => $request->shipping_cost ?? 0,
-                'grand_total'     => $request->grand_total,
-                'payment_method'  => $isPayLater ? 'pay_later' : ($paymentGateway ?: 'cash'),
-                'payment_status'  => $isCashPayment ? 'paid' : ($isPayLater ? 'unpaid' : 'pending'),
+                'cashier_id' => auth()->user()->id,
+                'customer_id' => $request->customer_id,
+                'invoice' => $invoice,
+                'cash' => $cashAmount,
+                'change' => $changeAmount,
+                'discount' => $request->discount,
+                'shipping_cost' => $request->shipping_cost ?? 0,
+                'grand_total' => $request->grand_total,
+                'payment_method' => $isPayLater ? 'pay_later' : ($paymentGateway ?: 'cash'),
+                'payment_status' => $isCashPayment ? 'paid' : ($isPayLater ? 'unpaid' : 'pending'),
                 'bank_account_id' => $paymentGateway === 'bank_transfer' ? $request->bank_account_id : null,
             ]);
 
@@ -545,49 +543,49 @@ return back()->withErrors([
             foreach ($carts as $cart) {
                 $transaction->details()->create([
                     'transaction_id' => $transaction->id,
-                    'product_id'     => $cart->product_id,
-                    'qty'            => $cart->qty,
-                    'price'          => $cart->price,
+                    'product_id' => $cart->product_id,
+                    'qty' => $cart->qty,
+                    'price' => $cart->price,
                 ]);
 
-                $total_buy_price  = $cart->product->buy_price * $cart->qty;
+                $total_buy_price = $cart->product->buy_price * $cart->qty;
                 $total_sell_price = $cart->product->sell_price * $cart->qty;
-                $profits          = $total_sell_price - $total_buy_price;
+                $profits = $total_sell_price - $total_buy_price;
 
                 $transaction->profits()->create([
                     'transaction_id' => $transaction->id,
-                    'total'          => $profits,
+                    'total' => $profits,
                 ]);
 
-                $product        = Product::find($cart->product_id);
+                $product = Product::find($cart->product_id);
                 $product->stock = $product->stock - $cart->qty;
                 $product->save();
             }
 
             Cart::where('cashier_id', auth()->user()->id)->delete();
 
-            if ($isPayLater) {
+            if ($isPayLater || $paymentGateway === 'cod') {
                 Receivable::create([
-                    'customer_id'    => $request->customer_id,
+                    'customer_id' => $request->customer_id,
                     'transaction_id' => $transaction->id,
-                    'invoice'        => $invoice,
-                    'total'          => $request->grand_total,
-                    'paid'           => 0,
-                    'due_date'       => $request->due_date,
-                    'status'         => 'unpaid',
+                    'invoice' => $invoice,
+                    'total' => $request->grand_total,
+                    'paid' => 0,
+                    'due_date' => $request->due_date,
+                    'status' => 'unpaid',
                 ]);
             }
 
             return $transaction->fresh(['customer']);
         });
 
-        if ($paymentGateway) {
+        if ($paymentGateway && $paymentGateway !== 'cod') {
             try {
                 $paymentResponse = $paymentGatewayManager->createPayment($transaction, $paymentGateway, $paymentSetting);
 
                 $transaction->update([
                     'payment_reference' => $paymentResponse['reference'] ?? null,
-                    'payment_url'       => $paymentResponse['payment_url'] ?? null,
+                    'payment_url' => $paymentResponse['payment_url'] ?? null,
                 ]);
             } catch (PaymentGatewayException $exception) {
                 return redirect()
@@ -601,7 +599,7 @@ return back()->withErrors([
 
     public function print($invoice)
     {
-        //get transaction
+        // get transaction
         $transaction = Transaction::with('details.product', 'cashier', 'customer', 'receivable')->where('invoice', $invoice)->firstOrFail();
 
         return Inertia::render('Dashboard/Transactions/Print', [
@@ -615,9 +613,9 @@ return back()->withErrors([
     public function history(Request $request)
     {
         $filters = [
-            'invoice'    => $request->input('invoice'),
+            'invoice' => $request->input('invoice'),
             'start_date' => $request->input('start_date'),
-            'end_date'   => $request->input('end_date'),
+            'end_date' => $request->input('end_date'),
         ];
 
         $query = Transaction::query()
@@ -632,7 +630,7 @@ return back()->withErrors([
 
         $query
             ->when($filters['invoice'], function (Builder $builder, $invoice) {
-                $builder->where('invoice', 'like', '%' . $invoice . '%');
+                $builder->where('invoice', 'like', '%'.$invoice.'%');
             })
             ->when($filters['start_date'], function (Builder $builder, $date) {
                 $builder->whereDate('created_at', '>=', $date);
@@ -645,7 +643,7 @@ return back()->withErrors([
 
         return Inertia::render('Dashboard/Transactions/History', [
             'transactions' => $transactions,
-            'filters'      => $filters,
+            'filters' => $filters,
         ]);
     }
 

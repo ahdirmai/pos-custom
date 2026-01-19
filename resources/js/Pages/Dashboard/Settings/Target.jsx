@@ -93,11 +93,10 @@ export default function Target({ settings }) {
                                 type="submit"
                                 variant="primary"
                                 disabled={processing}
-                                className="flex items-center gap-2"
-                            >
-                                <IconDeviceFloppy size={18} />
-                                {processing ? "Menyimpan..." : "Simpan Target"}
-                            </Button>
+                                icon={<IconDeviceFloppy size={18} />}
+                                label={processing ? "Menyimpan..." : "Simpan Target"}
+                                className="bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/30"
+                            />
                         </div>
                     </form>
                 </div>

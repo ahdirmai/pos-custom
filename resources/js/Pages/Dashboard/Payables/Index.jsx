@@ -7,9 +7,11 @@ import {
     IconCalendar,
     IconAlertCircle,
     IconPlus,
+    IconPencil,
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 import InputSelect from "@/Components/Dashboard/InputSelect";
+import Modal from "@/Components/Dashboard/Modal";
 
 const formatCurrency = (value = 0) =>
     new Intl.NumberFormat("id-ID", {
@@ -40,6 +42,9 @@ export default function PayablesIndex({ payables, filters = {}, suppliers = [] }
     const [search, setSearch] = useState(filters.invoice || "");
     const [status, setStatus] = useState(filters.status || "");
     const [supplierId, setSupplierId] = useState(filters.supplier || "");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editingId, setEditingId] = useState(null);
     
     // State helpers for InputSelect to show selected object
     const [selectedFilterStatus, setSelectedFilterStatus] = useState(
@@ -48,7 +53,7 @@ export default function PayablesIndex({ payables, filters = {}, suppliers = [] }
     const [selectedFilterSupplier, setSelectedFilterSupplier] = useState(
         suppliers.find(s => s.id == filters.supplier) || null
     );
-    const { data, setData, post, processing, reset, errors } = useForm({
+    const { data, setData, post, put, processing, reset, errors, clearErrors } = useForm({
         supplier_id: "",
         document_number: "",
         total: "",
@@ -84,11 +89,47 @@ export default function PayablesIndex({ payables, filters = {}, suppliers = [] }
         }
     };
 
-    const submitCreate = (e) => {
+    const openCreateModal = () => {
+        setIsEditMode(false);
+        setEditingId(null);
+        reset();
+        clearErrors();
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (e, item) => {
         e.preventDefault();
-        post(route("payables.store"), {
-            onSuccess: () => reset(),
+        e.stopPropagation();
+        setIsEditMode(true);
+        setEditingId(item.id);
+        setData({
+            supplier_id: item.supplier_id,
+            document_number: item.document_number,
+            total: item.total,
+            due_date: item.due_date ? item.due_date.split('T')[0] : "",
+            note: item.note || "",
         });
+        clearErrors();
+        setIsModalOpen(true);
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (isEditMode) {
+            put(route("payables.update", editingId), {
+                onSuccess: () => {
+                    reset();
+                    setIsModalOpen(false);
+                },
+            });
+        } else {
+            post(route("payables.store"), {
+                onSuccess: () => {
+                    reset();
+                    setIsModalOpen(false);
+                },
+            });
+        }
     };
 
     const rows = payables?.data || [];
@@ -107,86 +148,113 @@ export default function PayablesIndex({ payables, filters = {}, suppliers = [] }
                             Catat dan lacak pembayaran hutang ke supplier.
                         </p>
                     </div>
-                </div>
-
-                {/* Create form */}
-                <form
-                    onSubmit={submitCreate}
-                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 grid grid-cols-1 md:grid-cols-5 gap-3"
-                >
                     <div>
-                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Supplier
-                        </label>
-                        <InputSelect
-                            placeholder="Pilih Supplier"
-                            data={suppliers}
-                            selected={suppliers.find(s => s.id == data.supplier_id) || null}
-                            setSelected={(val) => setData("supplier_id", val ? val.id : "")}
-                            searchable={true}
-                            displayKey="name"
-                            valueKey="id"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Nomor Dokumen
-                        </label>
-                        <input
-                            value={data.document_number}
-                            onChange={(e) => setData("document_number", e.target.value)}
-                            className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                            placeholder="Opsional"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Total
-                        </label>
-                        <input
-                            type="number"
-                            min="1"
-                            value={data.total}
-                            onChange={(e) => setData("total", e.target.value)}
-                            className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                            required
-                        />
-                        {errors.total && <p className="text-xs text-danger-500">{errors.total}</p>}
-                    </div>
-                    <div>
-                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Jatuh Tempo
-                        </label>
-                        <input
-                            type="date"
-                            value={data.due_date}
-                            onChange={(e) => setData("due_date", e.target.value)}
-                            className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                        />
-                    </div>
-                    <div className="flex items-end">
                         <button
-                            type="submit"
-                            disabled={processing}
-                            className="w-full h-11 rounded-xl bg-primary-500 text-white text-sm font-semibold flex items-center justify-center gap-2"
+                            onClick={openCreateModal}
+                            className="px-4 py-2 rounded-xl bg-primary-500 text-white text-sm font-semibold flex items-center gap-2 hover:bg-primary-600 transition-colors"
                         >
-                            <IconPlus size={16} />
-                            Simpan
+                            <IconPlus size={18} />
+                            Tambah Hutang
                         </button>
                     </div>
-                    <div className="md:col-span-5">
-                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Catatan
-                        </label>
-                        <textarea
-                            rows={2}
-                            value={data.note}
-                            onChange={(e) => setData("note", e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                            placeholder="Catatan tambahan (opsional)"
-                        />
-                    </div>
-                </form>
+                </div>
+
+                {/* Create/Edit Modal */}
+                <Modal
+                    show={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title={isEditMode ? "Edit Hutang" : "Tambah Hutang Baru"}
+                    maxWidth="2xl"
+                >
+                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 block">
+                                Supplier
+                            </label>
+                            <InputSelect
+                                placeholder="Pilih Supplier"
+                                data={suppliers}
+                                selected={suppliers.find(s => s.id == data.supplier_id) || null}
+                                setSelected={(val) => setData("supplier_id", val ? val.id : "")}
+                                searchable={true}
+                                displayKey="name"
+                                valueKey="id"
+                            />
+                            {errors.supplier_id && <p className="text-xs text-danger-500 mt-1">{errors.supplier_id}</p>}
+                        </div>
+                        
+                        <div>
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 block">
+                                Nomor Dokumen
+                            </label>
+                            <input
+                                value={data.document_number}
+                                onChange={(e) => setData("document_number", e.target.value)}
+                                className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+                                placeholder="Opsional"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 block">
+                                Total
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={data.total}
+                                onChange={(e) => setData("total", e.target.value)}
+                                className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+                                required
+                            />
+                            {errors.total && <p className="text-xs text-danger-500 mt-1">{errors.total}</p>}
+                        </div>
+
+                        <div>
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 block">
+                                Jatuh Tempo
+                            </label>
+                            <input
+                                type="date"
+                                value={data.due_date}
+                                onChange={(e) => setData("due_date", e.target.value)}
+                                className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+                            />
+                             {errors.due_date && <p className="text-xs text-danger-500 mt-1">{errors.due_date}</p>}
+                        </div>
+
+                         <div className="md:col-span-2">
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 block">
+                                Catatan
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={data.note}
+                                onChange={(e) => setData("note", e.target.value)}
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+                                placeholder="Catatan tambahan (opsional)"
+                            />
+                        </div>
+
+                        <div className="md:col-span-2 flex justify-end gap-2 mt-2">
+                             <button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="px-6 py-2 rounded-xl bg-primary-500 text-white text-sm font-semibold flex items-center gap-2 hover:bg-primary-600 transition-colors"
+                            >
+                                <IconPlus size={18} />
+                                {processing ? 'Menyimpan...' : 'Simpan'}
+                            </button>
+                        </div>
+                    </form>
+                </Modal>
 
                 {/* Filters */}
                 <form
@@ -261,7 +329,7 @@ export default function PayablesIndex({ payables, filters = {}, suppliers = [] }
                                     <Link
                                         key={item.id}
                                         href={route("payables.show", item.id)}
-                                        className="grid grid-cols-12 gap-2 px-3 sm:px-4 py-3 items-center border-b border-slate-100 dark:border-slate-800 hover:bg-primary-50/50 dark:hover:bg-slate-800/50 transition-colors"
+                                        className="grid grid-cols-12 gap-2 px-3 sm:px-4 py-3 items-center border-b border-slate-100 dark:border-slate-800 hover:bg-primary-50/50 dark:hover:bg-slate-800/50 transition-colors group"
                                     >
                                         <div className="col-span-2">
                                             <p className="text-sm font-semibold text-slate-800 dark:text-white">
@@ -282,8 +350,15 @@ export default function PayablesIndex({ payables, filters = {}, suppliers = [] }
                                         <div className="col-span-2 text-right text-sm text-slate-600 dark:text-slate-400">
                                             {formatDate(item.due_date)}
                                         </div>
-                                        <div className="col-span-2 flex justify-center whitespace-nowrap">
+                                        <div className="col-span-2 flex justify-center items-center gap-2 whitespace-nowrap">
                                             {statusBadge(item.status)}
+                                            <button
+                                                onClick={(e) => openEditModal(e, item)}
+                                                className="hidden group-hover:block p-1 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors"
+                                                title="Edit"
+                                            >
+                                                <IconPencil size={16} />
+                                            </button>
                                         </div>
                                     </Link>
                                 ))
@@ -306,9 +381,17 @@ export default function PayablesIndex({ payables, filters = {}, suppliers = [] }
                                 <Link
                                     key={item.id}
                                     href={route("payables.show", item.id)}
-                                    className="p-4 space-y-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm"
+                                    className="p-4 space-y-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm relative"
                                 >
-                                    <div className="flex items-start justify-between">
+                                    <div className="absolute top-2 right-2">
+                                        <button
+                                            onClick={(e) => openEditModal(e, item)}
+                                            className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-orange-600 transition-colors"
+                                        >
+                                            <IconPencil size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="flex items-start justify-between pr-8">
                                         <div className="space-y-1">
                                             <p className="text-xs text-slate-500 dark:text-slate-400">
                                                 Dokumen

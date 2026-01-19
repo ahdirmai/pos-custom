@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Apps;
 
 use App\Http\Controllers\Controller;
@@ -8,48 +9,113 @@ use Inertia\Inertia;
 
 class SupplierController extends Controller
 {
-    public function index()
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
     {
-        $suppliers = Supplier::orderBy('name')->get();
+        // get suppliers
+        $suppliers = Supplier::when($request->search, function ($query, $search) {
+            $query->where('name', 'like', '%'.$search.'%')
+                ->orWhere('phone', 'like', '%'.$search.'%')
+                ->orWhere('email', 'like', '%'.$search.'%');
+        })->latest()->paginate(10)->withQueryString();
+
+        // return inertia
         return Inertia::render('Dashboard/Suppliers/Index', [
             'suppliers' => $suppliers,
+            'filters' => $request->only(['search']),
         ]);
     }
 
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name'    => ['required', 'string', 'max:150'],
-            'phone'   => ['nullable', 'string', 'max:50'],
-            'email'   => ['nullable', 'email', 'max:150'],
-            'address' => ['nullable', 'string'],
+        // validate request
+        $request->validate([
+            'name' => 'required',
+            'phone' => 'required',
+            'email' => 'nullable|email',
+            'address' => 'required',
+            'bank_name' => 'nullable|string',
+            'account_number' => 'nullable|string',
+            'account_name' => 'nullable|string',
         ]);
 
-        Supplier::create($data);
+        // create supplier
+        Supplier::create([
+            'name' => $request->name,
+            'phone' => $request->phone,
+            'email' => $request->email,
+            'address' => $request->address,
+            'bank_name' => $request->bank_name,
+            'account_number' => $request->account_number,
+            'account_name' => $request->account_name,
+        ]);
 
-        return back()->with('success', 'Supplier berhasil ditambahkan.');
+        // redirect
+        return redirect()->route('suppliers.index')->with('success', 'Data Supplier Berhasil Disimpan!');
     }
 
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
     public function update(Request $request, Supplier $supplier)
     {
-        $data = $request->validate([
-            'name'    => ['required', 'string', 'max:150'],
-            'phone'   => ['nullable', 'string', 'max:50'],
-            'email'   => ['nullable', 'email', 'max:150'],
-            'address' => ['nullable', 'string'],
+        // validate request
+        $request->validate([
+            'name' => 'required',
+            'phone' => 'required',
+            'email' => 'nullable|email',
+            'address' => 'required',
+            'bank_name' => 'nullable|string',
+            'account_number' => 'nullable|string',
+            'account_name' => 'nullable|string',
         ]);
 
-        $supplier->update($data);
+        // update supplier
+        $supplier->update([
+            'name' => $request->name,
+            'phone' => $request->phone,
+            'email' => $request->email,
+            'address' => $request->address,
+            'bank_name' => $request->bank_name,
+            'account_number' => $request->account_number,
+            'account_name' => $request->account_name,
+        ]);
 
-        return back()->with('success', 'Supplier berhasil diperbarui.');
+        // redirect
+        return redirect()->route('suppliers.index')->with('success', 'Data Supplier Berhasil Diupdate!');
     }
 
-    public function destroy(Supplier $supplier)
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
     {
-        if ($supplier->payables()->exists()) {
-            return back()->with('error', 'Supplier memiliki hutang, tidak dapat dihapus.');
+        // find supplier
+        $supplier = Supplier::findOrFail($id);
+
+        if ($supplier->payables()->count() > 0) {
+            return back()->with('error', 'Supplier tidak dapat d hapus karena masih memiliki data hutang!');
         }
+
+        // delete supplier
         $supplier->delete();
-        return back()->with('success', 'Supplier dihapus.');
+
+        // redirect
+        return redirect()->route('suppliers.index')->with('success', 'Data Supplier Berhasil Dihapus!');
     }
 }

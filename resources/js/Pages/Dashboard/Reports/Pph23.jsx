@@ -61,8 +61,10 @@ const SummaryCard = ({ title, value, description, icon, gradient }) => (
 const Pph23Report = ({ reports, filters, customers, summary }) => {
     const [showFilters, setShowFilters] = useState(true);
     const [filterData, setFilterData] = useState({
-        ...defaultFilters,
-        ...filters,
+        start_date: filters.start_date || "",
+        end_date: filters.end_date || "",
+        invoice: filters.invoice || "",
+        customer_id: filters.customer_id || "",
     });
     const [expandedRows, setExpandedRows] = useState({});
 
@@ -75,7 +77,12 @@ const Pph23Report = ({ reports, filters, customers, summary }) => {
     };
 
     useEffect(() => {
-        setFilterData({ ...defaultFilters, ...filters });
+        setFilterData({
+            start_date: filters.start_date || "",
+            end_date: filters.end_date || "",
+            invoice: filters.invoice || "",
+            customer_id: filters.customer_id || "",
+        });
     }, [filters]);
 
     const handleChange = (field, value) =>
@@ -146,7 +153,7 @@ const Pph23Report = ({ reports, filters, customers, summary }) => {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <SummaryCard
                         title="Total Transaksi"
                         value={summary.total_transactions}
@@ -160,6 +167,13 @@ const Pph23Report = ({ reports, filters, customers, summary }) => {
                         description="Gross Revenue"
                         icon={<IconTrendingUp />}
                         gradient="from-emerald-500 to-emerald-600"
+                    />
+                    <SummaryCard
+                        title="Total DPP Jasa"
+                        value={formatCurrency(summary.total_dpp)}
+                        description="Pendapatan Terkena Pajak"
+                        icon={<IconFileCertificate />}
+                        gradient="from-indigo-500 to-indigo-600"
                     />
                     <SummaryCard
                         title="Estimasi PPh 23"
@@ -354,7 +368,7 @@ const Pph23Report = ({ reports, filters, customers, summary }) => {
                                                         <div className="flex items-center justify-center gap-3">
                                                             <span
                                                                 className={`inline-flex px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide ${
-                                                                    row.tax_rate === 0.02
+                                                                    row.tax_rate === 0.01
                                                                         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                                                                         : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
                                                                 }`}
@@ -485,7 +499,7 @@ const Pph23Report = ({ reports, filters, customers, summary }) => {
                                             </div>
                                             <div
                                                 className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
-                                                    row.tax_rate === 0.02
+                                                    row.tax_rate === 0.01
                                                         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                                                         : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
                                                 }`}

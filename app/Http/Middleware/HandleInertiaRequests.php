@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Payable;
 use App\Models\Product;
 use App\Models\Receivable;
-use App\Models\Payable;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -20,7 +20,7 @@ class HandleInertiaRequests extends Middleware
     /**
      * Determine the current asset version.
      */
-    public function version(Request $request): string|null
+    public function version(Request $request): ?string
     {
         return parent::version($request);
     }
@@ -32,9 +32,9 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $lowStockNotifications    = [];
-        $receivableNotifications  = [];
-        $payableNotifications     = [];
+        $lowStockNotifications = [];
+        $receivableNotifications = [];
+        $payableNotifications = [];
 
         if ($request->user()) {
             $userId = $request->user()->id;
@@ -52,10 +52,10 @@ class HandleInertiaRequests extends Middleware
                 ->get(['id', 'title', 'stock', 'updated_at'])
                 ->map(function ($product) {
                     return [
-                        'id'    => $product->id,
+                        'id' => $product->id,
                         'title' => $product->title,
                         'stock' => (int) $product->stock,
-                        'time'  => optional($product->updated_at)->diffForHumans(),
+                        'time' => optional($product->updated_at)->diffForHumans(),
                     ];
                 });
 
@@ -67,12 +67,13 @@ class HandleInertiaRequests extends Middleware
                 ->get(['id', 'invoice', 'customer_id', 'due_date', 'total', 'paid', 'status'])
                 ->map(function ($item) {
                     $remaining = max(0, ($item->total ?? 0) - ($item->paid ?? 0));
+
                     return [
-                        'id'       => $item->id,
-                        'title'    => "Piutang: {$item->invoice}",
-                        'subtitle' => 'Sisa ' . number_format($remaining, 0, ',', '.'),
-                        'time'     => optional($item->due_date)->diffForHumans(),
-                        'status'   => $item->status,
+                        'id' => $item->id,
+                        'title' => "Piutang: {$item->invoice}",
+                        'subtitle' => 'Sisa '.number_format($remaining, 0, ',', '.'),
+                        'time' => optional($item->due_date)->diffForHumans(),
+                        'status' => $item->status,
                     ];
                 });
 
@@ -84,29 +85,30 @@ class HandleInertiaRequests extends Middleware
                 ->get(['id', 'document_number', 'due_date', 'total', 'paid', 'status'])
                 ->map(function ($item) {
                     $remaining = max(0, ($item->total ?? 0) - ($item->paid ?? 0));
+
                     return [
-                        'id'       => $item->id,
-                        'title'    => "Hutang: {$item->document_number}",
-                        'subtitle' => 'Sisa ' . number_format($remaining, 0, ',', '.'),
-                        'time'     => optional($item->due_date)->diffForHumans(),
-                        'status'   => $item->status,
+                        'id' => $item->id,
+                        'title' => "Hutang: {$item->document_number}",
+                        'subtitle' => 'Sisa '.number_format($remaining, 0, ',', '.'),
+                        'time' => optional($item->due_date)->diffForHumans(),
+                        'status' => $item->status,
                     ];
                 });
         }
 
         $logo = \App\Models\Setting::get('store_logo');
-        if ($logo && !str_starts_with($logo, 'http') && !str_starts_with($logo, '/storage')) {
-            $logo = asset('storage/' . ltrim($logo, '/'));
+        if ($logo && ! str_starts_with($logo, 'http') && ! str_starts_with($logo, '/storage')) {
+            $logo = asset('storage/'.ltrim($logo, '/'));
         }
 
         $storeProfile = [
-            'name'    => \App\Models\Setting::get('store_name', 'Toko Anda'),
-            'logo'    => $logo,
+            'name' => \App\Models\Setting::get('store_name', 'Toko Anda'),
+            'logo' => $logo,
             'address' => \App\Models\Setting::get('store_address', ''),
-            'phone'   => \App\Models\Setting::get('store_phone', ''),
-            'email'   => \App\Models\Setting::get('store_email', ''),
+            'phone' => \App\Models\Setting::get('store_phone', ''),
+            'email' => \App\Models\Setting::get('store_email', ''),
             'website' => \App\Models\Setting::get('store_website', ''),
-            'city'    => \App\Models\Setting::get('store_city', ''),
+            'city' => \App\Models\Setting::get('store_city', ''),
         ];
 
         return [
@@ -116,10 +118,10 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $request->user() ? $request->user()->getPermissions() : [],
                 'super' => $request->user() ? $request->user()->isSuperAdmin() : false,
             ],
-            'lowStockNotifications'   => $lowStockNotifications,
+            'lowStockNotifications' => $lowStockNotifications,
             'receivableNotifications' => $receivableNotifications,
-            'payableNotifications'    => $payableNotifications,
-            'storeProfile'            => $storeProfile,
+            'payableNotifications' => $payableNotifications,
+            'storeProfile' => $storeProfile,
         ];
     }
 }
