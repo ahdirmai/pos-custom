@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Apps;
 
 use App\Exceptions\PaymentGatewayException;
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\Cart;
 use App\Models\Customer;
 use App\Models\PaymentSetting;
@@ -510,7 +511,7 @@ class TransactionController extends Controller
             $random .= rand(0, 1) ? rand(0, 9) : chr(rand(ord('a'), ord('z')));
         }
 
-        $invoice = 'TRX-'.Str::upper($random);
+        $invoice = Setting::get('store_code', 'TRX') . '-' . Str::upper($random);
         $isCashPayment = empty($paymentGateway) && ! $isPayLater;
         $cashAmount = $isCashPayment ? $request->cash : 0;
         $changeAmount = $isCashPayment ? $request->change : 0;
@@ -649,20 +650,28 @@ class TransactionController extends Controller
         }
 
         $stats = $statsQuery->selectRaw("
+                count(*) as all_count,
+                sum(grand_total) as all_total,
                 count(case when payment_status = 'paid' then 1 end) as paid_count,
                 sum(case when payment_status = 'paid' then grand_total else 0 end) as paid_total,
                 count(case when payment_status = 'pending' then 1 end) as pending_count,
-                sum(case when payment_status = 'pending' then grand_total else 0 end) as pending_total
+                sum(case when payment_status = 'pending' then grand_total else 0 end) as pending_total,
+                count(case when payment_method = 'pay_later' and payment_status = 'unpaid' then 1 end) as receivable_count,
+                sum(case when payment_method = 'pay_later' and payment_status = 'unpaid' then grand_total else 0 end) as receivable_total
             ")
             ->first();
 
         return Inertia::render('Dashboard/Transactions/History', [
             'transactions' => $transactions,
             'filters' => $filters,
-            'totalTransactions' => $stats->paid_count ?? 0,
-            'totalSales' => $stats->paid_total ?? 0,
+            'totalTransactions' => $stats->all_count ?? 0,
+            'totalSales' => $stats->all_total ?? 0,
+            'paidTransactions' => $stats->paid_count ?? 0,
+            'paidSales' => $stats->paid_total ?? 0,
             'pendingTransactions' => $stats->pending_count ?? 0,
             'pendingSales' => $stats->pending_total ?? 0,
+            'receivableTransactions' => $stats->receivable_count ?? 0,
+            'receivableSales' => $stats->receivable_total ?? 0,
         ]);
     }
 

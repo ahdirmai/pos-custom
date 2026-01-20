@@ -12,11 +12,13 @@ import {
     IconMapPin,
     IconWorld,
     IconMail,
+    IconBarcode,
 } from "@tabler/icons-react";
 
 export default function Store({ settings }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         store_name: settings.store_name || "",
+        store_code: settings.store_code || "",
         store_logo: null,
         store_address: settings.store_address || "",
         store_phone: settings.store_phone || "",
@@ -109,6 +111,15 @@ export default function Store({ settings }) {
                                     onChange={(e) => setData("store_name", e.target.value)}
                                     placeholder="Masukkan nama brand/toko lo"
                                     icon={<IconBuildingStore size={18} />}
+                                />
+                                
+                                <Input
+                                    label="Kode Toko (Prefix Invoice)"
+                                    value={data.store_code}
+                                    errors={errors.store_code}
+                                    onChange={(e) => setData("store_code", e.target.value.toUpperCase().replace(/\s/g, ''))}
+                                    placeholder="Contoh: POS01 (Default: TRX)"
+                                    icon={<IconBarcode size={18} />}
                                 />
                                 
                                 <Textarea

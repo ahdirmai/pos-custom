@@ -48,6 +48,7 @@ class SettingController extends Controller
     {
         $settings = [
             'store_name'    => Setting::get('store_name', ''),
+            'store_code'    => Setting::get('store_code', ''),
             'store_logo'    => Setting::get('store_logo', ''),
             'store_address' => Setting::get('store_address', ''),
             'store_phone'   => Setting::get('store_phone', ''),
@@ -68,12 +69,15 @@ class SettingController extends Controller
     {
         $request->validate([
             'store_name'    => 'required|string|max:255',
+            'store_code'    => ['required', 'string', 'max:10', 'regex:/^\S*$/'], // No spaces allowed
             'store_address' => 'required|string|max:500',
             'store_phone'   => 'nullable|string|max:50',
             'store_email'   => 'nullable|email|max:255',
             'store_website' => 'nullable|string|max:255',
             'store_city'    => 'nullable|string|max:255',
             'store_logo'    => 'nullable|image|max:2048',
+        ], [
+            'store_code.regex' => 'Kode toko tidak boleh mengandung spasi.',
         ]);
 
         $logoPath = Setting::get('store_logo');
@@ -86,6 +90,7 @@ class SettingController extends Controller
         }
 
         Setting::set('store_name', $request->store_name, 'Nama toko');
+        Setting::set('store_code', strtoupper($request->store_code), 'Kode toko');
         Setting::set('store_address', $request->store_address, 'Alamat toko');
         Setting::set('store_phone', $request->store_phone, 'Telepon toko');
         Setting::set('store_email', $request->store_email, 'Email toko');

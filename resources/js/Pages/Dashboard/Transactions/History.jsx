@@ -36,7 +36,7 @@ const formatCurrency = (value = 0) =>
         minimumFractionDigits: 0,
     }).format(value);
 
-const History = ({ transactions, filters, totalTransactions = 0, totalSales = 0, pendingTransactions = 0, pendingSales = 0 }) => {
+const History = ({ transactions, filters, totalTransactions = 0, totalSales = 0, paidTransactions = 0, paidSales = 0, pendingTransactions = 0, pendingSales = 0, receivableTransactions = 0, receivableSales = 0 }) => {
     const [filterData, setFilterData] = useState({
         ...defaultFilters,
         ...filters,
@@ -135,27 +135,34 @@ const History = ({ transactions, filters, totalTransactions = 0, totalSales = 0,
                 </div>
 
                 {/* Summary Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <StatCard
-                        title="Total Penjualan"
-                        value={formatCurrency(totalSales)}
-                        subtitle="Total penjualan lunas (semua)"
-                        icon={IconCoin}
-                        gradient="from-primary-500 to-primary-700"
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatCard
                         title="Total Transaksi"
-                        value={totalTransactions}
-                        subtitle="Total transaksi lunas (semua)"
+                        value={formatCurrency(totalSales)}
+                        subtitle={`${totalTransactions} Total Transaksi`}
                         icon={IconTicket}
+                        gradient="from-slate-500 to-slate-700"
+                    />
+                    <StatCard
+                        title="Transaksi Sukses"
+                        value={formatCurrency(paidSales)}
+                        subtitle={`${paidTransactions} Transaksi Sukses`}
+                        icon={IconCheck}
                         gradient="from-success-500 to-success-700"
                     />
                     <StatCard
                         title="Transaksi Pending"
                         value={formatCurrency(pendingSales)}
-                        subtitle={`${pendingTransactions} transaksi menunggu`}
+                        subtitle={`${pendingTransactions} Transaksi Menunggu`}
                         icon={IconClock}
                         gradient="from-warning-500 to-warning-700"
+                    />
+                    <StatCard
+                        title="Transaksi Piutang"
+                        value={formatCurrency(receivableSales)}
+                        subtitle={`${receivableTransactions} Total Transaksi`}
+                        icon={IconReceipt}
+                        gradient="from-primary-500 to-primary-700"
                     />
                 </div>
 

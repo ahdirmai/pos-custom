@@ -57,7 +57,7 @@ class ProductController extends Controller
          */
         $request->validate([
             'barcode' => 'required|unique:products,barcode',
-            'sku' => 'nullable|unique:products,sku',
+            'sku' => 'nullable',
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
@@ -118,7 +118,7 @@ class ProductController extends Controller
          */
         $request->validate([
             'barcode' => 'required|unique:products,barcode,'.$product->id,
-            'sku' => 'nullable|unique:products,sku,'.$product->id,
+            'sku' => 'nullable',
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
