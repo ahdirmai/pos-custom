@@ -22,7 +22,25 @@ export default function ProductCard({ product }) {
         e.stopPropagation();
         if (hasStock) {
             addToCart(product);
-            toast.success(`${product.name} +1`);
+            toast.success(
+                (t) => (
+                    <div className="flex items-center gap-2">
+                        <span className="font-medium">{product.name}</span>
+                        <span className="text-green-600 font-bold">+1</span>
+                    </div>
+                ),
+                {
+                    duration: 1500,
+                    position: 'bottom-center',
+                    style: {
+                        background: '#fff',
+                        padding: '12px 16px',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                    },
+                    icon: '🛒',
+                }
+            );
         }
     };
 
@@ -94,11 +112,27 @@ export default function ProductCard({ product }) {
 
             {/* Content Section */}
             <div className="p-2 sm:p-3 flex-1 flex flex-col bg-white">
-                <h3 className="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2 leading-tight mb-2 min-h-[2rem] sm:min-h-[2.5rem]">
+                <div className="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2 leading-tight">
                     {product.name}
-                </h3>
+                </div>
                 
-                <div className="mt-auto pt-2 border-t border-gray-50 flex flex-col gap-2">
+                {/* Rating & Sold */}
+                {(product.rating || product.sold_count) && (
+                    <div className="flex items-center gap-1.5 mt-1.5 text-[10px] sm:text-xs text-gray-500">
+                        {product.rating && (
+                            <div className="flex items-center gap-0.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                <span>{product.rating}</span>
+                            </div>
+                        )}
+                        {product.rating && product.sold_count && <span>|</span>}
+                        {product.sold_count && <span>{product.sold_count}+ terjual</span>}
+                    </div>
+                )}
+                
+                <div className="mt-auto border-t mt-1 border-gray-50 flex flex-col gap-2">
                     <p className="text-sm sm:text-base font-bold text-indigo-600">
                         {formatPrice(product.price)}
                     </p>

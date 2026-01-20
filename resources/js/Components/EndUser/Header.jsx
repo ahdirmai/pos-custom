@@ -39,7 +39,7 @@ export default function Header() {
                     </nav>
 
                     {/* Search Bar - Hidden on mobile, visible on desktop */}
-                    <div className="hidden md:flex flex-1 mx-8">
+                    <div className="hidden lg:flex flex-1 mx-8">
                         <div className="relative w-full max-w-xl ml-auto">
                              <input
                                 type="text"
@@ -83,7 +83,7 @@ export default function Header() {
                 </div>
             </div>
              {/* Mobile Search - Visible only on mobile */}
-            <div className="md:hidden px-4 pb-2">
+            <div className="hidden px-4 pb-2">
                  <div className="relative w-full">
                      <input
                         type="text"

@@ -170,6 +170,8 @@ Route::name('user.')->group(function () {
     Route::get('/artikel', [\App\Http\Controllers\User\HomeController::class, 'articles'])->name('articles');
     Route::get('/checkout', [\App\Http\Controllers\User\HomeController::class, 'checkout'])->name('checkout');
     Route::get('/nota/{id}', [\App\Http\Controllers\User\HomeController::class, 'invoice'])->name('invoice');
+    Route::get('/profile', [\App\Http\Controllers\User\HomeController::class, 'profile'])->name('profile');
+    Route::get('/produk/{id}', [\App\Http\Controllers\User\HomeController::class, 'show'])->name('product.show');
 });
 
 require __DIR__.'/auth.php';
