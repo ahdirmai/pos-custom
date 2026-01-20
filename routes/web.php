@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return redirect()->route('login');
+    return redirect()->route('user.index');
     // return Inertia::render('Welcome', [
     //     'canLogin'       => Route::has('login'),
     //     'canRegister'    => Route::has('register'),
@@ -160,6 +160,16 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// end user page (customer)
+Route::name('user.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\User\HomeController::class, 'index'])->name('index');
+    Route::get('/katalog', [\App\Http\Controllers\User\HomeController::class, 'products'])->name('products');
+    Route::get('/cari', [\App\Http\Controllers\User\HomeController::class, 'search'])->name('search');
+    Route::get('/artikel', [\App\Http\Controllers\User\HomeController::class, 'articles'])->name('articles');
+    Route::get('/checkout', [\App\Http\Controllers\User\HomeController::class, 'checkout'])->name('checkout');
+    Route::get('/nota/{id}', [\App\Http\Controllers\User\HomeController::class, 'invoice'])->name('invoice');
 });
 
 require __DIR__.'/auth.php';
