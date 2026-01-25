@@ -25,6 +25,7 @@ import {
     IconFileInvoice,
     IconBuildingWarehouse,
     IconCurrencyDollar,
+    IconTicket,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -70,6 +71,13 @@ export default function Menu() {
                     active: url === "/dashboard/customers" ? true : false, // Update comparison here
                     icon: <IconUsersPlus size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["customers-access"]),
+                },
+                {
+                    title: "Voucher",
+                    href: route("vouchers.index"),
+                    active: url.startsWith("/dashboard/vouchers"),
+                    icon: <IconTicket size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["dashboard-access"]),
                 },
             ],
         },

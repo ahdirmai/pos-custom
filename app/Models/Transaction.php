@@ -81,6 +81,11 @@ return $this->belongsTo(Customer::class)->withTrashed();
         return $this->hasMany(Profit::class);
     }
 
+    public function voucherUsage()
+    {
+        return $this->hasOne(VoucherUsage::class);
+    }
+
     public function receivable()
     {
         return $this->hasOne(Receivable::class);

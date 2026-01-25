@@ -29,6 +29,11 @@ class Customer extends Model
         'village_id',
         'village_name',
     ];
+
+    public function voucherUsages()
+    {
+        return $this->hasMany(VoucherUsage::class);
+    }
     
     protected function noTelp(): Attribute
 {
