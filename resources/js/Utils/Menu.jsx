@@ -26,6 +26,9 @@ import {
     IconBuildingWarehouse,
     IconCurrencyDollar,
     IconTicket,
+    IconTruck,
+    IconTruckDelivery,
+    IconCalculator,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -224,6 +227,32 @@ export default function Menu() {
                     href: route("settings.target"),
                     active: url === "/dashboard/settings/target",
                     icon: <IconChartInfographic size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["dashboard-access"]),
+                },
+            ],
+        },
+        {
+            title: "Logistik",
+            details: [
+                {
+                    title: "Konfigurasi",
+                    href: route("settings.shipping"),
+                    active: url === "/dashboard/settings/shipping",
+                    icon: <IconTruckDelivery size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["dashboard-access"]),
+                },
+                {
+                    title: "Kurir",
+                    href: route("shipping-couriers.index"),
+                    active: url.startsWith("/dashboard/shipping-couriers"),
+                    icon: <IconTruck size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["dashboard-access"]),
+                },
+                {
+                    title: "Testing (Cek Ongkir)",
+                    href: route("settings.shipping.test"),
+                    active: url === "/dashboard/settings/shipping/test",
+                    icon: <IconCalculator size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["dashboard-access"]),
                 },
             ],

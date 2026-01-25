@@ -126,6 +126,11 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     // vouchers
     Route::resource('vouchers', VoucherController::class);
 
+    // shipping couriers
+    Route::resource('shipping-couriers', \App\Http\Controllers\Apps\ShippingCourierController::class);
+    Route::patch('/shipping-couriers/{shippingCourier}/toggle', [\App\Http\Controllers\Apps\ShippingCourierController::class, 'toggleActive'])->middleware('permission:dashboard-access')->name('shipping-couriers.toggle');
+
+
     // pdf documents
     Route::get('/documents/transactions/{invoice}/pdf/invoice', [\App\Http\Controllers\DocumentController::class, 'invoice'])->middleware('permission:transactions-access')->name('pdf.transactions.invoice');
     Route::get('/documents/transactions/{invoice}/pdf/receipt/{size?}', [\App\Http\Controllers\DocumentController::class, 'receipt'])->middleware('permission:transactions-access')->name('pdf.transactions.receipt');
@@ -141,6 +146,12 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/settings/target', [\App\Http\Controllers\Apps\SettingController::class, 'updateTarget'])->middleware('permission:dashboard-access')->name('settings.target.update');
     Route::get('/settings/store', [\App\Http\Controllers\Apps\SettingController::class, 'storeProfile'])->middleware('permission:dashboard-access')->name('settings.store');
     Route::post('/settings/store', [\App\Http\Controllers\Apps\SettingController::class, 'updateStoreProfile'])->middleware('permission:dashboard-access')->name('settings.store.update');
+    Route::get('/settings/shipping', [\App\Http\Controllers\Apps\SettingController::class, 'shipping'])->middleware('permission:dashboard-access')->name('settings.shipping');
+    Route::post('/settings/shipping', [\App\Http\Controllers\Apps\SettingController::class, 'updateShipping'])->middleware('permission:dashboard-access')->name('settings.shipping.update');
+    
+    // shipping testing (cek ongkir)
+    Route::get('/settings/shipping/test', [\App\Http\Controllers\Apps\ShippingController::class, 'test'])->middleware('permission:dashboard-access')->name('settings.shipping.test');
+    Route::post('/settings/shipping/check-rates', [\App\Http\Controllers\Apps\ShippingController::class, 'checkRates'])->middleware('permission:dashboard-access')->name('settings.shipping.check-rates');
 
     // settings bank accounts
     Route::get('/settings/bank-accounts', [\App\Http\Controllers\Apps\BankAccountController::class, 'index'])->middleware('permission:payment-settings-access')->name('settings.bank-accounts.index');

@@ -16,6 +16,8 @@ import {
     IconCurrencyDollar,
     IconTrendingUp,
     IconInfoCircle,
+    IconRuler,
+    IconWeight,
 } from "@tabler/icons-react";
 import { getProductImageUrl } from "@/Utils/imageUrl";
 
@@ -33,6 +35,10 @@ export default function Edit({ categories, product }) {
         sell_price: product.sell_price || 0,
         stock: product.stock || 0,
         is_pph23: product.is_pph23 || false,
+        weight: product.product_detail?.weight || "",
+        length: product.product_detail?.length || "10",
+        width: product.product_detail?.width || "10",
+        height: product.product_detail?.height || "10",
         _method: "PUT",
     });
 
@@ -301,6 +307,57 @@ export default function Edit({ categories, product }) {
                                     </div>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Berat & Dimensi */}
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                            <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+                                <div className="w-1.5 h-6 bg-purple-500 rounded-full"></div>
+                                <h3 className="font-bold text-slate-800 dark:text-slate-200">Berat & Dimensi (Pengiriman)</h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                                <div className="md:col-span-1">
+                                    <Input
+                                        type="number"
+                                        label="Berat (Gram)"
+                                        value={data.weight}
+                                        onChange={(e) => setData("weight", e.target.value)}
+                                        errors={errors.weight}
+                                        placeholder="Min. 1"
+                                        icon={<IconWeight size={16} />}
+                                    />
+                                </div>
+                                <div className="md:col-span-3 grid grid-cols-3 gap-3">
+                                    <Input
+                                        type="number"
+                                        label="Panjang (cm)"
+                                        value={data.length}
+                                        onChange={(e) => setData("length", e.target.value)}
+                                        errors={errors.length}
+                                        placeholder="10"
+                                        icon={<IconRuler size={16} />}
+                                    />
+                                    <Input
+                                        type="number"
+                                        label="Lebar (cm)"
+                                        value={data.width}
+                                        onChange={(e) => setData("width", e.target.value)}
+                                        errors={errors.width}
+                                        placeholder="10"
+                                        icon={<IconRuler size={16} />}
+                                    />
+                                    <Input
+                                        type="number"
+                                        label="Tinggi (cm)"
+                                        value={data.height}
+                                        onChange={(e) => setData("height", e.target.value)}
+                                        errors={errors.height}
+                                        placeholder="10"
+                                        icon={<IconRuler size={16} />}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Submit Actions */}

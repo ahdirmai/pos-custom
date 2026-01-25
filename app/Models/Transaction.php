@@ -106,4 +106,8 @@ class Transaction extends Model
             get: fn ($value) => Carbon::parse($value)->format('d-M-Y H:i:s'),
         );
     }
+    public function shipping()
+    {
+        return $this->hasOne(TransactionShipping::class);
+    }
 }

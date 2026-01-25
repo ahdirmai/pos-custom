@@ -50,6 +50,16 @@ class Product extends Model
     }
 
     /**
+     * productDetail
+     *
+     * @return void
+     */
+    public function productDetail()
+    {
+        return $this->hasOne(ProductDetail::class);
+    }
+
+    /**
      * The "booted" method of the model.
      */
     protected static function booted(): void

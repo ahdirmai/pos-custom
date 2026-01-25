@@ -65,13 +65,17 @@ class ProductController extends Controller
             'sell_price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'is_pph23' => 'nullable|boolean',
+            'weight' => 'required|integer|min:1',
+            'length' => 'nullable|integer|min:1',
+            'width' => 'nullable|integer|min:1',
+            'height' => 'nullable|integer|min:1',
         ]);
         // upload image
         $image = $request->file('image');
         $image->storeAs('public/products', $image->hashName());
 
         // create product
-        Product::create([
+        $product = Product::create([
             'image' => $image->hashName(),
             'barcode' => $request->barcode,
             'sku' => $request->sku,
@@ -82,6 +86,14 @@ class ProductController extends Controller
             'sell_price' => $request->sell_price,
             'stock' => $request->stock,
             'is_pph23' => $request->is_pph23 ?? false,
+        ]);
+
+        // create product detail
+        $product->productDetail()->create([
+            'weight' => $request->weight,
+            'length' => $request->length ?? 10,
+            'width' => $request->width ?? 10,
+            'height' => $request->height ?? 10,
         ]);
 
         // redirect
@@ -98,6 +110,8 @@ class ProductController extends Controller
     {
         // get categories
         $categories = Category::all();
+        // load detail
+        $product->load('productDetail');
 
         return Inertia::render('Dashboard/Products/Edit', [
             'product' => $product,
@@ -126,6 +140,10 @@ class ProductController extends Controller
             'sell_price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'is_pph23' => 'nullable|boolean',
+            'weight' => 'required|integer|min:1',
+            'length' => 'nullable|integer|min:1',
+            'width' => 'nullable|integer|min:1',
+            'height' => 'nullable|integer|min:1',
         ]);
 
         // check image update
@@ -152,20 +170,31 @@ class ProductController extends Controller
                 'is_pph23' => $request->is_pph23 ?? false,
             ]);
 
+        } else {
+            // update product without image
+            $product->update([
+                'barcode' => $request->barcode,
+                'sku' => $request->sku,
+                'title' => $request->title,
+                'description' => $request->description,
+                'category_id' => $request->category_id,
+                'buy_price' => $request->buy_price,
+                'sell_price' => $request->sell_price,
+                'stock' => $request->stock,
+                'is_pph23' => $request->is_pph23 ?? false,
+            ]);
         }
-
-        // update product without image
-        $product->update([
-            'barcode' => $request->barcode,
-            'sku' => $request->sku,
-            'title' => $request->title,
-            'description' => $request->description,
-            'category_id' => $request->category_id,
-            'buy_price' => $request->buy_price,
-            'sell_price' => $request->sell_price,
-            'stock' => $request->stock,
-            'is_pph23' => $request->is_pph23 ?? false,
-        ]);
+        
+        // update product detail
+        $product->productDetail()->updateOrCreate(
+            ['product_id' => $product->id],
+            [
+                'weight' => $request->weight,
+                'length' => $request->length ?? 10,
+                'width' => $request->width ?? 10,
+                'height' => $request->height ?? 10,
+            ]
+        );
 
         // redirect
         return to_route('products.index');
