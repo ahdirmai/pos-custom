@@ -106,6 +106,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     // route transaction store
     Route::post('/transactions/store', [TransactionController::class, 'store'])->middleware('permission:transactions-access')->name('transactions.store');
     Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->middleware('permission:transactions-access')->name('transactions.print');
+    Route::post('/transactions/check-voucher', [TransactionController::class, 'checkVoucher'])->middleware('permission:transactions-access')->name('transactions.checkVoucher');
     Route::get('/transactions-history', [TransactionController::class, 'history'])->middleware('permission:transactions-access')->name('transactions.history');
     // receivables (nota barang)
     Route::get('/receivables', [\App\Http\Controllers\Apps\ReceivableController::class, 'index'])->middleware('permission:receivables-access')->name('receivables.index');

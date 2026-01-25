@@ -546,13 +546,41 @@ export default function Print({ transaction }) {
                                             )}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                                        <span>Diskon</span>
-                                        <span>
-                                            -{" "}
-                                            {formatPrice(transaction.discount)}
-                                        </span>
-                                    </div>
+                                    {/* Discount Breakdown */}
+                                    {(() => {
+                                        const voucherUsages = transaction.voucher_usages || [];
+                                        const totalVoucherDiscount = voucherUsages.reduce((sum, v) => sum + Number(v.discount_amount), 0);
+                                        const totalDiscount = Number(transaction.discount) || 0;
+                                        const manualDiscount = Math.max(0, totalDiscount - totalVoucherDiscount);
+
+                                        return (
+                                            <>
+                                                {/* Manual Discount */}
+                                                {manualDiscount > 0 && (
+                                                    <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                                                        <span>Diskon Manual</span>
+                                                        <span>- {formatPrice(manualDiscount)}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Voucher Discounts */}
+                                                {voucherUsages.map((usage, index) => (
+                                                    <div key={index} className="flex justify-between text-slate-600 dark:text-slate-400">
+                                                        <span>Voucher {usage.voucher?.code}</span>
+                                                        <span>- {formatPrice(usage.discount_amount)}</span>
+                                                    </div>
+                                                ))}
+                                                
+                                                {/* Fallback if no specific breakdown but discount exists (legacy data) */}
+                                                {totalDiscount > 0 && manualDiscount === 0 && voucherUsages.length === 0 && (
+                                                     <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                                                        <span>Diskon</span>
+                                                        <span>- {formatPrice(totalDiscount)}</span>
+                                                    </div>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                     {transaction.shipping_cost > 0 && (
                                         <div className="flex justify-between text-slate-600 dark:text-slate-400">
                                             <span>Ongkos Kirim</span>

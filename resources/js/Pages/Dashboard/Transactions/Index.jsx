@@ -31,6 +31,8 @@ import {
     IconBuildingBank,
     IconAlertTriangle,
     IconTruck,
+    IconTicket,
+    IconX,
 } from "@tabler/icons-react";
 
 const formatPrice = (value = 0) =>
@@ -50,6 +52,7 @@ export default function Index({
     paymentGateways = [],
     defaultPaymentGateway = "cash",
     bankAccounts = [],
+    active_vouchers = [],
 }) {
     const { auth, errors, lowStockNotifications = [] } = usePage().props;
 
@@ -110,20 +113,43 @@ export default function Index({
 
     const LowStockAlerts = () => null;
 
+    // State for Voucher
+    const [voucherSubtotal, setVoucherSubtotal] = useState(null); // { code, amount, type, value, target }
+    const [voucherShipping, setVoucherShipping] = useState(null); // { code, amount, type, value, target }
+    
+    // UI State for Voucher Input
+    const [voucherCode, setVoucherCode] = useState("");
+    const [checkingVoucher, setCheckingVoucher] = useState(false);
+    const [showVoucherList, setShowVoucherList] = useState(false);
+
     // Calculations
-    const discount = useMemo(
+    const manualDiscount = useMemo(
         () => Math.max(0, Number(discountInput) || 0),
         [discountInput]
     );
+
+    const voucherSubtotalAmount = useMemo(() => voucherSubtotal?.amount || 0, [voucherSubtotal]);
+    const voucherShippingAmount = useMemo(() => voucherShipping?.amount || 0, [voucherShipping]);
+    const totalVoucherDiscount = voucherSubtotalAmount + voucherShippingAmount;
+
     const shipping = useMemo(
         () => Math.max(0, Number(shippingInput) || 0),
         [shippingInput]
     );
+
     const subtotal = useMemo(() => carts_total ?? 0, [carts_total]);
+    
+    // Stacking Discount Logic: (Subtotal - ManualDiscount - VoucherSubtotal) + (Shipping - VoucherShipping)
+    // Note: ensure no negative components
     const payable = useMemo(
-        () => Math.max(subtotal - discount + shipping, 0),
-        [subtotal, discount, shipping]
+        () => {
+            const netSubtotal = Math.max(0, subtotal - manualDiscount - voucherSubtotalAmount);
+            const netShipping = Math.max(0, shipping - voucherShippingAmount);
+            return netSubtotal + netShipping;
+        },
+        [subtotal, manualDiscount, voucherSubtotalAmount, shipping, voucherShippingAmount]
     );
+
     const isCashPayment = !payLater && paymentMethod === "cash";
     const cash = useMemo(
         () => (isCashPayment ? Math.max(0, Number(cashInput) || 0) : payable),
@@ -133,6 +159,62 @@ export default function Index({
         () => carts.reduce((total, item) => total + Number(item.qty), 0),
         [carts]
     );
+
+    // Re-check vouchers when dependencies change
+    useEffect(() => {
+        if (voucherSubtotal) handleCheckVoucher(voucherSubtotal.code, true);
+        if (voucherShipping) handleCheckVoucher(voucherShipping.code, true);
+    }, [subtotal, manualDiscount, shipping]);
+
+    const handleCheckVoucher = async (code = voucherCode, isRecheck = false) => {
+        if (!code) return;
+        if (!isRecheck) setCheckingVoucher(true);
+
+        try {
+            const response = await axios.post(route('transactions.checkVoucher'), {
+                voucher_code: code,
+                subtotal: subtotal,
+                manual_discount: manualDiscount,
+                shipping_cost: shipping,
+                customer_id: selectedCustomer?.id
+            });
+
+            const { data } = response.data;
+            
+            // Assign to correct slot
+            if (data.target === 'subtotal') {
+                setVoucherSubtotal(data);
+                if (!isRecheck) toast.success("Voucher Potongan Harga dipasang!");
+            } else {
+                setVoucherShipping(data);
+                if (!isRecheck) toast.success("Voucher Potongan Ongkir dipasang!");
+            }
+
+            if (!isRecheck) {
+                setVoucherCode(""); // Clear input on success
+                setShowVoucherList(false);
+            }
+        } catch (error) {
+            // Only remove if it was active and failed re-check
+            if (isRecheck) {
+                 // Check which one failed
+                 if (voucherSubtotal?.code === code) setVoucherSubtotal(null);
+                 if (voucherShipping?.code === code) setVoucherShipping(null);
+                 // Silent or warning?
+            } else {
+                const msg = error.response?.data?.message || "Voucher tidak valid";
+                toast.error(msg);
+            }
+        } finally {
+            if (!isRecheck) setCheckingVoucher(false);
+        }
+    };
+    
+    // Clear voucher
+    const handleRemoveVoucher = (type) => { // 'subtotal' or 'shipping'
+        if (type === 'subtotal') setVoucherSubtotal(null);
+        if (type === 'shipping') setVoucherShipping(null);
+    };
 
     // Payment options
     const paymentOptions = useMemo(() => {
@@ -374,7 +456,20 @@ export default function Index({
             route("transactions.store"),
             {
                 customer_id: selectedCustomer.id,
-                discount,
+                discount: manualDiscount, // Send Manual Discount separately if needed, but Controller expects 'discount' as total? 
+                // Wait, implementation plan said: "I will make the voucher discount **replace** the manual discount field" -> OLD LOGIC
+                // NEW LOGIC: Stacking.
+                // Controller 'store' uses: 'discount' => $manualDiscount + $voucherDiscount
+                // So I should send manualDiscount as 'discount' param, and voucher_code separately.
+                // The Controller code I wrote calculates Total Discount = Manual (request->discount) + Voucher (calculated).
+                // So here I send 'discount' as manualDiscount.
+                
+                // MULTI VOUCHER UPDATE
+                voucher_codes: [
+                    voucherSubtotal?.code,
+                    voucherShipping?.code
+                ].filter(Boolean), // Remove nulls
+                
                 shipping_cost: shipping,
                 grand_total: payable,
                 cash: isCashPayment ? cash : payable,
@@ -391,6 +486,9 @@ export default function Index({
                     setDiscountInput("");
                     setCashInput("");
                     setShippingInput("");
+                    setVoucherCode("");
+                    setVoucherSubtotal(null);
+                    setVoucherShipping(null);
                     setSelectedCustomer(null);
                     setSelectedBankAccount(null);
                     setPaymentMethod(defaultPaymentGateway ?? "cash");
@@ -855,6 +953,133 @@ export default function Index({
                                 </div>
                             )}
 
+                            {/* Voucher Section */}
+                            <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800/50">
+                                <div className="flex items-center justify-between mb-2">
+                                     <div className="flex items-center gap-2">
+                                        <IconTicket size={16} className="text-indigo-600 dark:text-indigo-400" />
+                                        <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">Voucher</span>
+                                    </div>
+                                    <span className="text-[10px] text-indigo-500 font-medium bg-indigo-100 dark:bg-indigo-900/50 px-2 py-0.5 rounded-full">
+                                        Max 2 (1 Harga + 1 Ongkir)
+                                    </span>
+                                </div>
+                                
+                                {/* Active Vouchers Display */}
+                                <div className="space-y-2 mb-3">
+                                    {/* Subtotal Voucher */}
+                                    {voucherSubtotal && (
+                                         <div className="bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-700 text-indigo-800 dark:text-indigo-200 px-3 py-2 rounded-lg flex items-center justify-between shadow-sm">
+                                             <div className="flex-1 min-w-0">
+                                                 <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-sm truncate">{voucherSubtotal.code}</span>
+                                                    <span className="text-[10px] uppercase bg-green-100 text-green-700 px-1.5 rounded">Produk</span>
+                                                 </div>
+                                                 <span className="text-xs text-indigo-500 dark:text-indigo-400">
+                                                     Hemat {formatPrice(voucherSubtotal.amount)}
+                                                 </span>
+                                             </div>
+                                             <button
+                                                onClick={() => handleRemoveVoucher('subtotal')}
+                                                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-danger-500 transition-colors"
+                                             >
+                                                 <IconX size={16} />
+                                             </button>
+                                         </div>
+                                    )}
+
+                                    {/* Shipping Voucher */}
+                                     {voucherShipping && (
+                                         <div className="bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-700 text-indigo-800 dark:text-indigo-200 px-3 py-2 rounded-lg flex items-center justify-between shadow-sm">
+                                             <div className="flex-1 min-w-0">
+                                                 <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-sm truncate">{voucherShipping.code}</span>
+                                                    <span className="text-[10px] uppercase bg-blue-100 text-blue-700 px-1.5 rounded">Ongkir</span>
+                                                 </div>
+                                                 <span className="text-xs text-indigo-500 dark:text-indigo-400">
+                                                     Hemat {formatPrice(voucherShipping.amount)}
+                                                 </span>
+                                             </div>
+                                             <button
+                                                onClick={() => handleRemoveVoucher('shipping')}
+                                                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-danger-500 transition-colors"
+                                             >
+                                                 <IconX size={16} />
+                                             </button>
+                                         </div>
+                                    )}
+                                </div>
+
+                                {/* Voucher Input & List */}
+                                <div className="relative">
+                                    <div className="flex gap-2">
+                                         <input
+                                            type="text"
+                                            value={voucherCode}
+                                            onChange={(e) => {
+                                                setVoucherCode(e.target.value.toUpperCase());
+                                                setShowVoucherList(true);
+                                            }}
+                                            onFocus={() => setShowVoucherList(true)}
+                                            onBlur={() => setTimeout(() => setShowVoucherList(false), 200)} // Delay to allow click on list
+                                            placeholder="Kode Voucher / Pilih..."
+                                            className="flex-1 h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 uppercase placeholder:normal-case"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleCheckVoucher(voucherCode);
+                                                }
+                                            }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCheckVoucher(voucherCode)}
+                                            disabled={!voucherCode || checkingVoucher}
+                                            className="h-9 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-lg text-xs font-medium transition-colors flex items-center justify-center min-w-[60px]"
+                                        >
+                                            {checkingVoucher ? (
+                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                "Pakai"
+                                            )}
+                                        </button>
+                                    </div>
+
+                                    {/* Dropdown List */}
+                                    {showVoucherList && active_vouchers.length > 0 && (
+                                        <div className="absolute top-10 left-0 right-0 z-20 bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 max-h-48 overflow-y-auto">
+                                            {active_vouchers
+                                                .filter(v => !voucherCode || v.code.includes(voucherCode))
+                                                .map(v => (
+                                                <button
+                                                    key={v.id}
+                                                    type="button" // Prevent form submit
+                                                    onClick={() => {
+                                                        setVoucherCode(v.code);
+                                                        handleCheckVoucher(v.code);
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-0 flex items-center justify-between group"
+                                                >
+                                                    <div>
+                                                        <span className="font-bold text-slate-700 dark:text-slate-300 block">{v.code}</span>
+                                                        <span className="text-slate-500">{v.name}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                                             v.discount_target === 'subtotal' 
+                                                             ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' 
+                                                             : 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                                                         }`}>
+                                                             {v.discount_target === 'subtotal' ? 'Produk' : 'Ongkir'}
+                                                         </span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Discount Input */}
                             <div>
                                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
@@ -968,11 +1193,11 @@ export default function Index({
                                 {formatPrice(subtotal)}
                             </span>
                         </div>
-                        {discount > 0 && (
+                        {manualDiscount > 0 && (
                             <div className="flex justify-between items-center mb-2 text-sm">
                                 <span className="text-slate-500">Diskon</span>
                                 <span className="text-danger-500">
-                                    -{formatPrice(discount)}
+                                    -{formatPrice(manualDiscount)}
                                 </span>
                             </div>
                         )}
