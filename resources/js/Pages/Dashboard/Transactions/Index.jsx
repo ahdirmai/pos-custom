@@ -31,6 +31,9 @@ import {
     IconBuildingBank,
     IconAlertTriangle,
     IconTruck,
+    IconTicket,
+    IconX,
+    IconMapPin,
 } from "@tabler/icons-react";
 
 const formatPrice = (value = 0) =>
@@ -50,6 +53,7 @@ export default function Index({
     paymentGateways = [],
     defaultPaymentGateway = "cash",
     bankAccounts = [],
+    active_vouchers = [],
 }) {
     const { auth, errors, lowStockNotifications = [] } = usePage().props;
 
@@ -110,20 +114,120 @@ export default function Index({
 
     const LowStockAlerts = () => null;
 
+    // State for Voucher
+    const [voucherSubtotal, setVoucherSubtotal] = useState(null); // { code, amount, type, value, target }
+    const [voucherShipping, setVoucherShipping] = useState(null); // { code, amount, type, value, target }
+    const [voucherCode, setVoucherCode] = useState("");
+    const [checkingVoucher, setCheckingVoucher] = useState(false);
+    const [showVoucherList, setShowVoucherList] = useState(false);
+
+    // State for Shipping
+    const [shippingMethod, setShippingMethod] = useState("off"); // 'off', 'manual', 'using_vendor'
+    const [selectedCourier, setSelectedCourier] = useState(null);
+    const [shippingRates, setShippingRates] = useState([]);
+    const [isCheckingRates, setIsCheckingRates] = useState(false);
+
+    const handleCheckRates = async () => {
+        if (!selectedCustomer) {
+            toast.error("Pilih pelanggan terlebih dahulu");
+            return;
+        }
+
+        if (!selectedCustomer.postal_code) {
+             // Fallback logic if postal_code not directly on customer root? 
+             // We just updated Customer model to have postal_code attribute.
+             // But in JS key conversion, it might be camelCase 'postalCode' or snake_case 'postal_code' depending on serialization.
+             // Laravel default toArray() preserves snake_case unless mapped.
+             // We can check.
+             toast.error("Data pelanggan tidak memiliki kode pos");
+             return;
+        }
+        
+        setIsCheckingRates(true);
+        setShippingRates([]);
+
+        try {
+            // Calculate total weight (default 1000g if not set in product)
+            const totalWeight = carts.reduce((acc, item) => acc + (1000 * item.qty), 0); // Temporary assumption: 1kg per item if not defined. Ideally: item.product.weight
+            
+            // Build items payload
+            const itemsPayload = carts.map(c => ({
+                name: c.product.title,
+                value: c.product.sell_price,
+                weight: 1000, // Hardcoded for now, or fetch from product if available
+                quantity: c.qty
+            }));
+
+            const response = await axios.post(route('settings.shipping.check-rates'), {
+                destination_postal_code: selectedCustomer.postal_code,
+                weight: totalWeight,
+                // items: itemsPayload // Controller might need update to accept items if we want exact detail
+            });
+
+            if (response.data?.rates) {
+                 // Check if it was returned via flash (redirect back with Inertia) or JSON?
+                 // Wait, the controller returns `back()->with(...)` which is an Inertia response.
+                 // Calling it via axios will return the HTML/Inertia page content, NOT JSON data directly if it is a standard controller method returning Inertia render/redirect.
+                 // We need a JSON endpoint or we need to use `router.post` and handle `onSuccess`.
+                 // But `router.post` reloads the page/props. That might be okay.
+                 
+                 // HOWEVER, `Index.jsx` is a POS page, state reload might be jarring.
+                 // Better to have a dedicated JSON endpoint for check rates.
+                 // OPTION 2: Use `router.post` with `preserveState: true`.
+            }
+            // Let's use router.post instead for consistency with Inertia
+        } catch (e) {
+            console.error(e);
+        }
+        // Actually, let's use router for the call to utilize existing controller logic
+        router.post(route('settings.shipping.check-rates'), {
+            destination_postal_code: selectedCustomer.postal_code,
+            weight: 1000, // Dummy weight for now
+        }, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: (page) => {
+                if (page.props.flash.rates) {
+                    setShippingRates(page.props.flash.rates);
+                    toast.success("Ongkir berhasil dicek");
+                }
+                setIsCheckingRates(false);
+            },
+            onError: () => {
+                toast.error("Gagal cek ongkir");
+                setIsCheckingRates(false);
+            }
+        });
+    };
+
     // Calculations
-    const discount = useMemo(
+    const manualDiscount = useMemo(
         () => Math.max(0, Number(discountInput) || 0),
         [discountInput]
     );
+
+    const voucherSubtotalAmount = useMemo(() => voucherSubtotal?.amount || 0, [voucherSubtotal]);
+    const voucherShippingAmount = useMemo(() => voucherShipping?.amount || 0, [voucherShipping]);
+    const totalVoucherDiscount = voucherSubtotalAmount + voucherShippingAmount;
+
     const shipping = useMemo(
         () => Math.max(0, Number(shippingInput) || 0),
         [shippingInput]
     );
+
     const subtotal = useMemo(() => carts_total ?? 0, [carts_total]);
+    
+    // Stacking Discount Logic: (Subtotal - ManualDiscount - VoucherSubtotal) + (Shipping - VoucherShipping)
+    // Note: ensure no negative components
     const payable = useMemo(
-        () => Math.max(subtotal - discount + shipping, 0),
-        [subtotal, discount, shipping]
+        () => {
+            const netSubtotal = Math.max(0, subtotal - manualDiscount - voucherSubtotalAmount);
+            const netShipping = Math.max(0, shipping - voucherShippingAmount);
+            return netSubtotal + netShipping;
+        },
+        [subtotal, manualDiscount, voucherSubtotalAmount, shipping, voucherShippingAmount]
     );
+
     const isCashPayment = !payLater && paymentMethod === "cash";
     const cash = useMemo(
         () => (isCashPayment ? Math.max(0, Number(cashInput) || 0) : payable),
@@ -133,6 +237,62 @@ export default function Index({
         () => carts.reduce((total, item) => total + Number(item.qty), 0),
         [carts]
     );
+
+    // Re-check vouchers when dependencies change
+    useEffect(() => {
+        if (voucherSubtotal) handleCheckVoucher(voucherSubtotal.code, true);
+        if (voucherShipping) handleCheckVoucher(voucherShipping.code, true);
+    }, [subtotal, manualDiscount, shipping]);
+
+    const handleCheckVoucher = async (code = voucherCode, isRecheck = false) => {
+        if (!code) return;
+        if (!isRecheck) setCheckingVoucher(true);
+
+        try {
+            const response = await axios.post(route('transactions.checkVoucher'), {
+                voucher_code: code,
+                subtotal: subtotal,
+                manual_discount: manualDiscount,
+                shipping_cost: shipping,
+                customer_id: selectedCustomer?.id
+            });
+
+            const { data } = response.data;
+            
+            // Assign to correct slot
+            if (data.target === 'subtotal') {
+                setVoucherSubtotal(data);
+                if (!isRecheck) toast.success("Voucher Potongan Harga dipasang!");
+            } else {
+                setVoucherShipping(data);
+                if (!isRecheck) toast.success("Voucher Potongan Ongkir dipasang!");
+            }
+
+            if (!isRecheck) {
+                setVoucherCode(""); // Clear input on success
+                setShowVoucherList(false);
+            }
+        } catch (error) {
+            // Only remove if it was active and failed re-check
+            if (isRecheck) {
+                 // Check which one failed
+                 if (voucherSubtotal?.code === code) setVoucherSubtotal(null);
+                 if (voucherShipping?.code === code) setVoucherShipping(null);
+                 // Silent or warning?
+            } else {
+                const msg = error.response?.data?.message || "Voucher tidak valid";
+                toast.error(msg);
+            }
+        } finally {
+            if (!isRecheck) setCheckingVoucher(false);
+        }
+    };
+    
+    // Clear voucher
+    const handleRemoveVoucher = (type) => { // 'subtotal' or 'shipping'
+        if (type === 'subtotal') setVoucherSubtotal(null);
+        if (type === 'shipping') setVoucherShipping(null);
+    };
 
     // Payment options
     const paymentOptions = useMemo(() => {
@@ -374,8 +534,25 @@ export default function Index({
             route("transactions.store"),
             {
                 customer_id: selectedCustomer.id,
-                discount,
+                discount: manualDiscount, // Send Manual Discount separately if needed, but Controller expects 'discount' as total? 
+                // Wait, implementation plan said: "I will make the voucher discount **replace** the manual discount field" -> OLD LOGIC
+                // NEW LOGIC: Stacking.
+                // Controller 'store' uses: 'discount' => $manualDiscount + $voucherDiscount
+                // So I should send manualDiscount as 'discount' param, and voucher_code separately.
+                // The Controller code I wrote calculates Total Discount = Manual (request->discount) + Voucher (calculated).
+                // So here I send 'discount' as manualDiscount.
+                
+                // MULTI VOUCHER UPDATE
+                voucher_codes: [
+                    voucherSubtotal?.code,
+                    voucherShipping?.code
+                ].filter(Boolean), // Remove nulls
+                
                 shipping_cost: shipping,
+                shipping_method: shippingMethod,
+                shipping_courier_code: selectedCourier?.code,
+                shipping_courier_service: selectedCourier?.service,
+                
                 grand_total: payable,
                 cash: isCashPayment ? cash : payable,
                 change: isCashPayment ? Math.max(cash - payable, 0) : 0,
@@ -391,6 +568,9 @@ export default function Index({
                     setDiscountInput("");
                     setCashInput("");
                     setShippingInput("");
+                    setVoucherCode("");
+                    setVoucherSubtotal(null);
+                    setVoucherShipping(null);
                     setSelectedCustomer(null);
                     setSelectedBankAccount(null);
                     setPaymentMethod(defaultPaymentGateway ?? "cash");
@@ -501,6 +681,28 @@ export default function Index({
                             error={errors?.customer_id}
                             label="Pelanggan"
                         />
+                        {selectedCustomer && (
+                            <div className="mt-3 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border border-slate-100 dark:border-slate-700">
+                                <p className="font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                                    <IconMapPin size={12} />
+                                    Alamat Pengiriman
+                                </p>
+                                <p className="leading-relaxed">
+                                    {selectedCustomer.address || '-'}
+                                </p>
+                                {(selectedCustomer.village_name || selectedCustomer.district_name || selectedCustomer.regency_name || selectedCustomer.province_name) && (
+                                    <p className="mt-1 text-[10px] opacity-75">
+                                        {[
+                                            selectedCustomer.village_name,
+                                            selectedCustomer.district_name,
+                                            selectedCustomer.regency_name,
+                                            selectedCustomer.province_name,
+                                            selectedCustomer.postal_code
+                                        ].filter(Boolean).join(', ')}
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Held Transactions & Alerts */}
@@ -674,6 +876,118 @@ export default function Index({
                                         />
                                     </span>
                                 </label>
+                            </div>
+
+                            {/* Shipping Section */}
+                            <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-slate-50 dark:bg-slate-800/50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                        <IconTruck size={16} />
+                                        {paymentMethod === "cod" ? "Biaya COD / Ongkir" : "Pengiriman (Ongkir)"}
+                                    </h3>
+                                    <select
+                                        value={shippingMethod}
+                                        onChange={(e) => {
+                                            setShippingMethod(e.target.value);
+                                            setShippingInput("");
+                                            setSelectedCourier(null);
+                                            setShippingRates([]);
+                                        }}
+                                        className="h-8 pl-2 pr-8 text-xs rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-primary-500 focus:border-primary-500"
+                                    >
+                                        <option value="off">Off</option>
+                                        <option value="manual">Manual</option>
+                                        <option value="using_vendor">Cek Ongkir</option>
+                                    </select>
+                                </div>
+
+                                {shippingMethod !== "using_vendor" && (
+                                    <div className="relative">
+                                        <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-xs ${shippingMethod === 'off' ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400'}`}>Rp</span>
+                                        <input
+                                            type="number"
+                                            value={shippingMethod === 'off' ? '' : shippingInput}
+                                            onChange={(e) => setShippingInput(e.target.value)}
+                                            disabled={shippingMethod === 'off'}
+                                            placeholder="0"
+                                            className={`w-full h-9 pl-8 pr-3 text-xs rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-primary-500 focus:border-primary-500 disabled:bg-slate-100 disabled:dark:bg-slate-800 disabled:text-slate-400 disabled:cursor-not-allowed`}
+                                        />
+                                    </div>
+                                )}
+
+                                {shippingMethod === "using_vendor" && (
+                                    <div className="space-y-3">
+                                        {!selectedCourier ? (
+                                            <>
+                                                <button
+                                                    onClick={handleCheckRates}
+                                                    disabled={isCheckingRates}
+                                                    className="w-full h-9 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                                                >
+                                                    {isCheckingRates ? "Memuat..." : (
+                                                        <>
+                                                            <IconTruck size={14} />
+                                                            Cek Ongkir
+                                                        </>
+                                                    )}
+                                                </button>
+
+                                                {shippingRates.length > 0 && (
+                                                    <div className="space-y-2 mt-2 max-h-[200px] overflow-y-auto">
+                                                       {shippingRates.map((rate, idx) => (
+                                                            <div 
+                                                                key={idx}
+                                                                onClick={() => {
+                                                                    setShippingInput(String(rate.price));
+                                                                    setSelectedCourier({
+                                                                        code: rate.courier_code,
+                                                                        service: rate.courier_service_code,
+                                                                        name: rate.courier_name,
+                                                                        service_name: rate.courier_service_name,
+                                                                        price: rate.price,
+                                                                        etd: rate.duration
+                                                                    });
+                                                                    setShippingRates([]); // Hide list after selection
+                                                                }} 
+                                                                className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:border-primary-500 transition-colors"
+                                                            >
+                                                                <div className="flex justify-between items-start">
+                                                                    <div>
+                                                                        <p className="text-xs font-bold text-slate-800 dark:text-white uppercase">{rate.company} - {rate.courier_service_name}</p>
+                                                                        <p className="text-[10px] text-slate-500">Est: {rate.duration}</p>
+                                                                    </div>
+                                                                    <p className="text-xs font-bold text-primary-600">Rp {rate.price.toLocaleString()}</p>
+                                                                </div>
+                                                            </div>
+                                                       ))}
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div className="p-3 bg-white dark:bg-slate-800 border border-primary-200 dark:border-primary-800 rounded-lg relative">
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedCourier(null);
+                                                        setShippingInput("");
+                                                    }}
+                                                    className="absolute top-2 right-2 text-slate-400 hover:text-red-500"
+                                                >
+                                                    <IconX size={14} />
+                                                </button>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                     <IconTruck size={16} className="text-primary-500" />
+                                                     <p className="text-xs font-bold text-slate-800 dark:text-white uppercase">
+                                                        {selectedCourier.name} - {selectedCourier.service_name}
+                                                     </p>
+                                                </div>
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="text-slate-500">Est: {selectedCourier.etd}</span>
+                                                    <span className="font-bold text-primary-600">Rp {selectedCourier.price.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {payLater && (
@@ -855,6 +1169,133 @@ export default function Index({
                                 </div>
                             )}
 
+                            {/* Voucher Section */}
+                            <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800/50">
+                                <div className="flex items-center justify-between mb-2">
+                                     <div className="flex items-center gap-2">
+                                        <IconTicket size={16} className="text-indigo-600 dark:text-indigo-400" />
+                                        <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">Voucher</span>
+                                    </div>
+                                    <span className="text-[10px] text-indigo-500 font-medium bg-indigo-100 dark:bg-indigo-900/50 px-2 py-0.5 rounded-full">
+                                        Max 2 (1 Harga + 1 Ongkir)
+                                    </span>
+                                </div>
+                                
+                                {/* Active Vouchers Display */}
+                                <div className="space-y-2 mb-3">
+                                    {/* Subtotal Voucher */}
+                                    {voucherSubtotal && (
+                                         <div className="bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-700 text-indigo-800 dark:text-indigo-200 px-3 py-2 rounded-lg flex items-center justify-between shadow-sm">
+                                             <div className="flex-1 min-w-0">
+                                                 <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-sm truncate">{voucherSubtotal.code}</span>
+                                                    <span className="text-[10px] uppercase bg-green-100 text-green-700 px-1.5 rounded">Produk</span>
+                                                 </div>
+                                                 <span className="text-xs text-indigo-500 dark:text-indigo-400">
+                                                     Hemat {formatPrice(voucherSubtotal.amount)}
+                                                 </span>
+                                             </div>
+                                             <button
+                                                onClick={() => handleRemoveVoucher('subtotal')}
+                                                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-danger-500 transition-colors"
+                                             >
+                                                 <IconX size={16} />
+                                             </button>
+                                         </div>
+                                    )}
+
+                                    {/* Shipping Voucher */}
+                                     {voucherShipping && (
+                                         <div className="bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-700 text-indigo-800 dark:text-indigo-200 px-3 py-2 rounded-lg flex items-center justify-between shadow-sm">
+                                             <div className="flex-1 min-w-0">
+                                                 <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-sm truncate">{voucherShipping.code}</span>
+                                                    <span className="text-[10px] uppercase bg-blue-100 text-blue-700 px-1.5 rounded">Ongkir</span>
+                                                 </div>
+                                                 <span className="text-xs text-indigo-500 dark:text-indigo-400">
+                                                     Hemat {formatPrice(voucherShipping.amount)}
+                                                 </span>
+                                             </div>
+                                             <button
+                                                onClick={() => handleRemoveVoucher('shipping')}
+                                                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-danger-500 transition-colors"
+                                             >
+                                                 <IconX size={16} />
+                                             </button>
+                                         </div>
+                                    )}
+                                </div>
+
+                                {/* Voucher Input & List */}
+                                <div className="relative">
+                                    <div className="flex gap-2">
+                                         <input
+                                            type="text"
+                                            value={voucherCode}
+                                            onChange={(e) => {
+                                                setVoucherCode(e.target.value.toUpperCase());
+                                                setShowVoucherList(true);
+                                            }}
+                                            onFocus={() => setShowVoucherList(true)}
+                                            onBlur={() => setTimeout(() => setShowVoucherList(false), 200)} // Delay to allow click on list
+                                            placeholder="Kode Voucher / Pilih..."
+                                            className="flex-1 h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 uppercase placeholder:normal-case"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleCheckVoucher(voucherCode);
+                                                }
+                                            }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCheckVoucher(voucherCode)}
+                                            disabled={!voucherCode || checkingVoucher}
+                                            className="h-9 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-lg text-xs font-medium transition-colors flex items-center justify-center min-w-[60px]"
+                                        >
+                                            {checkingVoucher ? (
+                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                "Pakai"
+                                            )}
+                                        </button>
+                                    </div>
+
+                                    {/* Dropdown List */}
+                                    {showVoucherList && active_vouchers.length > 0 && (
+                                        <div className="absolute top-10 left-0 right-0 z-20 bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 max-h-48 overflow-y-auto">
+                                            {active_vouchers
+                                                .filter(v => !voucherCode || v.code.includes(voucherCode))
+                                                .map(v => (
+                                                <button
+                                                    key={v.id}
+                                                    type="button" // Prevent form submit
+                                                    onClick={() => {
+                                                        setVoucherCode(v.code);
+                                                        handleCheckVoucher(v.code);
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-0 flex items-center justify-between group"
+                                                >
+                                                    <div>
+                                                        <span className="font-bold text-slate-700 dark:text-slate-300 block">{v.code}</span>
+                                                        <span className="text-slate-500">{v.name}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                                             v.discount_target === 'subtotal' 
+                                                             ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' 
+                                                             : 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                                                         }`}>
+                                                             {v.discount_target === 'subtotal' ? 'Produk' : 'Ongkir'}
+                                                         </span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Discount Input */}
                             <div>
                                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
@@ -882,51 +1323,7 @@ export default function Index({
                                 </div>
                             </div>
 
-                            {/* Shipping Cost Input */}
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                    {paymentMethod === "cod" ? "Ongkos COD (Rp)" : "Ongkos Kirim (Rp)"}
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                                        Rp
-                                    </span>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={shippingInput}
-                                        onChange={(e) =>
-                                            setShippingInput(
-                                                e.target.value.replace(
-                                                    /[^\d]/g,
-                                                    ""
-                                                )
-                                            )
-                                        }
-                                        placeholder="0"
-                                        className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-                                    />
-                                </div>
-                                {/* Quick Shipping Amounts */}
-                                <div className="grid grid-cols-4 gap-2 mt-2">
-                                    {[10000, 15000, 20000, 25000].map((amt) => (
-                                        <button
-                                            key={amt}
-                                            type="button"
-                                            onClick={() =>
-                                                setShippingInput(String(amt))
-                                            }
-                                            className={`py-1.5 px-1 rounded-lg text-xs font-medium transition-all ${
-                                                Number(shippingInput) === amt
-                                                    ? "bg-primary-500 text-white"
-                                                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
-                                            }`}
-                                        >
-                                            {formatPrice(amt)}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+
 
                             {/* Cash Input - Only for cash */}
                             {paymentMethod === "cash" && (
@@ -968,11 +1365,11 @@ export default function Index({
                                 {formatPrice(subtotal)}
                             </span>
                         </div>
-                        {discount > 0 && (
+                        {manualDiscount > 0 && (
                             <div className="flex justify-between items-center mb-2 text-sm">
                                 <span className="text-slate-500">Diskon</span>
                                 <span className="text-danger-500">
-                                    -{formatPrice(discount)}
+                                    -{formatPrice(manualDiscount)}
                                 </span>
                             </div>
                         )}

@@ -100,4 +100,41 @@ class SettingController extends Controller
 
         return back()->with('success', 'Profil toko berhasil diperbarui');
     }
+
+    /**
+     * Show shipping settings page
+     */
+    public function shipping()
+    {
+        $settings = [
+            'shop_postal_code'  => Setting::get('shop_postal_code', ''),
+            'shipping_provider' => Setting::get('shipping_provider', 'biteship'),
+            'biteship_api_key'  => Setting::get('biteship_api_key', ''),
+            'biteship_base_url' => Setting::get('biteship_base_url', 'https://api.biteship.com'),
+        ];
+
+        return Inertia::render('Dashboard/Settings/Shipping', [
+            'settings' => $settings,
+        ]);
+    }
+
+    /**
+     * Update shipping settings
+     */
+    public function updateShipping(Request $request)
+    {
+        $request->validate([
+            'shop_postal_code' => 'required|string|max:10',
+            'shipping_provider' => 'required|string|in:biteship',
+            'biteship_api_key' => 'required|string',
+            'biteship_base_url' => 'required|string|url',
+        ]);
+
+        Setting::set('shop_postal_code', $request->shop_postal_code, 'Kode Pos Toko');
+        Setting::set('shipping_provider', $request->shipping_provider, 'Provider Pengiriman');
+        Setting::set('biteship_api_key', $request->biteship_api_key, 'API Key Biteship');
+        Setting::set('biteship_base_url', $request->biteship_base_url, 'Base URL Biteship');
+
+        return back()->with('success', 'Konfigurasi pengiriman berhasil diperbarui');
+    }
 }

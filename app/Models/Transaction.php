@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Carbon\Carbon;
@@ -23,6 +24,7 @@ class Transaction extends Model
         'change',
         'discount',
         'shipping_cost',
+        'shipping_method',
         'grand_total',
         'payment_method',
         'payment_status',
@@ -48,8 +50,8 @@ class Transaction extends Model
      */
     public function customer()
     {
-return $this->belongsTo(Customer::class)->withTrashed();
-}
+        return $this->belongsTo(Customer::class)->withTrashed();
+    }
 
     /**
      * cashier
@@ -81,6 +83,16 @@ return $this->belongsTo(Customer::class)->withTrashed();
         return $this->hasMany(Profit::class);
     }
 
+    public function voucherUsage()
+    {
+        return $this->hasOne(VoucherUsage::class);
+    }
+
+    public function voucherUsages()
+    {
+        return $this->hasMany(VoucherUsage::class);
+    }
+
     public function receivable()
     {
         return $this->hasOne(Receivable::class);
@@ -88,13 +100,15 @@ return $this->belongsTo(Customer::class)->withTrashed();
 
     /**
      * createdAt
-     *
-     * @return Attribute
      */
     protected function createdAt(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => Carbon::parse($value)->format('d-M-Y H:i:s'),
+            get: fn ($value) => Carbon::parse($value)->format('d-M-Y H:i:s'),
         );
+    }
+    public function shipping()
+    {
+        return $this->hasOne(TransactionShipping::class);
     }
 }

@@ -139,7 +139,7 @@ class CategoryController extends Controller
         //find by ID
         $category = Category::findOrFail($id);
 
-        if($category->products()->count() > 0) {
+        if($category->products()->whereNull('deleted_at')->count() > 0) {
             return back()->with('error', 'Kategori tidak dapat dihapus karena masih memiliki data produk!');
         }
 

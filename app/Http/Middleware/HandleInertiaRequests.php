@@ -77,6 +77,8 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
+                'rates' => fn () => $request->session()->get('rates'),
+                'destination' => fn () => $request->session()->get('destination'),
             ],
             'notifications' => $notifications ?? [],
             'storeProfile' => $storeProfile,

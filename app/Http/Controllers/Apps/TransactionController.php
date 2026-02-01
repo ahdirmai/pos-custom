@@ -90,6 +90,13 @@ class TransactionController extends Controller
         $bankAccounts = \App\Models\BankAccount::active()->ordered()->get();
 
         $provinces = Province::select('code', 'name')->orderBy('name')->get();
+        
+        // Active Vouchers
+        $activeVouchers = \App\Models\Voucher::where('is_active', true)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->whereRaw('quota > used_count')
+            ->get();
 
         return Inertia::render('Dashboard/Transactions/Index', [
             'carts' => $carts,
@@ -97,6 +104,7 @@ class TransactionController extends Controller
             'heldCarts' => $heldCarts,
             'customers' => $customers,
             'products' => $products,
+            'active_vouchers' => $activeVouchers,
             'categories' => $categories,
             'paymentGateways' => $paymentSetting?->enabledGateways() ?? [],
             'defaultPaymentGateway' => $defaultGateway,
@@ -475,6 +483,141 @@ class TransactionController extends Controller
     }
 
     /**
+     * checkVoucher
+     *
+     * @param  mixed  $request
+     * @return void
+     */
+    public function checkVoucher(Request $request)
+    {
+        $request->validate([
+            'voucher_code' => 'required|string',
+            'subtotal' => 'required|numeric|min:0',
+            'manual_discount' => 'nullable|numeric|min:0',
+            'shipping_cost' => 'nullable|numeric|min:0',
+            'customer_id' => 'required',
+        ]);
+
+        $voucher = \App\Models\Voucher::where('code', $request->voucher_code)->first();
+
+        // 1. Check if voucher exists
+        if (! $voucher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher tidak ditemukan',
+            ], 404);
+        }
+
+        // 2. Check if active
+        if (! $voucher->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher tidak aktif',
+            ], 422);
+        }
+
+        // 3. Check date range
+        $now = now();
+        if ($now->lt($voucher->start_date)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher belum berlaku',
+            ], 422);
+        }
+        if ($now->gt($voucher->end_date)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher sudah kadaluarsa',
+            ], 422);
+        }
+
+        // 4. Check global quota
+        if ($voucher->quota <= $voucher->used_count) {
+             return response()->json([
+                'success' => false,
+                'message' => 'Kuota voucher telah habis',
+            ], 422);
+        }
+
+        // 5. Check user quota (if limit_per_user is set)
+        if ($voucher->limit_per_user > 0) {
+            if ($request->customer_id) {
+                $userUsage = \App\Models\VoucherUsage::where('voucher_id', $voucher->id)
+                    ->whereHas('transaction', function($q) use ($request) {
+                        $q->where('customer_id', $request->customer_id);
+                    })->count();
+                
+                if ($userUsage >= $voucher->limit_per_user) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Batas penggunaan voucher per user tercapai',
+                    ], 422);
+                }
+            }
+        }
+
+        // 6. Calculate Net Before Voucher based on Type
+        $subtotal = $request->subtotal;
+        $manualDiscount = $request->manual_discount ?? 0;
+        $shippingCost = $request->shipping_cost ?? 0;
+        
+        $netBeforeVoucher = 0;
+        
+        if ($voucher->discount_target === 'subtotal') {
+            $netBeforeVoucher = max(0, $subtotal - $manualDiscount);
+            $comparisonAmount = $netBeforeVoucher;
+        } else {
+            // Shipping
+            $netBeforeVoucher = $shippingCost;
+            // Usually minimum spend for shipping voucher is based on Subtotal
+            // Decision: Use Net Subtotal (after manual discount) for min spend check of shipping voucher as well
+            $comparisonAmount = max(0, $subtotal - $manualDiscount);
+        }
+
+        // 7. Check Minimum Spend
+        if ($comparisonAmount < $voucher->min_spend) {
+             return response()->json([
+                'success' => false,
+                'message' => 'Minimal belanja tidak terpenuhi (' . ($voucher->discount_target == 'shipping' ? 'untuk subsidi ongkir' : 'setelah diskon manual') . '). Min: ' . number_format($voucher->min_spend),
+            ], 422);
+        }
+
+        // 8. Calculate Discount
+        $discountAmount = 0;
+        if ($voucher->discount_type === 'fixed') {
+            $discountAmount = $voucher->amount;
+        } else {
+            // Percentage
+            $baseForPercentage = ($voucher->discount_target === 'subtotal') ? $netBeforeVoucher : $shippingCost;
+            $discountAmount = ($baseForPercentage * $voucher->amount) / 100;
+            // Check max discount
+            if ($voucher->max_discount > 0 && $discountAmount > $voucher->max_discount) {
+                $discountAmount = $voucher->max_discount;
+            }
+        }
+
+        // Ensure discount doesn't exceed the amount to be paid for that component
+        // Note: For 'subtotal' type, it's capped by netBeforeVoucher
+        // For 'shipping' type, it's capped by shippingCost
+        $capAmount = ($voucher->discount_target === 'subtotal') ? $netBeforeVoucher : $shippingCost;
+        if ($discountAmount > $capAmount) {
+            $discountAmount = $capAmount; 
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Voucher valid',
+            'data' => [
+                'code' => $voucher->code,
+                'amount' => $discountAmount,
+                'type' => $voucher->discount_type,
+                'target' => $voucher->discount_target, // subtotal or shipping
+                'value' => $voucher->amount
+            ]
+        ]);
+    }
+
+    /**
      * store
      *
      * @param  mixed  $request
@@ -513,8 +656,83 @@ class TransactionController extends Controller
 
         $invoice = Setting::get('store_code', 'TRX') . '-' . Str::upper($random);
         $isCashPayment = empty($paymentGateway) && ! $isPayLater;
+        
+        // Re-calculate Logic Server Side
+        // 1. Get Carts
+        $carts = Cart::where('cashier_id', auth()->user()->id)->get();
+        if ($carts->isEmpty()) {
+            return back()->with('error', 'Keranjang kosong');
+        }
+        $subtotal = $carts->sum('price');
+        $manualDiscount = $request->discount ?? 0;
+        $shippingCost = $request->shipping_cost ?? 0;
+        
+        // 2. Resolve Vouchers
+        // Incoming input can be array 'voucher_codes'
+        $voucherCodes = $request->input('voucher_codes', []); 
+        // Backward compatibility if single 'voucher_code' sent
+        if (empty($voucherCodes) && $request->voucher_code) {
+             $voucherCodes = [$request->voucher_code];
+        }
+
+        $activeVouchers = [];
+        $totalVoucherDiscountSubtotal = 0;
+        $totalVoucherDiscountShipping = 0;
+
+        foreach ($voucherCodes as $code) {
+             $voucher = \App\Models\Voucher::where('code', $code)->first();
+             // Minimal validation just to be safe they are still valid/active
+             if ($voucher && $voucher->is_active && $voucher->quota > $voucher->used_count) {
+                 $netSubtotal = max(0, $subtotal - $manualDiscount);
+                 $comparisonAmount = $netSubtotal; // Min spend always check against subtotal
+                 
+                 if ($comparisonAmount >= $voucher->min_spend) {
+                     $dAmount = 0;
+                     if ($voucher->discount_target === 'subtotal') {
+                          // Check if we already have a subtotal voucher? Rule says max 1 each.
+                          // Ideally controller should reject if multiple of same type, but let's just accept first or accumulate if allowed. 
+                          // Requirement: "1 voucher diskon harga total dan 1 voucer diskon ongkir"
+                          // So we only take ONE of each type.
+                          $alreadyHasSubtotal = collect($activeVouchers)->contains('target', 'subtotal');
+                          if (!$alreadyHasSubtotal) {
+                                if ($voucher->discount_type === 'fixed') {
+                                    $dAmount = $voucher->amount;
+                                } else {
+                                    $dAmount = ($netSubtotal * $voucher->amount) / 100;
+                                    if ($voucher->max_discount > 0) $dAmount = min($dAmount, $voucher->max_discount);
+                                }
+                                $dAmount = min($dAmount, $netSubtotal);
+                                $totalVoucherDiscountSubtotal += $dAmount;
+                                $activeVouchers[] = ['model' => $voucher, 'amount' => $dAmount, 'target' => 'subtotal'];
+                          }
+                     } else {
+                          // Shipping
+                          $alreadyHasShipping = collect($activeVouchers)->contains('target', 'shipping');
+                          if (!$alreadyHasShipping) {
+                                if ($voucher->discount_type === 'fixed') {
+                                    $dAmount = $voucher->amount;
+                                } else {
+                                    $dAmount = ($shippingCost * $voucher->amount) / 100;
+                                    if ($voucher->max_discount > 0) $dAmount = min($dAmount, $voucher->max_discount);
+                                }
+                                $dAmount = min($dAmount, $shippingCost);
+                                $totalVoucherDiscountShipping += $dAmount;
+                                $activeVouchers[] = ['model' => $voucher, 'amount' => $dAmount, 'target' => 'shipping'];
+                          }
+                     }
+                 }
+             }
+        }
+
+        // 3. Final Calculation
+        // Grand Total = (Subtotal - ManualDiscount - VoucherSubtotal) + (ShippingCost - VoucherShipping)
+        $msgSubtotal = max(0, $subtotal - $manualDiscount - $totalVoucherDiscountSubtotal);
+        $msgShipping = max(0, $shippingCost - $totalVoucherDiscountShipping);
+        
+        $grandTotal = $msgSubtotal + $msgShipping;
+
         $cashAmount = $isCashPayment ? $request->cash : 0;
-        $changeAmount = $isCashPayment ? $request->change : 0;
+        $changeAmount = $isCashPayment ? ($cashAmount - $grandTotal) : 0;
 
         $transaction = DB::transaction(function () use (
             $request,
@@ -523,7 +741,13 @@ class TransactionController extends Controller
             $changeAmount,
             $paymentGateway,
             $isCashPayment,
-            $isPayLater
+            $isPayLater,
+            $grandTotal,
+            $totalVoucherDiscountSubtotal,
+            $totalVoucherDiscountShipping,
+            $activeVouchers,
+            $carts,
+            $manualDiscount
         ) {
             $transaction = Transaction::create([
                 'cashier_id' => auth()->user()->id,
@@ -531,15 +755,37 @@ class TransactionController extends Controller
                 'invoice' => $invoice,
                 'cash' => $cashAmount,
                 'change' => $changeAmount,
-                'discount' => $request->discount,
+                'discount' => $manualDiscount + $totalVoucherDiscountSubtotal + $totalVoucherDiscountShipping, // Store total distinct given
                 'shipping_cost' => $request->shipping_cost ?? 0,
-                'grand_total' => $request->grand_total,
+                'shipping_method' => $request->shipping_method ?? 'off',
+                'grand_total' => $grandTotal,
                 'payment_method' => $isPayLater ? 'pay_later' : ($paymentGateway ?: 'cash'),
                 'payment_status' => $isCashPayment ? 'paid' : ($isPayLater ? 'unpaid' : 'pending'),
                 'bank_account_id' => $paymentGateway === 'bank_transfer' ? $request->bank_account_id : null,
             ]);
 
-            $carts = Cart::where('cashier_id', auth()->user()->id)->get();
+            // Save Shipping Detail if using vendor
+            if ($request->shipping_method === 'using_vendor') {
+                \App\Models\TransactionShipping::create([
+                    'transaction_id' => $transaction->id,
+                    'shipping_courier_code' => $request->shipping_courier_code,
+                    'shipping_courier_service' => $request->shipping_courier_service,
+                    'shipping_cost' => $request->shipping_cost,
+                    'shipping_status' => 'pending', // Default status
+                ]);
+            }
+
+            // Save Voucher Usage(s)
+            foreach ($activeVouchers as $av) {
+                 \App\Models\VoucherUsage::create([
+                     'voucher_id' => $av['model']->id,
+                     'transaction_id' => $transaction->id,
+                     'customer_id' => $request->customer_id,
+                     'discount_amount' => $av['amount'],
+                     'used_at' => now(),
+                 ]);
+                 $av['model']->increment('used_count');
+            }
 
             foreach ($carts as $cart) {
                 $transaction->details()->create([
@@ -570,7 +816,7 @@ class TransactionController extends Controller
                     'customer_id' => $request->customer_id,
                     'transaction_id' => $transaction->id,
                     'invoice' => $invoice,
-                    'total' => $request->grand_total,
+                    'total' => $grandTotal,
                     'paid' => 0,
                     'due_date' => $request->due_date,
                     'status' => 'unpaid',
@@ -601,7 +847,7 @@ class TransactionController extends Controller
     public function print($invoice)
     {
         // get transaction
-        $transaction = Transaction::with('details.product', 'cashier', 'customer', 'receivable')->where('invoice', $invoice)->firstOrFail();
+        $transaction = Transaction::with('details.product', 'cashier', 'customer', 'receivable', 'voucherUsages.voucher', 'shipping')->where('invoice', $invoice)->firstOrFail();
 
         return Inertia::render('Dashboard/Transactions/Print', [
             'transaction' => $transaction,

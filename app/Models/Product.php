@@ -36,7 +36,7 @@ class Product extends Model
      */
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class)->withTrashed();
     }
 
     /**
@@ -57,6 +57,16 @@ class Product extends Model
         return Attribute::make(
             get: fn ($value) => asset('/storage/products/'.$value),
         );
+    }
+
+    /**
+     * productDetail
+     *
+     * @return void
+     */
+    public function productDetail()
+    {
+        return $this->hasOne(ProductDetail::class);
     }
 
     /**

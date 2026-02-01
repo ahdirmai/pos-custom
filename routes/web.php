@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Apps\CategoryController;
 use App\Http\Controllers\Apps\CustomerController;
 use App\Http\Controllers\Apps\PaymentSettingController;
@@ -105,6 +106,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     // route transaction store
     Route::post('/transactions/store', [TransactionController::class, 'store'])->middleware('permission:transactions-access')->name('transactions.store');
     Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->middleware('permission:transactions-access')->name('transactions.print');
+    Route::post('/transactions/check-voucher', [TransactionController::class, 'checkVoucher'])->middleware('permission:transactions-access')->name('transactions.checkVoucher');
     Route::get('/transactions-history', [TransactionController::class, 'history'])->middleware('permission:transactions-access')->name('transactions.history');
     // receivables (nota barang)
     Route::get('/receivables', [\App\Http\Controllers\Apps\ReceivableController::class, 'index'])->middleware('permission:receivables-access')->name('receivables.index');
@@ -121,6 +123,14 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('/payables/{payable}', [\App\Http\Controllers\Apps\PayableController::class, 'show'])->middleware('permission:payables-access')->name('payables.show');
     Route::post('/payables/{payable}/pay', [\App\Http\Controllers\Apps\PayableController::class, 'pay'])->middleware('permission:payables-pay')->name('payables.pay');
 
+    // vouchers
+    Route::resource('vouchers', VoucherController::class);
+
+    // shipping couriers
+    Route::resource('shipping-couriers', \App\Http\Controllers\Apps\ShippingCourierController::class);
+    Route::patch('/shipping-couriers/{shippingCourier}/toggle', [\App\Http\Controllers\Apps\ShippingCourierController::class, 'toggleActive'])->middleware('permission:dashboard-access')->name('shipping-couriers.toggle');
+
+
     // pdf documents
     Route::get('/documents/transactions/{invoice}/pdf/invoice', [\App\Http\Controllers\DocumentController::class, 'invoice'])->middleware('permission:transactions-access')->name('pdf.transactions.invoice');
     Route::get('/documents/transactions/{invoice}/pdf/receipt/{size?}', [\App\Http\Controllers\DocumentController::class, 'receipt'])->middleware('permission:transactions-access')->name('pdf.transactions.receipt');
@@ -136,6 +146,12 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/settings/target', [\App\Http\Controllers\Apps\SettingController::class, 'updateTarget'])->middleware('permission:dashboard-access')->name('settings.target.update');
     Route::get('/settings/store', [\App\Http\Controllers\Apps\SettingController::class, 'storeProfile'])->middleware('permission:dashboard-access')->name('settings.store');
     Route::post('/settings/store', [\App\Http\Controllers\Apps\SettingController::class, 'updateStoreProfile'])->middleware('permission:dashboard-access')->name('settings.store.update');
+    Route::get('/settings/shipping', [\App\Http\Controllers\Apps\SettingController::class, 'shipping'])->middleware('permission:dashboard-access')->name('settings.shipping');
+    Route::post('/settings/shipping', [\App\Http\Controllers\Apps\SettingController::class, 'updateShipping'])->middleware('permission:dashboard-access')->name('settings.shipping.update');
+    
+    // shipping testing (cek ongkir)
+    Route::get('/settings/shipping/test', [\App\Http\Controllers\Apps\ShippingController::class, 'test'])->middleware('permission:dashboard-access')->name('settings.shipping.test');
+    Route::post('/settings/shipping/check-rates', [\App\Http\Controllers\Apps\ShippingController::class, 'checkRates'])->middleware('permission:dashboard-access')->name('settings.shipping.check-rates');
 
     // settings bank accounts
     Route::get('/settings/bank-accounts', [\App\Http\Controllers\Apps\BankAccountController::class, 'index'])->middleware('permission:payment-settings-access')->name('settings.bank-accounts.index');

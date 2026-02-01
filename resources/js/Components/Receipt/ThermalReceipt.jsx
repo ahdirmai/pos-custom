@@ -147,6 +147,12 @@ export default function ThermalReceipt({
                         <span>-{formatPrice(discount)}</span>
                     </div>
                 )}
+                {transaction?.shipping_cost > 0 && (
+                     <div className="flex justify-between">
+                        <span>Ongkir</span>
+                        <span>+{formatPrice(transaction.shipping_cost)}</span>
+                    </div>
+                )}
                 <div className="flex justify-between font-bold text-sm">
                     <span>TOTAL</span>
                     <span>{formatPrice(total)}</span>
@@ -272,6 +278,12 @@ export function ThermalReceipt58mm({
             ))}
 
             <pre>{line}</pre>
+            {transaction?.shipping_cost > 0 && (
+                <div className="flex justify-between">
+                    <span>Ongkir</span>
+                    <span>{formatPrice(transaction.shipping_cost)}</span>
+                </div>
+            )}
             <div className="flex justify-between font-bold">
                 <span>TOTAL</span>
                 <span>{formatPrice(transaction?.grand_total)}</span>
