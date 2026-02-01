@@ -757,11 +757,23 @@ class TransactionController extends Controller
                 'change' => $changeAmount,
                 'discount' => $manualDiscount + $totalVoucherDiscountSubtotal + $totalVoucherDiscountShipping, // Store total distinct given
                 'shipping_cost' => $request->shipping_cost ?? 0,
+                'shipping_method' => $request->shipping_method ?? 'off',
                 'grand_total' => $grandTotal,
                 'payment_method' => $isPayLater ? 'pay_later' : ($paymentGateway ?: 'cash'),
                 'payment_status' => $isCashPayment ? 'paid' : ($isPayLater ? 'unpaid' : 'pending'),
                 'bank_account_id' => $paymentGateway === 'bank_transfer' ? $request->bank_account_id : null,
             ]);
+
+            // Save Shipping Detail if using vendor
+            if ($request->shipping_method === 'using_vendor') {
+                \App\Models\TransactionShipping::create([
+                    'transaction_id' => $transaction->id,
+                    'shipping_courier_code' => $request->shipping_courier_code,
+                    'shipping_courier_service' => $request->shipping_courier_service,
+                    'shipping_cost' => $request->shipping_cost,
+                    'shipping_status' => 'pending', // Default status
+                ]);
+            }
 
             // Save Voucher Usage(s)
             foreach ($activeVouchers as $av) {
@@ -835,7 +847,7 @@ class TransactionController extends Controller
     public function print($invoice)
     {
         // get transaction
-        $transaction = Transaction::with('details.product', 'cashier', 'customer', 'receivable', 'voucherUsages.voucher')->where('invoice', $invoice)->firstOrFail();
+        $transaction = Transaction::with('details.product', 'cashier', 'customer', 'receivable', 'voucherUsages.voucher', 'shipping')->where('invoice', $invoice)->firstOrFail();
 
         return Inertia::render('Dashboard/Transactions/Print', [
             'transaction' => $transaction,

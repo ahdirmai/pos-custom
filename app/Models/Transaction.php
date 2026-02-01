@@ -24,6 +24,7 @@ class Transaction extends Model
         'change',
         'discount',
         'shipping_cost',
+        'shipping_method',
         'grand_total',
         'payment_method',
         'payment_status',

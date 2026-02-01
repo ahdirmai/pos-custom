@@ -33,6 +33,7 @@ import {
     IconTruck,
     IconTicket,
     IconX,
+    IconMapPin,
 } from "@tabler/icons-react";
 
 const formatPrice = (value = 0) =>
@@ -116,11 +117,88 @@ export default function Index({
     // State for Voucher
     const [voucherSubtotal, setVoucherSubtotal] = useState(null); // { code, amount, type, value, target }
     const [voucherShipping, setVoucherShipping] = useState(null); // { code, amount, type, value, target }
-    
-    // UI State for Voucher Input
     const [voucherCode, setVoucherCode] = useState("");
     const [checkingVoucher, setCheckingVoucher] = useState(false);
     const [showVoucherList, setShowVoucherList] = useState(false);
+
+    // State for Shipping
+    const [shippingMethod, setShippingMethod] = useState("off"); // 'off', 'manual', 'using_vendor'
+    const [selectedCourier, setSelectedCourier] = useState(null);
+    const [shippingRates, setShippingRates] = useState([]);
+    const [isCheckingRates, setIsCheckingRates] = useState(false);
+
+    const handleCheckRates = async () => {
+        if (!selectedCustomer) {
+            toast.error("Pilih pelanggan terlebih dahulu");
+            return;
+        }
+
+        if (!selectedCustomer.postal_code) {
+             // Fallback logic if postal_code not directly on customer root? 
+             // We just updated Customer model to have postal_code attribute.
+             // But in JS key conversion, it might be camelCase 'postalCode' or snake_case 'postal_code' depending on serialization.
+             // Laravel default toArray() preserves snake_case unless mapped.
+             // We can check.
+             toast.error("Data pelanggan tidak memiliki kode pos");
+             return;
+        }
+        
+        setIsCheckingRates(true);
+        setShippingRates([]);
+
+        try {
+            // Calculate total weight (default 1000g if not set in product)
+            const totalWeight = carts.reduce((acc, item) => acc + (1000 * item.qty), 0); // Temporary assumption: 1kg per item if not defined. Ideally: item.product.weight
+            
+            // Build items payload
+            const itemsPayload = carts.map(c => ({
+                name: c.product.title,
+                value: c.product.sell_price,
+                weight: 1000, // Hardcoded for now, or fetch from product if available
+                quantity: c.qty
+            }));
+
+            const response = await axios.post(route('settings.shipping.check-rates'), {
+                destination_postal_code: selectedCustomer.postal_code,
+                weight: totalWeight,
+                // items: itemsPayload // Controller might need update to accept items if we want exact detail
+            });
+
+            if (response.data?.rates) {
+                 // Check if it was returned via flash (redirect back with Inertia) or JSON?
+                 // Wait, the controller returns `back()->with(...)` which is an Inertia response.
+                 // Calling it via axios will return the HTML/Inertia page content, NOT JSON data directly if it is a standard controller method returning Inertia render/redirect.
+                 // We need a JSON endpoint or we need to use `router.post` and handle `onSuccess`.
+                 // But `router.post` reloads the page/props. That might be okay.
+                 
+                 // HOWEVER, `Index.jsx` is a POS page, state reload might be jarring.
+                 // Better to have a dedicated JSON endpoint for check rates.
+                 // OPTION 2: Use `router.post` with `preserveState: true`.
+            }
+            // Let's use router.post instead for consistency with Inertia
+        } catch (e) {
+            console.error(e);
+        }
+        // Actually, let's use router for the call to utilize existing controller logic
+        router.post(route('settings.shipping.check-rates'), {
+            destination_postal_code: selectedCustomer.postal_code,
+            weight: 1000, // Dummy weight for now
+        }, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: (page) => {
+                if (page.props.flash.rates) {
+                    setShippingRates(page.props.flash.rates);
+                    toast.success("Ongkir berhasil dicek");
+                }
+                setIsCheckingRates(false);
+            },
+            onError: () => {
+                toast.error("Gagal cek ongkir");
+                setIsCheckingRates(false);
+            }
+        });
+    };
 
     // Calculations
     const manualDiscount = useMemo(
@@ -471,6 +549,10 @@ export default function Index({
                 ].filter(Boolean), // Remove nulls
                 
                 shipping_cost: shipping,
+                shipping_method: shippingMethod,
+                shipping_courier_code: selectedCourier?.code,
+                shipping_courier_service: selectedCourier?.service,
+                
                 grand_total: payable,
                 cash: isCashPayment ? cash : payable,
                 change: isCashPayment ? Math.max(cash - payable, 0) : 0,
@@ -599,6 +681,28 @@ export default function Index({
                             error={errors?.customer_id}
                             label="Pelanggan"
                         />
+                        {selectedCustomer && (
+                            <div className="mt-3 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border border-slate-100 dark:border-slate-700">
+                                <p className="font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                                    <IconMapPin size={12} />
+                                    Alamat Pengiriman
+                                </p>
+                                <p className="leading-relaxed">
+                                    {selectedCustomer.address || '-'}
+                                </p>
+                                {(selectedCustomer.village_name || selectedCustomer.district_name || selectedCustomer.regency_name || selectedCustomer.province_name) && (
+                                    <p className="mt-1 text-[10px] opacity-75">
+                                        {[
+                                            selectedCustomer.village_name,
+                                            selectedCustomer.district_name,
+                                            selectedCustomer.regency_name,
+                                            selectedCustomer.province_name,
+                                            selectedCustomer.postal_code
+                                        ].filter(Boolean).join(', ')}
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Held Transactions & Alerts */}
@@ -772,6 +876,118 @@ export default function Index({
                                         />
                                     </span>
                                 </label>
+                            </div>
+
+                            {/* Shipping Section */}
+                            <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-slate-50 dark:bg-slate-800/50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                        <IconTruck size={16} />
+                                        {paymentMethod === "cod" ? "Biaya COD / Ongkir" : "Pengiriman (Ongkir)"}
+                                    </h3>
+                                    <select
+                                        value={shippingMethod}
+                                        onChange={(e) => {
+                                            setShippingMethod(e.target.value);
+                                            setShippingInput("");
+                                            setSelectedCourier(null);
+                                            setShippingRates([]);
+                                        }}
+                                        className="h-8 pl-2 pr-8 text-xs rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-primary-500 focus:border-primary-500"
+                                    >
+                                        <option value="off">Off</option>
+                                        <option value="manual">Manual</option>
+                                        <option value="using_vendor">Cek Ongkir</option>
+                                    </select>
+                                </div>
+
+                                {shippingMethod !== "using_vendor" && (
+                                    <div className="relative">
+                                        <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-xs ${shippingMethod === 'off' ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400'}`}>Rp</span>
+                                        <input
+                                            type="number"
+                                            value={shippingMethod === 'off' ? '' : shippingInput}
+                                            onChange={(e) => setShippingInput(e.target.value)}
+                                            disabled={shippingMethod === 'off'}
+                                            placeholder="0"
+                                            className={`w-full h-9 pl-8 pr-3 text-xs rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-primary-500 focus:border-primary-500 disabled:bg-slate-100 disabled:dark:bg-slate-800 disabled:text-slate-400 disabled:cursor-not-allowed`}
+                                        />
+                                    </div>
+                                )}
+
+                                {shippingMethod === "using_vendor" && (
+                                    <div className="space-y-3">
+                                        {!selectedCourier ? (
+                                            <>
+                                                <button
+                                                    onClick={handleCheckRates}
+                                                    disabled={isCheckingRates}
+                                                    className="w-full h-9 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                                                >
+                                                    {isCheckingRates ? "Memuat..." : (
+                                                        <>
+                                                            <IconTruck size={14} />
+                                                            Cek Ongkir
+                                                        </>
+                                                    )}
+                                                </button>
+
+                                                {shippingRates.length > 0 && (
+                                                    <div className="space-y-2 mt-2 max-h-[200px] overflow-y-auto">
+                                                       {shippingRates.map((rate, idx) => (
+                                                            <div 
+                                                                key={idx}
+                                                                onClick={() => {
+                                                                    setShippingInput(String(rate.price));
+                                                                    setSelectedCourier({
+                                                                        code: rate.courier_code,
+                                                                        service: rate.courier_service_code,
+                                                                        name: rate.courier_name,
+                                                                        service_name: rate.courier_service_name,
+                                                                        price: rate.price,
+                                                                        etd: rate.duration
+                                                                    });
+                                                                    setShippingRates([]); // Hide list after selection
+                                                                }} 
+                                                                className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:border-primary-500 transition-colors"
+                                                            >
+                                                                <div className="flex justify-between items-start">
+                                                                    <div>
+                                                                        <p className="text-xs font-bold text-slate-800 dark:text-white uppercase">{rate.company} - {rate.courier_service_name}</p>
+                                                                        <p className="text-[10px] text-slate-500">Est: {rate.duration}</p>
+                                                                    </div>
+                                                                    <p className="text-xs font-bold text-primary-600">Rp {rate.price.toLocaleString()}</p>
+                                                                </div>
+                                                            </div>
+                                                       ))}
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div className="p-3 bg-white dark:bg-slate-800 border border-primary-200 dark:border-primary-800 rounded-lg relative">
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedCourier(null);
+                                                        setShippingInput("");
+                                                    }}
+                                                    className="absolute top-2 right-2 text-slate-400 hover:text-red-500"
+                                                >
+                                                    <IconX size={14} />
+                                                </button>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                     <IconTruck size={16} className="text-primary-500" />
+                                                     <p className="text-xs font-bold text-slate-800 dark:text-white uppercase">
+                                                        {selectedCourier.name} - {selectedCourier.service_name}
+                                                     </p>
+                                                </div>
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="text-slate-500">Est: {selectedCourier.etd}</span>
+                                                    <span className="font-bold text-primary-600">Rp {selectedCourier.price.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {payLater && (
@@ -1107,51 +1323,7 @@ export default function Index({
                                 </div>
                             </div>
 
-                            {/* Shipping Cost Input */}
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                    {paymentMethod === "cod" ? "Ongkos COD (Rp)" : "Ongkos Kirim (Rp)"}
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                                        Rp
-                                    </span>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={shippingInput}
-                                        onChange={(e) =>
-                                            setShippingInput(
-                                                e.target.value.replace(
-                                                    /[^\d]/g,
-                                                    ""
-                                                )
-                                            )
-                                        }
-                                        placeholder="0"
-                                        className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-                                    />
-                                </div>
-                                {/* Quick Shipping Amounts */}
-                                <div className="grid grid-cols-4 gap-2 mt-2">
-                                    {[10000, 15000, 20000, 25000].map((amt) => (
-                                        <button
-                                            key={amt}
-                                            type="button"
-                                            onClick={() =>
-                                                setShippingInput(String(amt))
-                                            }
-                                            className={`py-1.5 px-1 rounded-lg text-xs font-medium transition-all ${
-                                                Number(shippingInput) === amt
-                                                    ? "bg-primary-500 text-white"
-                                                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
-                                            }`}
-                                        >
-                                            {formatPrice(amt)}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+
 
                             {/* Cash Input - Only for cash */}
                             {paymentMethod === "cash" && (
