@@ -87,12 +87,15 @@ class BiteshipService
             ])->post("{$this->baseUrl}/v1/rates/couriers", $payload);
 
             if ($response->successful()) {
+                // Parse response to ensure correct format
                 return $response->json();
             }
 
             Log::error('Biteship checkRates Error: '.$response->body());
 
-            return ['error' => 'Gagal mengambil tarif pengiriman dari Biteship. '.$response->json('error')];
+            // Handle specific Biteship errors if possible
+            $errorMsg = $response->json('error') ?? 'Gagal mengambil tarif pengiriman.';
+            return ['error' => $errorMsg];
 
         } catch (\Exception $e) {
             Log::error('Biteship checkRates Exception: '.$e->getMessage());

@@ -7,7 +7,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ThemeSwitcherProvider } from './Context/ThemeSwitcherContext';
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-import { CartProvider } from '@/Context/CartContext';
+
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -17,9 +17,7 @@ createInertiaApp({
 
         root.render(
             <ThemeSwitcherProvider>
-                <CartProvider>
-                    <App {...props} />
-                </CartProvider>
+                <App {...props} />
             </ThemeSwitcherProvider>
         );
     },

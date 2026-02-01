@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
-import UserLayout from '@/Layouts/UserLayout';
+import { Head, Link, router } from '@inertiajs/react';
+import AuthenticatedUserLayout from '@/Layouts/AuthenticatedUserLayout';
+import AddressModal from '@/Components/EndUser/AddressModal';
 
-export default function ProfileIndex({ user, addresses, orders, wishlist, pendingReviews }) {
+export default function ProfileIndex({ user, provinces, addresses, orders, wishlist, pendingReviews }) {
     const [activeTab, setActiveTab] = useState('profile');
     const [orderFilter, setOrderFilter] = useState('all');
+    const [showAddressModal, setShowAddressModal] = useState(false);
+    const [editingAddress, setEditingAddress] = useState(null);
 
     const formatPrice = (value) => 
         new Intl.NumberFormat('id-ID', {
@@ -54,7 +57,7 @@ export default function ProfileIndex({ user, addresses, orders, wishlist, pendin
         : orders.filter(o => o.status === orderFilter);
 
     return (
-        <UserLayout>
+        <AuthenticatedUserLayout>
             <Head title="Profil Saya" />
             
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -229,7 +232,13 @@ export default function ProfileIndex({ user, addresses, orders, wishlist, pendin
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="font-bold text-gray-900">Daftar Alamat</h3>
-                                    <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                                    <button 
+                                        onClick={() => {
+                                            setEditingAddress(null);
+                                            setShowAddressModal(true);
+                                        }}
+                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                                    >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                                         </svg>
@@ -237,7 +246,7 @@ export default function ProfileIndex({ user, addresses, orders, wishlist, pendin
                                     </button>
                                 </div>
 
-                                {addresses.map(addr => (
+                                {addresses.length > 0 ? addresses.map(addr => (
                                     <div key={addr.id} className="bg-white rounded-2xl border border-gray-200 p-5">
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="flex-1">
@@ -253,24 +262,54 @@ export default function ProfileIndex({ user, addresses, orders, wishlist, pendin
                                                 </div>
                                                 <p className="font-semibold text-gray-900">{addr.recipient}</p>
                                                 <p className="text-sm text-gray-600 mt-1">{addr.phone}</p>
-                                                <p className="text-sm text-gray-600 mt-1">{addr.address}</p>
-                                                <p className="text-sm text-gray-600">{addr.city}, {addr.postal_code}</p>
+                                                <p className="text-sm text-gray-600 mt-2">{addr.address}</p>
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    {addr.city} {addr.postal_code && `- ${addr.postal_code}`}
+                                                </p>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <button className="p-2 text-gray-400 hover:text-indigo-600 transition-colors">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
+                                            <div className="flex flex-col gap-2">
+                                                <button 
+                                                    onClick={() => {
+                                                        setEditingAddress(addr);
+                                                        setShowAddressModal(true);
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                                                >
+                                                    Edit
                                                 </button>
-                                                <button className="p-2 text-gray-400 hover:text-red-600 transition-colors">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
+                                                <button 
+                                                    onClick={() => {
+                                                        if (confirm('Hapus alamat ini?')) {
+                                                            router.delete(route('addresses.destroy', addr.id));
+                                                        }
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                                                >
+                                                    Hapus
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+                                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-gray-500 mb-2">Belum ada alamat tersimpan</p>
+                                        <button
+                                            onClick={() => {
+                                                setEditingAddress(null);
+                                                setShowAddressModal(true);
+                                            }}
+                                            className="text-indigo-600 font-medium hover:text-indigo-700"
+                                        >
+                                            Tambah alamat sekarang
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -303,7 +342,11 @@ export default function ProfileIndex({ user, addresses, orders, wishlist, pendin
                                 {/* Order Cards */}
                                 {filteredOrders.length > 0 ? (
                                     filteredOrders.map(order => (
-                                        <div key={order.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                                        <Link 
+                                            key={order.id} 
+                                            href={route('user.invoice', order.id)}
+                                            className="block bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all"
+                                        >
                                             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <span className="text-sm text-gray-500">{order.date}</span>
@@ -319,7 +362,7 @@ export default function ProfileIndex({ user, addresses, orders, wishlist, pendin
                                                         {order.items.slice(0, 3).map((item, idx) => (
                                                             <img 
                                                                 key={idx}
-                                                                src={item.image} 
+                                                                src={item.image || 'https://via.placeholder.com/150'} 
                                                                 alt={item.name}
                                                                 className="w-12 h-12 rounded-lg border-2 border-white object-cover"
                                                             />
@@ -350,7 +393,7 @@ export default function ProfileIndex({ user, addresses, orders, wishlist, pendin
                                                     </div>
                                                 )}
                                             </div>
-                                        </div>
+                                        </Link>
                                     ))
                                 ) : (
                                     <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
@@ -429,6 +472,17 @@ export default function ProfileIndex({ user, addresses, orders, wishlist, pendin
                     </div>
                 </div>
             </div>
-        </UserLayout>
+
+            {/* Address Modal */}
+            <AddressModal 
+                show={showAddressModal}
+                onClose={() => {
+                    setShowAddressModal(false);
+                    setEditingAddress(null);
+                }}
+                address={editingAddress}
+                provinces={provinces}
+            />
+        </AuthenticatedUserLayout>
     );
 }

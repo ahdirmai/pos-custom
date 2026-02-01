@@ -14,6 +14,7 @@ class VoucherUsage extends Model
         'voucher_id',
         'transaction_id',
         'customer_id',
+        'user_id',
         'discount_amount',
         'used_at',
     ];
@@ -36,5 +37,10 @@ class VoucherUsage extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

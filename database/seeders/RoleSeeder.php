@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -30,7 +31,7 @@ class RoleSeeder extends Seeder
         Role::firstOrCreate(['name' => 'super-admin']);
 
         // Create cashier role with basic permissions for public registration
-        $cashierRole        = Role::firstOrCreate(['name' => 'cashier']);
+        $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
         $cashierPermissions = Permission::whereIn('name', [
             'dashboard-access',
             'transactions-access',
@@ -48,7 +49,7 @@ class RoleSeeder extends Seeder
     private function createRoleWithPermissions($roleName, $permissionNamePattern)
     {
         $permissions = Permission::where('name', 'like', $permissionNamePattern)->get();
-        $role        = Role::firstOrCreate(['name' => $roleName]);
+        $role = Role::firstOrCreate(['name' => $roleName]);
         $role->syncPermissions($permissions);
     }
 }

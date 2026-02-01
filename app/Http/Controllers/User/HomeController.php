@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Product;
 use Inertia\Inertia;
 
 class HomeController extends Controller
@@ -16,38 +18,18 @@ class HomeController extends Controller
             'subtitle' => 'Best products for you',
         ];
 
-        $productCategories = [
-            ['id' => 1, 'name' => 'Fashion', 'image' => 'https://picsum.photos/200/200?random=2'],
-            ['id' => 2, 'name' => 'Electronics', 'image' => 'https://picsum.photos/200/200?random=3'],
-            ['id' => 3, 'name' => 'Home', 'image' => 'https://picsum.photos/200/200?random=4'],
-            ['id' => 4, 'name' => 'Beauty', 'image' => 'https://picsum.photos/200/200?random=5'],
-            ['id' => 5, 'name' => 'Sports', 'image' => 'https://picsum.photos/200/200?random=6'],
-        ];
+        $productCategories = Category::all();
 
         $promoBanner = [
             'image' => 'https://picsum.photos/1200/200?random=7',
             'link' => '#',
         ];
 
-        $topCategories = [];
-        for ($i = 1; $i <= 4; $i++) {
-            $products = [];
-            for ($j = 1; $j <= 10; $j++) {
-                $products[] = [
-                    'id' => $j,
-                    'name' => "Product $j - Cat $i",
-                    'price' => rand(10000, 500000),
-                    'stock' => rand(0, 20), // Added random stock
-                    'image' => 'https://picsum.photos/200/300?random='.($i * 10 + $j),
-                    'category' => "Category $i",
-                ];
-            }
-            $topCategories[] = [
-                'id' => $i,
-                'name' => "Top Category $i",
-                'products' => $products,
-            ];
-        }
+        $products = Product::with('category')
+            ->withSum('transactionDetails as sold_count', 'qty')
+            ->orderByDesc('sold_count')
+            ->take(10)
+            ->get();
 
         $latestPosts = [
             ['id' => 1, 'title' => 'New Arrival', 'excerpt' => 'Check out our new collection.', 'image' => 'https://picsum.photos/300/200?random=100'],
@@ -59,26 +41,17 @@ class HomeController extends Controller
             'storeBanner' => $storeBanner,
             'productCategories' => $productCategories,
             'promoBanner' => $promoBanner,
-            'topCategories' => $topCategories,
+            'products' => $products,
             'latestPosts' => $latestPosts,
         ]);
     }
 
     public function products()
     {
-        $products = [];
-        for ($i = 1; $i <= 20; $i++) {
-            $products[] = [
-                'id' => $i,
-                'name' => "Product $i",
-                'price' => rand(10000, 500000),
-                'stock' => rand(0, 20),
-                'image' => 'https://picsum.photos/200/300?random='.($i + 50),
-                'category' => 'Category '.rand(1, 4),
-                'rating' => round(rand(35, 50) / 10, 1),
-                'sold_count' => rand(10, 500),
-            ];
-        }
+        $products = Product::with('category')
+            ->withSum('transactionDetails as sold_count', 'qty')
+            ->latest()
+            ->paginate(12);
 
         return Inertia::render('EndUser/Products/Index', [
             'products' => $products,

@@ -130,7 +130,6 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::resource('shipping-couriers', \App\Http\Controllers\Apps\ShippingCourierController::class);
     Route::patch('/shipping-couriers/{shippingCourier}/toggle', [\App\Http\Controllers\Apps\ShippingCourierController::class, 'toggleActive'])->middleware('permission:dashboard-access')->name('shipping-couriers.toggle');
 
-
     // pdf documents
     Route::get('/documents/transactions/{invoice}/pdf/invoice', [\App\Http\Controllers\DocumentController::class, 'invoice'])->middleware('permission:transactions-access')->name('pdf.transactions.invoice');
     Route::get('/documents/transactions/{invoice}/pdf/receipt/{size?}', [\App\Http\Controllers\DocumentController::class, 'receipt'])->middleware('permission:transactions-access')->name('pdf.transactions.receipt');
@@ -148,7 +147,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/settings/store', [\App\Http\Controllers\Apps\SettingController::class, 'updateStoreProfile'])->middleware('permission:dashboard-access')->name('settings.store.update');
     Route::get('/settings/shipping', [\App\Http\Controllers\Apps\SettingController::class, 'shipping'])->middleware('permission:dashboard-access')->name('settings.shipping');
     Route::post('/settings/shipping', [\App\Http\Controllers\Apps\SettingController::class, 'updateShipping'])->middleware('permission:dashboard-access')->name('settings.shipping.update');
-    
+
     // shipping testing (cek ongkir)
     Route::get('/settings/shipping/test', [\App\Http\Controllers\Apps\ShippingController::class, 'test'])->middleware('permission:dashboard-access')->name('settings.shipping.test');
     Route::post('/settings/shipping/check-rates', [\App\Http\Controllers\Apps\ShippingController::class, 'checkRates'])->middleware('permission:dashboard-access')->name('settings.shipping.check-rates');
@@ -178,16 +177,42 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// end user page (customer)
+// end user page (customer) public
 Route::name('user.')->group(function () {
     Route::get('/', [\App\Http\Controllers\User\HomeController::class, 'index'])->name('index');
     Route::get('/katalog', [\App\Http\Controllers\User\HomeController::class, 'products'])->name('products');
     Route::get('/cari', [\App\Http\Controllers\User\HomeController::class, 'search'])->name('search');
     Route::get('/artikel', [\App\Http\Controllers\User\HomeController::class, 'articles'])->name('articles');
-    Route::get('/checkout', [\App\Http\Controllers\User\HomeController::class, 'checkout'])->name('checkout');
-    Route::get('/nota/{id}', [\App\Http\Controllers\User\HomeController::class, 'invoice'])->name('invoice');
-    Route::get('/profile', [\App\Http\Controllers\User\HomeController::class, 'profile'])->name('profile');
     Route::get('/produk/{id}', [\App\Http\Controllers\User\HomeController::class, 'show'])->name('product.show');
+});
+
+// end user page (customer) protected
+Route::middleware(['auth'])->name('user.')->group(function () {
+    // Checkout
+    Route::match(['get', 'post'], '/checkout', [\App\Http\Controllers\User\CheckoutController::class, 'index'])->name('checkout');
+    Route::post('/checkout/store', [\App\Http\Controllers\User\CheckoutController::class, 'store'])->name('checkout.store');
+    Route::post('/checkout/check-rates', [\App\Http\Controllers\User\CheckoutController::class, 'checkRates'])->name('checkout.check-rates');
+    Route::post('/checkout/check-voucher', [\App\Http\Controllers\User\CheckoutController::class, 'checkVoucher'])->name('checkout.check-voucher');
+
+    // Orders
+    Route::get('/pesanan', [\App\Http\Controllers\User\OrderController::class, 'index'])->name('orders.index');
+    Route::get('/nota/{id}', [\App\Http\Controllers\User\OrderController::class, 'show'])->name('invoice');
+
+    // Cart
+    Route::post('/cart', [\App\Http\Controllers\User\CartController::class, 'store'])->name('cart.store');
+    Route::delete('/cart/{id}', [\App\Http\Controllers\User\CartController::class, 'destroy'])->name('cart.destroy');
+    Route::patch('/cart/{id}', [\App\Http\Controllers\User\CartController::class, 'update'])->name('cart.update');
+
+    // Addresses
+    Route::post('/addresses', [\App\Http\Controllers\User\AddressController::class, 'store'])->name('addresses.store');
+    Route::put('/addresses/{id}', [\App\Http\Controllers\User\AddressController::class, 'update'])->name('addresses.update');
+    Route::delete('/addresses/{id}', [\App\Http\Controllers\User\AddressController::class, 'destroy'])->name('addresses.destroy');
+    Route::post('/addresses/{id}/set-primary', [\App\Http\Controllers\User\AddressController::class, 'setPrimary'])->name('addresses.setPrimary');
+
+    // Payment Proof Upload
+    Route::post('/orders/{id}/upload-payment-proof', [\App\Http\Controllers\User\PaymentProofController::class, 'upload'])->name('orders.upload-payment-proof');
+
+    Route::get('/profile', [\App\Http\Controllers\User\ProfileController::class, 'index'])->name('profile');
 });
 
 require __DIR__.'/auth.php';

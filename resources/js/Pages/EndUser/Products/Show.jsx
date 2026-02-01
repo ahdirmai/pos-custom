@@ -26,26 +26,27 @@ export default function ProductShow({ product, reviews, relatedProducts }) {
     const lowStock = product.stock > 0 && product.stock <= 5;
 
     const handleAddToCart = () => {
-        if (!selectedSize) {
-            toast.error('Pilih ukuran terlebih dahulu');
-            return;
-        }
-        addToCart({
-            ...product,
-            selectedColor: selectedColor?.name,
-            selectedSize: selectedSize?.name,
+        // Validation for variants if needed (Phase 2)
+        // if (product.variants?.sizes && !selectedSize) { ... }
+
+        router.post(route('user.cart.store'), {
+            product_id: product.id,
             qty: quantity,
+        }, {
+            onSuccess: () => toast.success(`${product.name} ditambahkan ke keranjang`),
+            onError: () => toast.error('Gagal menambahkan ke keranjang'),
+            preserveScroll: true
         });
-        toast.success(`${product.name} ditambahkan ke keranjang`);
     };
 
     const handleBuyNow = () => {
-        if (!selectedSize) {
-            toast.error('Pilih ukuran terlebih dahulu');
-            return;
-        }
-        handleAddToCart();
-        window.location.href = '/checkout';
+        router.post(route('user.cart.store'), {
+            product_id: product.id,
+            qty: quantity,
+        }, {
+            onSuccess: () => router.visit(route('user.checkout')),
+            onError: () => toast.error('Gagal memproses pesanan'),
+        });
     };
 
     const ratingDistribution = useMemo(() => {

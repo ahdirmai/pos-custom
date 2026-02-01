@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useCart } from '@/Context/CartContext';
 import toast from 'react-hot-toast';
 
@@ -17,30 +17,41 @@ export default function ProductCard({ product }) {
     const hasStock = product.stock > 0;
     const lowStock = product.stock > 0 && product.stock <= 5;
 
+    const { auth } = usePage().props; // Get auth from page props
+
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (!auth.user) {
+            toast.error('Silakan login untuk belanja');
+            router.visit(route('login'));
+            return;
+        }
+
         if (hasStock) {
-            addToCart(product);
-            toast.success(
-                (t) => (
-                    <div className="flex items-center gap-2">
-                        <span className="font-medium">{product.name}</span>
-                        <span className="text-green-600 font-bold">+1</span>
-                    </div>
-                ),
-                {
-                    duration: 1500,
-                    position: 'bottom-center',
-                    style: {
-                        background: '#fff',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                    },
-                    icon: '🛒',
-                }
-            );
+            router.post('/cart', {
+                product_id: product.id,
+                qty: 1
+            }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success(
+                        (t) => (
+                            <div className="flex items-center gap-2">
+                                <span className="font-medium">{product.name || product.title}</span>
+                                <span className="text-green-600 font-bold">+1</span>
+                            </div>
+                        ),
+                        {
+                            duration: 1500,
+                            position: 'bottom-center',
+                            icon: '🛒',
+                        }
+                    );
+                },
+                onError: () => toast.error('Gagal menambahkan ke keranjang')
+            });
         }
     };
 
@@ -53,34 +64,18 @@ export default function ProductCard({ product }) {
             <div className="relative aspect-square bg-gray-100 overflow-hidden">
                 <img 
                     src={product.image} 
-                    alt={product.name} 
+                    alt={product.name || product.title} 
                     className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:blur-[2px] ${!hasStock ? 'grayscale' : ''}`}
                     loading="lazy"
                 />
-                
-                {/* Stock Badge (Top Right) */}
-                 <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
-                    {!hasStock ? (
-                        <span className="px-2 py-1 bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm">
+                               {/* Out of Stock Overlay */}
+                {!hasStock && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                        <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white border border-white/50 text-xs font-bold uppercase tracking-widest rounded-full">
                             Habis
                         </span>
-                    ) : lowStock ? (
-                        <span className="px-2 py-1 bg-orange-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm animate-pulse">
-                            Sisa {product.stock}
-                        </span>
-                    ) : (
-                         <span className="px-2 py-1 bg-gray-900/60 backdrop-blur-sm text-white text-[10px] font-medium rounded-lg shadow-sm">
-                            Stok: {product.stock}
-                        </span>
-                    )}
-                 </div>
-
-                {/* Category Badge (Top Left) */}
-                 <div className="absolute top-2 left-2 z-10">
-                    <span className="px-2 py-1 bg-white/90 backdrop-blur-sm text-gray-800 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm">
-                        {product.category || 'Produk'}
-                    </span>
-                 </div>
+                    </div>
+                )}
                  
                  {/* Hover Action Buttons */}
                  <div className="hidden md:flex absolute inset-0 z-20 items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -112,29 +107,44 @@ export default function ProductCard({ product }) {
 
             {/* Content Section */}
             <div className="p-2 sm:p-3 flex-1 flex flex-col bg-white">
-                <div className="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2 leading-tight">
-                    {product.name}
+                {/* Category Label */}
+                <div className="mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                        {product.category?.name || product.category || 'Produk'}
+                    </span>
+                </div>
+
+                <div className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug mb-2 group-hover:text-indigo-600 transition-colors">
+                    {product.name || product.title}
                 </div>
                 
                 {/* Rating & Sold */}
-                {(product.rating || product.sold_count) && (
-                    <div className="flex items-center gap-1.5 mt-1.5 text-[10px] sm:text-xs text-gray-500">
+                {(product.rating || product.sold_count || hasStock) && (
+                    <div className="flex flex-wrap items-center gap-2 mt-auto text-[11px] text-gray-500">
                         {product.rating && (
-                            <div className="flex items-center gap-0.5">
+                            <div className="flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
-                                <span>{product.rating}</span>
+                                <span className="font-medium text-gray-700">{product.rating}</span>
                             </div>
                         )}
-                        {product.rating && product.sold_count && <span>|</span>}
-                        {product.sold_count && <span>{product.sold_count}+ terjual</span>}
+                        {product.rating && product.sold_count && <span className="text-gray-300">|</span>}
+                        {product.sold_count && <span>{product.sold_count} terjual</span>}
+                        
+                        {/* Stock Info */}
+                        {lowStock && (
+                            <>
+                                <span className="text-gray-300">|</span>
+                                <span className="text-red-600 font-medium">Sisa {product.stock}</span>
+                            </>
+                        )}
                     </div>
                 )}
                 
                 <div className="mt-auto border-t mt-1 border-gray-50 flex flex-col gap-2">
                     <p className="text-sm sm:text-base font-bold text-indigo-600">
-                        {formatPrice(product.price)}
+                        {formatPrice(product.price || product.sell_price)}
                     </p>
                     {/* Mobile Only: Full Width Add Button */}
                     {hasStock && (

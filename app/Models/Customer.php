@@ -17,7 +17,9 @@ class Customer extends Model
      * @var array
      */
     protected $fillable = [
+        'user_id',
         'name',
+        'email',
         'no_telp',
         'address',
         'npwp',
@@ -39,6 +41,27 @@ class Customer extends Model
     public function village()
     {
         return $this->belongsTo(\Laravolt\Indonesia\Models\Village::class, 'village_id', 'code');
+    }
+
+    /**
+     * Get the user account associated with the customer.
+     */
+    public function account()
+    {
+        return $this->hasOneThrough(
+            User::class,
+            CustomerHasAccount::class,
+            'customer_id', // Foreign key on customer_has_accounts table...
+            'id', // Foreign key on users table...
+            'id', // Local key on customers table...
+            'user_id' // Local key on customer_has_accounts table...
+        );
+    }
+    
+    // Or simpler: BelongsToMany (if just a pivot) but acting as 1-to-1
+    public function user()
+    {
+        return $this->belongsToMany(User::class, 'customer_has_accounts', 'customer_id', 'user_id');
     }
 
     protected function postalCode(): Attribute
