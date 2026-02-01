@@ -67,11 +67,32 @@
 
 - [x] **Database**
     - [x] `transactions` table modification migration created & run.
+    - [x] `customer_addresses` table created.
+    - [x] Voucher tables created.
 - [x] **Backend**
     - [x] `VoucherService` validation logic implemented.
     - [x] `CheckoutController` implemented with Biteship & Voucher support.
+    - [x] `AddressController` for CRUD operations.
+    - [x] `PaymentProofController` for upload handling.
+    - [x] `OrderController` for viewing orders.
+    - [x] `ProfileController` for user profile management.
 - [x] **Frontend**
-    - [x] Checkout Page: Address, Shipping Rate Select, Voucher Input.
-- [ ] **Access Control & Layout**
-    - [ ] **Unauthenticated Access**: Handle redirect to login for restricted pages (Checkout, Orders).
-    - [ ] **Authenticated Layout**: specific layout for User Dashboard (Orders, Profile).
+    - [x] Checkout Page: Address, Shipping Rate Select, Voucher Input, Payment Proof Upload.
+    - [x] Order List Page with status filtering.
+    - [x] Order Detail/Invoice Page with payment proof display & upload.
+    - [x] Profile Page with address management modal.
+- [x] **Access Control & Layout**
+    - [x] **Unauthenticated Access**: Redirects to login for restricted pages (Checkout, Orders, Profile).
+    - [x] **Authenticated Layout**: `AuthenticatedUserLayout` for User Dashboard (Orders, Profile).
+    - [x] Updated Header with user authentication state.
+    - [x] Mobile navbar for better UX.
+- [x] **Additional Features Completed**
+    - [x] Address Management Modal with Laravolt integration.
+    - [x] Payment proof upload functionality.
+    - [x] Order status display with conditional logic.
+    - [x] ApplicationLogo restored in Header.
+    - [x] Collapsible payment proof section.
+
+## Phase 1 Status: ✅ COMPLETE
+
+All core features and additional enhancements have been successfully implemented and tested.
