@@ -430,7 +430,7 @@ export default function Print({ transaction }) {
                             </div>
 
                             {/* Shipping Info */}
-                            {transaction.shipping && (
+                            {transaction.shipping || transaction.shipping_method !== "off" && (
                                 <div className="px-4 sm:px-6 pb-4 sm:pb-6 border-b border-slate-100 dark:border-slate-800">
                                     <div className="bg-slate-50/60 dark:bg-slate-800/40 rounded-xl p-3 sm:p-4">
                                         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
@@ -440,13 +440,13 @@ export default function Print({ transaction }) {
                                             <div>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">Kurir</p>
                                                 <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase">
-                                                    {transaction.shipping.shipping_courier_code} - {transaction.shipping.shipping_courier_service}
+                                                    {transaction.shipping?.shipping_courier_code || '-'} - {transaction.shipping?.shipping_courier_service || '-'}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">No. Resi</p>
                                                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                                    {transaction.shipping.waybill_number || '-'}
+                                                    {transaction.shipping?.waybill_number || '-'}
                                                 </p>
                                             </div>
                                         </div>
