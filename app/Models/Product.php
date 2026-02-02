@@ -40,6 +40,16 @@ class Product extends Model
     }
 
     /**
+     * transactionDetails
+     *
+     * @return void
+     */
+    public function transactionDetails()
+    {
+        return $this->hasMany(TransactionDetail::class);
+    }
+
+    /**
      * image
      */
     protected function image(): Attribute

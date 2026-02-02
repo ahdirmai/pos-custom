@@ -20,6 +20,7 @@ export default function Create() {
     const { data, setData, post, processing } = useForm({
         name: "",
         no_telp: "",
+        email: "",
         address: "",
         province_id: "",
         regency_id: "",
@@ -170,6 +171,19 @@ export default function Create() {
                                 onChange={(e) => setData("no_telp", e.target.value)}
                                 value={data.no_telp}
                             />
+                            <div className="col-span-1 md:col-span-2">
+                                <Input
+                                    type="email"
+                                    label="Email (Opsional)"
+                                    placeholder="Email untuk login akun (Default: no_hp@toko.com)"
+                                    errors={errors.email}
+                                    onChange={(e) => setData("email", e.target.value)}
+                                    value={data.email}
+                                />
+                                <p className="text-sm text-slate-500 italic mt-1">
+                                    *Akun login akan dibuat otomatis dengan password default: <strong>password</strong>
+                                </p>
+                            </div>
                         </div>
 
                         <hr className="border-slate-100 dark:border-slate-800" />

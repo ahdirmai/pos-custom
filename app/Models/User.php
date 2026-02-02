@@ -91,4 +91,11 @@ class User extends Authenticatable
     {
         return $this->hasRole('super-admin');
     }
+    /**
+     * Get the customer profile associated with the user.
+     */
+    public function customer()
+    {
+        return $this->belongsToMany(Customer::class, 'customer_has_accounts', 'user_id', 'customer_id');
+    }
 }

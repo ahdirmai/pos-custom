@@ -15,6 +15,7 @@ export default function Edit({ customer }) {
         id: customer.id,
         name: customer.name,
         no_telp: customer.no_telp,
+        email: customer.account?.email || "", // Add email state
         address: customer.address,
         province_id: customer.province_id || "",
         regency_id: customer.regency_id || "",
@@ -160,6 +161,19 @@ export default function Edit({ customer }) {
                                 onChange={(e) => setData("no_telp", e.target.value)}
                                 value={data.no_telp}
                             />
+                             <div className="col-span-1 md:col-span-2">
+                                <Input
+                                    type="email"
+                                    label="Email Login"
+                                    placeholder="Update email login"
+                                    errors={errors.email}
+                                    onChange={(e) => setData("email", e.target.value)}
+                                    value={data.email}
+                                />
+                                <p className="text-sm text-slate-500 italic mt-1">
+                                    *Mengubah email akan mengubah akun login user terkait.
+                                </p>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

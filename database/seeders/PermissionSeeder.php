@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 
@@ -36,25 +35,25 @@ class PermissionSeeder extends Seeder
         $create('permissions-update');
         $create('permissions-delete');
 
-        //permission categories
+        // permission categories
         $create('categories-access');
         $create('categories-create');
         $create('categories-edit');
         $create('categories-delete');
 
-        //permission products
+        // permission products
         $create('products-access');
         $create('products-create');
         $create('products-edit');
         $create('products-delete');
 
-        //permission customers
+        // permission customers
         $create('customers-access');
         $create('customers-create');
         $create('customers-edit');
         $create('customers-delete');
 
-        //permission transactions
+        // permission transactions
         $create('transactions-access');
 
         // permission receivables & payables
@@ -70,5 +69,9 @@ class PermissionSeeder extends Seeder
 
         // payment settings
         $create('payment-settings-access');
+
+        // customer area permissions
+        $create('customer-access');
+        $create('customer-order-access');
     }
 }

@@ -19,6 +19,7 @@ class Transaction extends Model
     protected $fillable = [
         'cashier_id',
         'customer_id',
+        'user_id',
         'invoice',
         'cash',
         'change',
@@ -26,11 +27,18 @@ class Transaction extends Model
         'shipping_cost',
         'shipping_method',
         'grand_total',
+        'payment_proof',
         'payment_method',
         'payment_status',
         'payment_reference',
         'payment_url',
         'bank_account_id',
+        'order_status',
+        'shipping_address',
+        'shipping_courier',
+        'tracking_number',
+        'voucher_id',
+        'snap_token',
     ];
 
     /**
@@ -51,6 +59,11 @@ class Transaction extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class)->withTrashed();
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -83,6 +96,11 @@ class Transaction extends Model
         return $this->hasMany(Profit::class);
     }
 
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class);
+    }
+
     public function voucherUsage()
     {
         return $this->hasOne(VoucherUsage::class);
@@ -107,6 +125,7 @@ class Transaction extends Model
             get: fn ($value) => Carbon::parse($value)->format('d-M-Y H:i:s'),
         );
     }
+
     public function shipping()
     {
         return $this->hasOne(TransactionShipping::class);

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -31,29 +32,47 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|lowercase|email|max:255|unique:' . User::class,
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        try {
+            \DB::beginTransaction();
 
-        // Assign default role to new user
-        // Try 'cashier' first, if not exists try 'user', otherwise no role
-        if (Role::where('name', 'cashier')->exists()) {
-            $user->assignRole('cashier');
-        } elseif (Role::where('name', 'user')->exists()) {
-            $user->assignRole('user');
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+
+            // Assign 'customer' role to new user
+            if (Role::where('name', 'customer')->exists()) {
+                $user->assignRole('customer');
+            }
+
+            // Create customer record for the new user
+            \App\Models\Customer::create([
+                'user_id' => $user->id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'no_telp' => null, // Can be updated later in profile
+                'address' => null, // Can be updated later in profile
+            ]);
+
+            event(new Registered($user));
+
+            \DB::commit();
+
+            Auth::login($user);
+
+            return redirect(route('home', absolute: false));
+        } catch (\Exception $e) {
+            \DB::rollBack();
+
+            return back()->withErrors([
+                'email' => 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.'.$e->getMessage(),
+            ])->withInput($request->except('password', 'password_confirmation'));
         }
-
-        event(new Registered($user));
-
-        Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
     }
 }

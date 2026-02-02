@@ -64,6 +64,7 @@ class CustomerController extends Controller
             'regency_id'  => 'required|string',
             'district_id' => 'required|string',
             'village_id'  => 'required|string',
+            'email'       => 'nullable|email|unique:users,email', // Validate email for User creation
         ]);
 
         $province = Province::where('code', $request->province_id)->first();
@@ -72,7 +73,7 @@ class CustomerController extends Controller
         $village  = Village::where('code', $request->village_id)->first();
 
         //create customer
-        Customer::create([
+        $customer = Customer::create([
             'name'    => $request->name,
             'no_telp' => $request->no_telp,
             'address' => $request->address,
@@ -84,6 +85,26 @@ class CustomerController extends Controller
             'district_name' => $district?->name,
             'village_id' => $request->village_id,
             'village_name' => $village?->name,
+        ]);
+
+        // Auto-create User Account
+        // Use provided email or fallback to phone-based email
+        $email = $request->email ?: ($request->no_telp . '@toko.com');
+        
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => $email],
+            [
+                'name' => $request->name,
+                'password' => bcrypt('password'), // Default password
+            ]
+        );
+
+        $user->assignRole('customer');
+
+        // Link Customer to User
+        \App\Models\CustomerHasAccount::firstOrCreate([
+            'customer_id' => $customer->id,
+            'user_id' => $user->id,
         ]);
 
         //redirect
@@ -128,6 +149,24 @@ class CustomerController extends Controller
                 'village_name'   => $village?->name,
             ]);
 
+            // Auto-create User Account
+            $email = $validated['no_telp'] . '@toko.com';
+            
+            $user = \App\Models\User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $validated['name'],
+                    'password' => bcrypt('password'),
+                ]
+            );
+
+            $user->assignRole('customer');
+
+            \App\Models\CustomerHasAccount::firstOrCreate([
+                'customer_id' => $customer->id,
+                'user_id' => $user->id,
+            ]);
+
             return response()->json([
                 'success'  => true,
                 'message'  => 'Pelanggan berhasil ditambahkan',
@@ -167,7 +206,7 @@ class CustomerController extends Controller
             : [];
 
         return Inertia::render('Dashboard/Customers/Edit', [
-            'customer' => $customer,
+            'customer' => $customer->load('account'),
             'provinces' => $provinces,
             'regencies' => $regencies,
             'districts' => $districts,
@@ -195,6 +234,7 @@ class CustomerController extends Controller
             'regency_id'  => 'required|string',
             'district_id' => 'required|string',
             'village_id'  => 'required|string',
+            'email'       => 'nullable|email|unique:users,email,' . $customer->account?->id, // Validate email excluding current user
         ]);
 
         $province = Province::where('code', $request->province_id)->first();
@@ -216,6 +256,31 @@ class CustomerController extends Controller
             'village_id' => $request->village_id,
             'village_name' => $village?->name,
         ]);
+
+        // Sync User Account Email/Name
+        if ($customer->account) {
+            // If user exists, update it
+            $email = $request->email ?: ($request->no_telp . '@toko.com');
+            $customer->account->update([
+                'name' => $request->name,
+                'email' => $email,
+            ]);
+        } else {
+             // Create if missing (fix for old data)
+             $email = $request->email ?: ($request->no_telp . '@toko.com');
+             $user = \App\Models\User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $request->name,
+                    'password' => bcrypt('password'),
+                ]
+            );
+            $user->assignRole('customer');
+            \App\Models\CustomerHasAccount::firstOrCreate([
+                'customer_id' => $customer->id,
+                'user_id' => $user->id,
+            ]);
+        }
 
         //redirect
         return to_route('customers.index');
