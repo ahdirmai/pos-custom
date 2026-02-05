@@ -33,7 +33,7 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -55,7 +55,7 @@ class RegisteredUserController extends Controller
             \App\Models\Customer::create([
                 'user_id' => $user->id,
                 'name' => $request->name,
-                'email' => $request->email,
+                // 'email' => $request->email,
                 'no_telp' => null, // Can be updated later in profile
                 'address' => null, // Can be updated later in profile
             ]);
@@ -71,7 +71,7 @@ class RegisteredUserController extends Controller
             \DB::rollBack();
 
             return back()->withErrors([
-                'email' => 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.'.$e->getMessage(),
+                'email' => 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.' . $e->getMessage(),
             ])->withInput($request->except('password', 'password_confirmation'));
         }
     }

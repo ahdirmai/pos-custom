@@ -19,7 +19,7 @@ class Customer extends Model
     protected $fillable = [
         'user_id',
         'name',
-        'email',
+        // 'email',
         'no_telp',
         'address',
         'npwp',
@@ -57,7 +57,7 @@ class Customer extends Model
             'user_id' // Local key on customer_has_accounts table...
         );
     }
-    
+
     // Or simpler: BelongsToMany (if just a pivot) but acting as 1-to-1
     public function user()
     {
@@ -79,12 +79,12 @@ class Customer extends Model
             get: function ($value) {
                 // 1. Jika awalan 62, ubah menjadi 0
                 if (str_starts_with($value, '62')) {
-                    return '0'.substr($value, 2);
+                    return '0' . substr($value, 2);
                 }
 
                 // 2. Jika awalan 8 (tidak ada 0 atau 62), tambahkan 0 di depannya
                 if (str_starts_with($value, '8')) {
-                    return '0'.$value;
+                    return '0' . $value;
                 }
 
                 return $value;
