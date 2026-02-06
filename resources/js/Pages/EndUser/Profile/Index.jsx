@@ -9,7 +9,7 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [editingAddress, setEditingAddress] = useState(null);
 
-    const formatPrice = (value) => 
+    const formatPrice = (value) =>
         new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -17,32 +17,42 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
         }).format(value);
 
     const tabs = [
-        { id: 'profile', label: 'Profil', icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-        )},
-        { id: 'addresses', label: 'Alamat', icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-        )},
-        { id: 'orders', label: 'Pesanan', icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-        )},
-        { id: 'wishlist', label: 'Wishlist', icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-        )},
-        { id: 'reviews', label: 'Ulasan', icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-            </svg>
-        )},
+        {
+            id: 'profile', label: 'Profil', icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            )
+        },
+        {
+            id: 'addresses', label: 'Alamat', icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            )
+        },
+        {
+            id: 'orders', label: 'Pesanan', icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+            )
+        },
+        {
+            id: 'wishlist', label: 'Wishlist', icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+            )
+        },
+        {
+            id: 'reviews', label: 'Ulasan', icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+            )
+        },
     ];
 
     const orderStatusColors = {
@@ -52,22 +62,22 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
         completed: 'bg-green-100 text-green-700',
     };
 
-    const filteredOrders = orderFilter === 'all' 
-        ? orders 
+    const filteredOrders = orderFilter === 'all'
+        ? orders
         : orders.filter(o => o.status === orderFilter);
 
     return (
         <AuthenticatedUserLayout>
             <Head title="Profil Saya" />
-            
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Mobile: Profile Header */}
                 <div className="md:hidden mb-6">
                     <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
                         <div className="flex items-center gap-4">
                             <div className="relative">
-                                <img 
-                                    src={user.avatar} 
+                                <img
+                                    src={user.avatar}
                                     alt={user.name}
                                     className="w-16 h-16 rounded-full border-2 border-white/50 object-cover"
                                 />
@@ -93,11 +103,10 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                                    activeTab === tab.id
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
                                         ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
                                         : 'bg-white text-gray-600 border border-gray-200'
-                                }`}
+                                    }`}
                             >
                                 {tab.icon}
                                 {tab.label}
@@ -113,8 +122,8 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
                             {/* Profile Card */}
                             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white text-center">
                                 <div className="relative inline-block">
-                                    <img 
-                                        src={user.avatar} 
+                                    <img
+                                        src={user.avatar}
                                         alt={user.name}
                                         className="w-20 h-20 rounded-full border-4 border-white/30 object-cover mx-auto"
                                     />
@@ -135,11 +144,10 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${
-                                            activeTab === tab.id
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${activeTab === tab.id
                                                 ? 'bg-indigo-50 text-indigo-700 font-medium'
                                                 : 'text-gray-600 hover:bg-gray-50'
-                                        }`}
+                                            }`}
                                     >
                                         {tab.icon}
                                         {tab.label}
@@ -159,12 +167,17 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
 
                             {/* Logout */}
                             <div className="p-3 border-t border-gray-100">
-                                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all">
+                                <Link
+                                    href={route('logout')}
+                                    method="post"
+                                    as="button"
+                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all text-left"
+                                >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                     </svg>
                                     Keluar
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
@@ -232,7 +245,7 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="font-bold text-gray-900">Daftar Alamat</h3>
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             setEditingAddress(null);
                                             setShowAddressModal(true);
@@ -268,7 +281,7 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
                                                 </p>
                                             </div>
                                             <div className="flex flex-col gap-2">
-                                                <button 
+                                                <button
                                                     onClick={() => {
                                                         setEditingAddress(addr);
                                                         setShowAddressModal(true);
@@ -277,7 +290,7 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
                                                 >
                                                     Edit
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={() => {
                                                         if (confirm('Hapus alamat ini?')) {
                                                             router.delete(route('addresses.destroy', addr.id));
@@ -328,11 +341,10 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
                                         <button
                                             key={filter.id}
                                             onClick={() => setOrderFilter(filter.id)}
-                                            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                                                orderFilter === filter.id
+                                            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${orderFilter === filter.id
                                                     ? 'bg-indigo-600 text-white'
                                                     : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                                            }`}
+                                                }`}
                                         >
                                             {filter.label}
                                         </button>
@@ -342,8 +354,8 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
                                 {/* Order Cards */}
                                 {filteredOrders.length > 0 ? (
                                     filteredOrders.map(order => (
-                                        <Link 
-                                            key={order.id} 
+                                        <Link
+                                            key={order.id}
                                             href={route('user.invoice', order.id)}
                                             className="block bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all"
                                         >
@@ -360,9 +372,9 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
                                                 <div className="flex items-center gap-4">
                                                     <div className="flex -space-x-2">
                                                         {order.items.slice(0, 3).map((item, idx) => (
-                                                            <img 
+                                                            <img
                                                                 key={idx}
-                                                                src={item.image || 'https://via.placeholder.com/150'} 
+                                                                src={item.image || 'https://via.placeholder.com/150'}
                                                                 alt={item.name}
                                                                 className="w-12 h-12 rounded-lg border-2 border-white object-cover"
                                                             />
@@ -437,13 +449,13 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
                         {activeTab === 'reviews' && (
                             <div className="space-y-4">
                                 <h3 className="font-bold text-gray-900">Menunggu Ulasan ({pendingReviews.length})</h3>
-                                
+
                                 {pendingReviews.length > 0 ? (
                                     pendingReviews.map(review => (
                                         <div key={review.id} className="bg-white rounded-2xl border border-gray-200 p-5">
                                             <div className="flex items-center gap-4">
-                                                <img 
-                                                    src={review.product_image} 
+                                                <img
+                                                    src={review.product_image}
                                                     alt={review.product_name}
                                                     className="w-16 h-16 rounded-lg object-cover"
                                                 />
@@ -474,7 +486,7 @@ export default function ProfileIndex({ user, provinces, addresses, orders, wishl
             </div>
 
             {/* Address Modal */}
-            <AddressModal 
+            <AddressModal
                 show={showAddressModal}
                 onClose={() => {
                     setShowAddressModal(false);

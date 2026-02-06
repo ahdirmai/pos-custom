@@ -37,14 +37,23 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = $request->user();
+
+        if ($user->roles()->count() === 0) {
+            $user->assignRole('customer');
+        }
+
+        if ($user->hasRole('customer')) {
+            return redirect()->route('user.index');
+        }
+
         $routePriority = [
             'transactions-access' => 'transactions.index',
-            'receivables-access'  => 'receivables.index',
-            'payables-access'     => 'payables.index',
-            'customers-access'    => 'customers.index',
-            'suppliers-access'    => 'suppliers.index',
-            'reports-access'      => 'reports.sales.index',
-            'dashboard-access'    => 'dashboard',
+            'receivables-access' => 'receivables.index',
+            'payables-access' => 'payables.index',
+            'customers-access' => 'customers.index',
+            'suppliers-access' => 'suppliers.index',
+            'reports-access' => 'reports.sales.index',
+            'dashboard-access' => 'dashboard',
         ];
 
         $defaultRoute = 'dashboard.access';
