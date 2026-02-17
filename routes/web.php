@@ -130,6 +130,17 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::resource('shipping-couriers', \App\Http\Controllers\Apps\ShippingCourierController::class);
     Route::patch('/shipping-couriers/{shippingCourier}/toggle', [\App\Http\Controllers\Apps\ShippingCourierController::class, 'toggleActive'])->middleware('permission:dashboard-access')->name('shipping-couriers.toggle');
 
+    // banners
+    Route::resource('banners', \App\Http\Controllers\Apps\BannerController::class)
+        ->middlewareFor(['index', 'show'], 'permission:dashboard-access')
+        ->middlewareFor(['create', 'store'], 'permission:dashboard-access')
+        ->middlewareFor(['edit', 'update'], 'permission:dashboard-access')
+        ->middlewareFor('destroy', 'permission:dashboard-access');
+
+    // pdf documents
+    Route::resource('shipping-couriers', \App\Http\Controllers\Apps\ShippingCourierController::class);
+    Route::patch('/shipping-couriers/{shippingCourier}/toggle', [\App\Http\Controllers\Apps\ShippingCourierController::class, 'toggleActive'])->middleware('permission:dashboard-access')->name('shipping-couriers.toggle');
+
     // pdf documents
     Route::get('/documents/transactions/{invoice}/pdf/invoice', [\App\Http\Controllers\DocumentController::class, 'invoice'])->middleware('permission:transactions-access')->name('pdf.transactions.invoice');
     Route::get('/documents/transactions/{invoice}/pdf/receipt/{size?}', [\App\Http\Controllers\DocumentController::class, 'receipt'])->middleware('permission:transactions-access')->name('pdf.transactions.receipt');

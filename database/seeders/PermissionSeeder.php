@@ -62,6 +62,12 @@ class PermissionSeeder extends Seeder
         $create('payables-access');
         $create('payables-pay');
         $create('suppliers-access');
+        
+        // banners permissions
+        $create('banners-access');
+        $create('banners-create');
+        $create('banners-edit');
+        $create('banners-delete');
 
         // permission reports
         $create('reports-access');

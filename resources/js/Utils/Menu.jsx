@@ -29,6 +29,7 @@ import {
     IconTruck,
     IconTruckDelivery,
     IconCalculator,
+    IconPhoto,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -54,6 +55,13 @@ export default function Menu() {
         {
             title: "Data Management",
             details: [
+                {
+                    title: "Banner",
+                    href: route("banners.index"),
+                    active: url.startsWith("/dashboard/banners"),
+                    icon: <IconPhoto size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["dashboard-access"]),
+                },
                 {
                     title: "Kategori",
                     href: route("categories.index"),

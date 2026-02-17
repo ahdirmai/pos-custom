@@ -1,33 +1,89 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import UserLayout from '@/Layouts/UserLayout';
 import Banner from '@/Components/EndUser/Banner';
 import CategoryList from '@/Components/EndUser/CategoryList';
 import ProductCard from '@/Components/EndUser/ProductCard';
 
-export default function Index({ storeBanner, productCategories = [], promoBanner, products = [], latestPosts = [] }) {
+export default function Index({ heroBanners = [], promoBanners = [], productCategories = [], products = [], latestPosts = [] }) {
+    
+    // Carousel State
+    const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+
+    // Auto-slide effect
+    useEffect(() => {
+        if (heroBanners.length > 1) {
+            const interval = setInterval(() => {
+                setCurrentHeroIndex((prevIndex) => (prevIndex + 1) % heroBanners.length);
+            }, 5000); // 5 seconds
+
+            return () => clearInterval(interval);
+        }
+    }, [heroBanners]);
+
+    const activeHeroBanner = heroBanners.length > 0 ? heroBanners[currentHeroIndex] : null;
+    const activePromoBanner = promoBanners.length > 0 ? promoBanners[0] : null;
+
     return (
         <UserLayout>
             <Head title="Home" />
 
             <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-8 space-y-12">
                 
-                {/* Store Banner */}
-                <Banner 
-                    image={storeBanner.image} 
-                    title={storeBanner.title} 
-                    subtitle={storeBanner.subtitle}
-                    className="h-[400px] md:h-[500px]"
-                 />
+                {/* Hero Banner Carousel */}
+                <div className="relative">
+                    {activeHeroBanner ? (
+                        <div className="relative overflow-hidden rounded-2xl">
+                             <div 
+                                key={activeHeroBanner.id}
+                                className="transition-opacity duration-1000 ease-in-out"
+                             >
+                                <Banner 
+                                    image={activeHeroBanner.image} 
+                                    title={activeHeroBanner.title} 
+                                    subtitle={activeHeroBanner.subtitle}
+                                    className="h-[400px] md:h-[500px]"
+                                />
+                             </div>
+                             
+                             {/* Carousel Indicators */}
+                             {heroBanners.length > 1 && (
+                                <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-10">
+                                    {heroBanners.map((_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCurrentHeroIndex(index)}
+                                            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                                                index === currentHeroIndex 
+                                                ? 'bg-white w-8' 
+                                                : 'bg-white/50 hover:bg-white/80'
+                                            }`}
+                                            aria-label={`Go to slide ${index + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                             )}
+                        </div>
+                    ) : (
+                         // Fallback if no hero banner
+                         <div className="h-[400px] md:h-[500px] bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400">
+                             No Active Hero Banner
+                         </div>
+                    )}
+                </div>
 
                 {/* Product Categories */}
                 <CategoryList categories={productCategories} />
 
                 {/* Promo Banner */}
-                <Banner 
-                    image={promoBanner.image}
-                    className="h-40 md:h-60"
-                />
+                {activePromoBanner && (
+                    <Banner 
+                        image={activePromoBanner.image}
+                        className="h-40 md:h-60"
+                        title={activePromoBanner.title} // Optional: display title if needed
+                        subtitle={activePromoBanner.subtitle} // Optional: display subtitle if needed
+                    />
+                )}
 
                 {/* Products Grid */}
                 <div className="space-y-8">

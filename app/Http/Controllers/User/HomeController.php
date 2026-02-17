@@ -11,19 +11,18 @@ class HomeController extends Controller
 {
     public function index()
     {
-        // Dummy Data
-        $storeBanner = [
-            'image' => 'https://picsum.photos/1200/400?random=1',
-            'title' => 'Welcome to Our Store',
-            'subtitle' => 'Best products for you',
-        ];
+        // Fetch active banners
+        $heroBanners = \App\Models\Banner::where('type', 'hero')
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
+
+        $promoBanners = \App\Models\Banner::where('type', 'promo')
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
 
         $productCategories = Category::all();
-
-        $promoBanner = [
-            'image' => 'https://picsum.photos/1200/200?random=7',
-            'link' => '#',
-        ];
 
         $products = Product::with('category')
             ->withSum('transactionDetails as sold_count', 'qty')
@@ -38,9 +37,9 @@ class HomeController extends Controller
         ];
 
         return Inertia::render('EndUser/Home/Index', [
-            'storeBanner' => $storeBanner,
+            'heroBanners' => $heroBanners,
+            'promoBanners' => $promoBanners,
             'productCategories' => $productCategories,
-            'promoBanner' => $promoBanner,
             'products' => $products,
             'latestPosts' => $latestPosts,
         ]);
