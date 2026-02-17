@@ -130,6 +130,14 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::resource('shipping-couriers', \App\Http\Controllers\Apps\ShippingCourierController::class);
     Route::patch('/shipping-couriers/{shippingCourier}/toggle', [\App\Http\Controllers\Apps\ShippingCourierController::class, 'toggleActive'])->middleware('permission:dashboard-access')->name('shipping-couriers.toggle');
 
+    // blog management
+    Route::resource('blog-categories', \App\Http\Controllers\Apps\BlogCategoryController::class, ['as' => 'apps'])
+        ->middleware('permission:dashboard-access');
+    Route::resource('blog-tags', \App\Http\Controllers\Apps\BlogTagController::class, ['as' => 'apps'])
+        ->middleware('permission:dashboard-access');
+    Route::resource('blog-posts', \App\Http\Controllers\Apps\BlogPostController::class, ['as' => 'apps'])
+        ->middleware('permission:dashboard-access');
+
     // banners
     Route::resource('banners', \App\Http\Controllers\Apps\BannerController::class)
         ->middlewareFor(['index', 'show'], 'permission:dashboard-access')
@@ -194,6 +202,8 @@ Route::name('user.')->group(function () {
     Route::get('/katalog', [\App\Http\Controllers\User\HomeController::class, 'products'])->name('products');
     Route::get('/cari', [\App\Http\Controllers\User\HomeController::class, 'search'])->name('search');
     Route::get('/artikel', [\App\Http\Controllers\User\HomeController::class, 'articles'])->name('articles');
+    // Article Detail
+    Route::get('/article/{slug}', [\App\Http\Controllers\User\HomeController::class, 'articleShow'])->name('article.show');
     Route::get('/produk/{id}', [\App\Http\Controllers\User\HomeController::class, 'show'])->name('product.show');
 });
 

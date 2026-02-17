@@ -30,11 +30,22 @@ class HomeController extends Controller
             ->take(10)
             ->get();
 
-        $latestPosts = [
-            ['id' => 1, 'title' => 'New Arrival', 'excerpt' => 'Check out our new collection.', 'image' => 'https://picsum.photos/300/200?random=100'],
-            ['id' => 2, 'title' => 'Promo Alert', 'excerpt' => 'Get 50% off this weekend.', 'image' => 'https://picsum.photos/300/200?random=101'],
-            ['id' => 3, 'title' => 'Tips & Tricks', 'excerpt' => 'How to style your outfit.', 'image' => 'https://picsum.photos/300/200?random=102'],
-        ];
+        $latestPosts = \App\Models\BlogPost::with('category')
+            ->where('is_active', true)
+            ->latest()
+            ->take(3)
+            ->get()
+            ->map(function ($post) {
+                return [
+                    'id' => $post->id,
+                    'slug' => $post->slug,
+                    'category' => $post->category ? $post->category->name : 'Uncategorized',
+                    'title' => $post->title,
+                    'excerpt' => $post->excerpt ?? \Illuminate\Support\Str::limit(strip_tags($post->content), 100),
+                    'date' => $post->created_at, // using accessor
+                    'image' => $post->image,
+                ];
+            });
 
         return Inertia::render('EndUser/Home/Index', [
             'heroBanners' => $heroBanners,
@@ -82,19 +93,69 @@ class HomeController extends Controller
 
     public function articles()
     {
-        $articles = [];
-        for ($i = 1; $i <= 10; $i++) {
-            $articles[] = [
-                'id' => $i,
-                'title' => "Article Title $i: Tips for Muslimah Fashion",
-                'excerpt' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-                'image' => 'https://picsum.photos/600/400?random='.($i + 200),
-                'date' => now()->subDays($i)->format('d M Y'),
-            ];
-        }
+        $articles = \App\Models\BlogPost::with('category')
+            ->where('is_active', true)
+            ->latest()
+            ->paginate(9)
+            ->through(function ($post) {
+                return [
+                    'id' => $post->id,
+                    'slug' => $post->slug,
+                    'title' => $post->title,
+                    'category' => $post->category ? $post->category->name : 'Uncategorized',
+                    'excerpt' => $post->excerpt ?? \Illuminate\Support\Str::limit(strip_tags($post->content), 150),
+                    'image' => $post->image,
+                    'date' => $post->created_at, // using accessor
+                ];
+            });
 
         return Inertia::render('EndUser/Articles/Index', [
             'articles' => $articles,
+        ]);
+    }
+
+    public function articleShow($slug)
+    {
+        $article = \App\Models\BlogPost::with(['category', 'user', 'tags'])
+            ->where('is_active', true)
+            ->where('slug', $slug)
+            ->firstOrFail();
+
+        // Increment view count
+        $article->increment('views_count');
+
+        $articleData = [
+            'id' => $article->id,
+            'title' => $article->title,
+            'category' => $article->category ? $article->category->name : 'Uncategorized',
+            'author' => $article->user ? $article->user->name : 'Admin',
+            'date' => $article->created_at, // using accessor
+            'image' => $article->image,
+            'content' => $article->content,
+            'tags' => $article->tags->pluck('name')->toArray(),
+        ];
+
+        // Related Articles
+        $relatedArticles = \App\Models\BlogPost::where('blog_category_id', $article->blog_category_id)
+            ->where('id', '!=', $article->id)
+            ->where('is_active', true)
+            ->latest()
+            ->take(3)
+            ->get()
+            ->map(function ($post) {
+                return [
+                    'id' => $post->id,
+                    'slug' => $post->slug,
+                    'title' => $post->title,
+                    'category' => $post->category ? $post->category->name : 'Uncategorized',
+                    'date' => $post->created_at, // using accessor
+                    'image' => $post->image,
+                ];
+            });
+
+        return Inertia::render('EndUser/Articles/Show', [
+            'article' => $articleData,
+            'relatedArticles' => $relatedArticles,
         ]);
     }
 

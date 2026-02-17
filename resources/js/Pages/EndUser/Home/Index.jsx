@@ -112,30 +112,47 @@ export default function Index({ heroBanners = [], promoBanners = [], productCate
 
                 {/* Latest Posts */}
                 {latestPosts && latestPosts.length > 0 && (
-                     <div className="py-12 border-t border-gray-100">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-8 px-4 md:px-0 tracking-tight">Inspirasi & Tips</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4 md:px-0">
+                     <div className="py-8 border-t border-gray-100 px-4 md:px-0">
+                        {/* Header with visual accent */}
+                        <div className="relative mb-4 inline-block">
+                            <div className="absolute inset-0 bg-yellow-200 transform -skew-x-3 rounded-lg opacity-70"></div>
+                            <h2 className="relative text-xl font-bold text-gray-900 px-3 py-1 z-10">Post Terbaru</h2>
+                        </div>
+                        
+                        <div className="flex flex-col divide-y divide-gray-100 border-b border-gray-100">
                             {latestPosts.map((post) => (
-                                <div key={post.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full">
-                                     <div className="relative h-48 overflow-hidden">
+                                <Link 
+                                    href={route('user.article.show', post.slug)} 
+                                    key={post.id} 
+                                    className="group py-4 flex items-start justify-between hover:bg-gray-50 transition-colors rounded-lg px-2 -mx-2 first:pt-0 last:pb-0 cursor-pointer"
+                                >
+                                     <div className="flex-1 pr-4">
+                                        <div className="text-[11px] text-gray-500 mb-1">In <span className="font-semibold text-gray-600">{post.category || 'Panduan'}</span></div>
+                                        <h3 className="text-base font-bold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
+                                             {post.title}
+                                        </h3>
+                                        <div className="text-xs text-gray-400 font-medium">
+                                             {post.date}
+                                        </div>
+                                     </div>
+                                     <div className="flex-shrink-0 w-28 h-16 md:w-32 md:h-20 rounded-lg overflow-hidden bg-gray-100 shadow-sm relative mt-0.5">
                                         <img 
                                             src={post.image} 
                                             alt={post.title} 
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                                         />
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
                                      </div>
-                                     <div className="p-6 flex flex-col flex-1">
-                                         <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">Blog</span>
-                                         <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-2">{post.title}</h3>
-                                         <p className="text-gray-500 text-sm line-clamp-3 mb-4 flex-1">{post.excerpt}</p>
-                                         <a href="#" className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-                                             Baca Selengkapnya
-                                             <svg className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                                         </a>
-                                     </div>
-                                </div>
+                                </Link>
                             ))}
+                        </div>
+                        
+                        {/* View All Posts Button */}
+                        <div className="mt-6 text-center md:text-left">
+                            <Link href={route('user.articles')} className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                                Lihat Semua Postingan
+                                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                            </Link>
                         </div>
                     </div>
                 )} 
