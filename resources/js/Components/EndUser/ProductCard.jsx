@@ -30,7 +30,7 @@ export default function ProductCard({ product }) {
         }
 
         if (hasStock) {
-            router.post('/cart', {
+            router.post(route('user.cart.store'), {
                 product_id: product.id,
                 qty: 1
             }, {
@@ -39,7 +39,7 @@ export default function ProductCard({ product }) {
                     toast.success(
                         (t) => (
                             <div className="flex items-center gap-2">
-                                <span className="font-medium">{product.name || product.title}</span>
+                                <span className="font-medium">{product.title}</span>
                                 <span className="text-green-600 font-bold">+1</span>
                             </div>
                         ),
@@ -57,14 +57,14 @@ export default function ProductCard({ product }) {
 
     return (
         <Link 
-            href="#" 
+            href={route('user.product.show', product.id)} 
             className={`group relative flex flex-col bg-white rounded-2xl border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${!hasStock ? 'opacity-75' : ''}`}
         >
             {/* Image Section */}
             <div className="relative aspect-square bg-gray-100 overflow-hidden">
                 <img 
-                    src={product.image} 
-                    alt={product.name || product.title} 
+                    src={product.image || '/images/placeholder.png'} 
+                    alt={product.title} 
                     className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:blur-[2px] ${!hasStock ? 'grayscale' : ''}`}
                     loading="lazy"
                 />
@@ -110,12 +110,12 @@ export default function ProductCard({ product }) {
                 {/* Category Label */}
                 <div className="mb-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
-                        {product.category?.name || product.category || 'Produk'}
+                        {product.category?.name || 'Umum'}
                     </span>
                 </div>
 
                 <div className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug mb-2 group-hover:text-indigo-600 transition-colors">
-                    {product.name || product.title}
+                    {product.title}
                 </div>
                 
                 {/* Rating & Sold */}
@@ -130,7 +130,7 @@ export default function ProductCard({ product }) {
                             </div>
                         )}
                         {product.rating && product.sold_count && <span className="text-gray-300">|</span>}
-                        {product.sold_count && <span>{product.sold_count} terjual</span>}
+                        {product.sold_count > 0 && <span>{product.sold_count} terjual</span>}
                         
                         {/* Stock Info */}
                         {lowStock && (
@@ -144,7 +144,7 @@ export default function ProductCard({ product }) {
                 
                 <div className="mt-auto border-t mt-1 border-gray-50 flex flex-col gap-2">
                     <p className="text-sm sm:text-base font-bold text-indigo-600">
-                        {formatPrice(product.price || product.sell_price)}
+                        {formatPrice(product.sell_price)}
                     </p>
                     {/* Mobile Only: Full Width Add Button */}
                     {hasStock && (

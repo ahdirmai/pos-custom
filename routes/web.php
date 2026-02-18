@@ -199,12 +199,12 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
 // end user page (customer) public
 Route::name('user.')->group(function () {
     Route::get('/', [\App\Http\Controllers\User\HomeController::class, 'index'])->name('index');
-    Route::get('/katalog', [\App\Http\Controllers\User\HomeController::class, 'products'])->name('products');
-    Route::get('/cari', [\App\Http\Controllers\User\HomeController::class, 'search'])->name('search');
-    Route::get('/artikel', [\App\Http\Controllers\User\HomeController::class, 'articles'])->name('articles');
+    Route::get('/products', [\App\Http\Controllers\User\ProductController::class, 'index'])->name('products');
+    Route::get('/search', [\App\Http\Controllers\User\ProductController::class, 'search'])->name('search');
+    Route::get('/articles', [\App\Http\Controllers\User\HomeController::class, 'articles'])->name('articles');
     // Article Detail
     Route::get('/article/{slug}', [\App\Http\Controllers\User\HomeController::class, 'articleShow'])->name('article.show');
-    Route::get('/produk/{id}', [\App\Http\Controllers\User\HomeController::class, 'show'])->name('product.show');
+    Route::get('/product/{slug}', [\App\Http\Controllers\User\ProductController::class, 'show'])->name('product.show');
 });
 
 // end user page (customer) protected
