@@ -32,7 +32,7 @@ class RegionController extends Controller
     {
         $request->validate(['district_id' => 'required|string']);
         return Village::where('district_code', $request->district_id)
-            ->select('code', 'name')
+            ->select('code', 'name', 'meta')
             ->orderBy('name')
             ->get();
     }

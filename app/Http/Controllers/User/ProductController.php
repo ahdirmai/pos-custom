@@ -96,6 +96,26 @@ class ProductController extends Controller
 
     public function search(Request $request)
     {
-        return $this->index($request);
+        // Popular products (most sold)
+        $popularProducts = Product::with('category')
+            ->withSum('transactionDetails as sold_count', 'qty')
+            ->orderByDesc('sold_count')
+            ->take(8)
+            ->get();
+
+        // Latest products
+        $latestProducts = Product::with('category')
+            ->latest()
+            ->take(8)
+            ->get();
+
+        // Categories
+        $categories = Category::withCount('products')->get();
+
+        return Inertia::render('EndUser/Search/Index', [
+            'popularProducts' => $popularProducts,
+            'latestProducts' => $latestProducts,
+            'categories' => $categories,
+        ]);
     }
 }

@@ -60,7 +60,7 @@ class CheckoutController extends Controller
 
         // Fetch saved addresses
         $savedAddresses = \App\Models\CustomerAddress::where('user_id', Auth::id())
-            ->with(['province', 'regency', 'district', 'village'])
+            ->with(['province', 'city', 'district', 'village'])
             ->orderBy('is_primary', 'desc')
             ->get();
 
@@ -239,24 +239,10 @@ class CheckoutController extends Controller
                 $customer = $customer->first();
             }
 
+            // return $user->customer;
             // Save Address if requested
-            if ($request->boolean('save_address') && $customer) {
-                // 1. Update Customer Profile (Sync)
-                $customer->update([
-                    'address' => $request->address,
-                    'province_id' => $request->province_code,
-                    'province_name' => $province->name ?? null,
-                    'regency_id' => $request->city_code,
-                    'regency_name' => $city->name ?? null,
-                    'district_id' => $request->district_code,
-                    'district_name' => $district->name ?? null,
-                    'village_id' => $request->village_code,
-                    'village_name' => $village->name ?? null,
-                    'postal_code' => $request->postal_code,
-                    'no_telp' => $request->phone_number,
-                ]);
-
-                // 2. Add to CustomerAddress List
+            if ($request->save_address && $customer) {
+                // Add to CustomerAddress List
                 // Check if user has any address, if not, make this primary
                 $hasAddress = \App\Models\CustomerAddress::where('user_id', $user->id)->exists();
                 

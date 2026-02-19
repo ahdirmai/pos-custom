@@ -84,11 +84,10 @@ export default function Login({ status, canResetPassword, store_name, store_logo
                                         setData("email", e.target.value)
                                     }
                                     placeholder="nama@email.com"
-                                    className={`w-full h-12 pl-12 pr-4 rounded-xl border-2 ${
-                                        errors.email
+                                    className={`w-full h-12 pl-12 pr-4 rounded-xl border-2 ${errors.email
                                             ? "border-danger-500 focus:border-danger-500"
                                             : "border-slate-200 dark:border-slate-700 focus:border-primary-500"
-                                    } bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-primary-500/20 transition-all`}
+                                        } bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-primary-500/20 transition-all`}
                                 />
                             </div>
                             {errors.email && (
@@ -116,11 +115,10 @@ export default function Login({ status, canResetPassword, store_name, store_logo
                                         setData("password", e.target.value)
                                     }
                                     placeholder="••••••••"
-                                    className={`w-full h-12 pl-12 pr-12 rounded-xl border-2 ${
-                                        errors.password
+                                    className={`w-full h-12 pl-12 pr-12 rounded-xl border-2 ${errors.password
                                             ? "border-danger-500 focus:border-danger-500"
                                             : "border-slate-200 dark:border-slate-700 focus:border-primary-500"
-                                    } bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-primary-500/20 transition-all`}
+                                        } bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-primary-500/20 transition-all`}
                                 />
                                 <button
                                     type="button"
@@ -190,6 +188,17 @@ export default function Login({ status, canResetPassword, store_name, store_logo
                                 "Masuk"
                             )}
                         </button>
+
+                        {/* Register Link */}
+                        <p className="text-center text-sm text-slate-600 dark:text-slate-400">
+                            Belum punya akun?{" "}
+                            <Link
+                                href={route("register")}
+                                className="text-primary-500 hover:text-primary-600 font-semibold transition-colors"
+                            >
+                                Daftar disini
+                            </Link>
+                        </p>
                     </form>
                 </div>
             </div>

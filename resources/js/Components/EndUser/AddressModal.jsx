@@ -38,22 +38,43 @@ export default function AddressModal({ show, onClose, address = null, provinces 
                 is_primary: address.is_primary || false,
             });
 
-            // Load cascading data for editing
-            if (address.province_code) {
-                loadCities(address.province_code);
-            }
-            if (address.city_code) {
-                loadDistricts(address.city_code);
-            }
-            if (address.district_code) {
-                loadVillages(address.district_code);
-            }
+            // Load cascading data sequentially for editing
+            const loadEditData = async () => {
+                if (address.province_code) {
+                    await loadCities(address.province_code);
+                }
+                if (address.city_code) {
+                    await loadDistricts(address.city_code);
+                }
+                if (address.district_code) {
+                    await loadVillages(address.district_code);
+                }
+            };
+            loadEditData();
+        } else {
+            setFormData({
+                label: '',
+                recipient_name: '',
+                phone_number: '',
+                address: '',
+                province_code: '',
+                city_code: '',
+                district_code: '',
+                village_code: '',
+                postal_code: '',
+                is_primary: false,
+            });
+            setCities([]);
+            setDistricts([]);
+            setVillages([]);
         }
     }, [address]);
 
     const loadCities = async (provinceCode) => {
         try {
-            const response = await axios.get(`/api/laravolt/cities/${provinceCode}`);
+            const response = await axios.get(route('regions.regencies'), {
+                params: { province_id: provinceCode }
+            });
             setCities(response.data);
         } catch (error) {
             console.error('Failed to load cities:', error);
@@ -62,7 +83,9 @@ export default function AddressModal({ show, onClose, address = null, provinces 
 
     const loadDistricts = async (cityCode) => {
         try {
-            const response = await axios.get(`/api/laravolt/districts/${cityCode}`);
+            const response = await axios.get(route('regions.districts'), {
+                params: { regency_id: cityCode }
+            });
             setDistricts(response.data);
         } catch (error) {
             console.error('Failed to load districts:', error);
@@ -71,7 +94,9 @@ export default function AddressModal({ show, onClose, address = null, provinces 
 
     const loadVillages = async (districtCode) => {
         try {
-            const response = await axios.get(`/api/laravolt/villages/${districtCode}`);
+            const response = await axios.get(route('regions.villages'), {
+                params: { district_id: districtCode }
+            });
             setVillages(response.data);
         } catch (error) {
             console.error('Failed to load villages:', error);
@@ -122,8 +147,8 @@ export default function AddressModal({ show, onClose, address = null, provinces 
         setLoading(true);
         setErrors({});
 
-        const url = address 
-            ? route('user.addresses.update', address.id) 
+        const url = address
+            ? route('user.addresses.update', address.id)
             : route('user.addresses.store');
 
         const method = address ? 'put' : 'post';
@@ -164,7 +189,7 @@ export default function AddressModal({ show, onClose, address = null, provinces 
                     <h2 className="text-xl font-bold text-gray-900">
                         {address ? 'Edit Alamat' : 'Tambah Alamat Baru'}
                     </h2>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="text-gray-400 hover:text-gray-600"
                     >
@@ -285,7 +310,12 @@ export default function AddressModal({ show, onClose, address = null, provinces 
                             </label>
                             <select
                                 value={formData.village_code}
-                                onChange={(e) => setFormData(prev => ({ ...prev, village_code: e.target.value }))}
+                                onChange={(e) => {
+                                    const villageCode = e.target.value;
+                                    const selectedVillage = villages.find(v => v.code === villageCode);
+                                    const postalCode = selectedVillage?.meta?.pos || '';
+                                    setFormData(prev => ({ ...prev, village_code: villageCode, postal_code: postalCode }));
+                                }}
                                 disabled={!formData.district_code}
                                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"
                             >

@@ -21,7 +21,10 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+            'store_name' => \App\Models\Setting::where('key', 'store_name')->first()?->value,
+            'store_logo' => \App\Models\Setting::where('key', 'store_logo')->first()?->value,
+        ]);
     }
 
     /**
@@ -67,7 +70,7 @@ class RegisteredUserController extends Controller
 
             Auth::login($user);
 
-            return redirect(route('home', absolute: false));
+            return redirect('/');
         } catch (\Exception $e) {
             \DB::rollBack();
 

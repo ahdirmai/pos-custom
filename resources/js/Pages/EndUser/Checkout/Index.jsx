@@ -116,7 +116,9 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
     };
 
     const handleVillageChange = (villageCode) => {
-        setFormData({ ...formData, village_code: villageCode });
+        const selectedVillage = villages.find(v => v.code === villageCode);
+        const postalCode = selectedVillage?.meta?.pos || '';
+        setFormData({ ...formData, village_code: villageCode, postal_code: postalCode });
     };
 
     // Handle Saved Address Selection
@@ -302,8 +304,8 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                             key={addr.id}
                                             onClick={() => handleSelectSavedAddress(addr)}
                                             className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedSavedAddress?.id === addr.id
-                                                    ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
+                                                : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                         >
                                             <div className="flex justify-between items-start">
@@ -324,6 +326,23 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                             </div>
                                         </div>
                                     ))}
+
+                                    {/* Cek Ongkir for saved address */}
+                                    {selectedSavedAddress && (
+                                        <div className="flex items-center gap-3 pt-2">
+                                            <div className="flex-1 text-sm text-gray-600">
+                                                Kode Pos: <span className="font-semibold text-gray-900">{formData.postal_code}</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={checkRates}
+                                                disabled={loadingRates}
+                                                className="px-5 py-2.5 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-700 disabled:opacity-50 whitespace-nowrap"
+                                            >
+                                                {loadingRates ? 'Loading...' : 'Cek Ongkir'}
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -503,8 +522,8 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                                 shipping_cost: rate.price
                                             })}
                                             className={`p-3 border rounded-lg cursor-pointer transition-all ${formData.shipping_courier === rate.courier_name && formData.shipping_service === rate.service_type
-                                                    ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
+                                                : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                         >
                                             <div className="flex justify-between items-center mb-1">
