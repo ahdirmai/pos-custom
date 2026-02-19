@@ -68,7 +68,18 @@ class ProductController extends Controller
         // Using ID for now as slug column verification was inconclusive/not found in fillable
         $product = Product::with(['category', 'productDetail'])
             ->withSum('transactionDetails as sold_count', 'qty')
+            ->withAvg('reviews as average_rating', 'rating')
+            ->withCount(['reviews' => function ($q) {
+                $q->where('is_hidden', false);
+            }])
             ->findOrFail($slug);
+
+        // Get visible reviews with user info
+        $reviews = $product->reviews()
+            ->where('is_hidden', false)
+            ->with('user:id,name,avatar')
+            ->latest()
+            ->paginate(10);
 
         // Get related products (same category)
         $relatedProducts = Product::where('category_id', $product->category_id)
@@ -78,6 +89,7 @@ class ProductController extends Controller
 
         return Inertia::render('EndUser/Products/Show', [
             'product' => $product,
+            'reviews' => $reviews,
             'relatedProducts' => $relatedProducts,
         ]);
     }

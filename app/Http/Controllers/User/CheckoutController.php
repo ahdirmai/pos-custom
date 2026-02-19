@@ -169,6 +169,7 @@ class CheckoutController extends Controller
             'payment_proof' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        // return $request->all();
         return DB::transaction(function () use ($request) {
             $user = Auth::user();
 
@@ -232,9 +233,57 @@ class CheckoutController extends Controller
             $district = \Laravolt\Indonesia\Models\District::where('code', $request->district_code)->first();
             $village = \Laravolt\Indonesia\Models\Village::where('code', $request->village_code)->first();
 
+            // Resolve Customer (Handle BelongsToMany returning Collection)
+            $customer = $user->customer;
+            if ($customer instanceof \Illuminate\Database\Eloquent\Collection) {
+                $customer = $customer->first();
+            }
+
+            // Save Address if requested
+            if ($request->boolean('save_address') && $customer) {
+                // 1. Update Customer Profile (Sync)
+                $customer->update([
+                    'address' => $request->address,
+                    'province_id' => $request->province_code,
+                    'province_name' => $province->name ?? null,
+                    'regency_id' => $request->city_code,
+                    'regency_name' => $city->name ?? null,
+                    'district_id' => $request->district_code,
+                    'district_name' => $district->name ?? null,
+                    'village_id' => $request->village_code,
+                    'village_name' => $village->name ?? null,
+                    'postal_code' => $request->postal_code,
+                    'no_telp' => $request->phone_number,
+                ]);
+
+                // 2. Add to CustomerAddress List
+                // Check if user has any address, if not, make this primary
+                $hasAddress = \App\Models\CustomerAddress::where('user_id', $user->id)->exists();
+                
+                // Validate Label
+                if (!$request->address_label) {
+                    throw new \Exception('Label alamat wajib diisi jika simpan alamat dipilih.');
+                }
+
+                \App\Models\CustomerAddress::create([
+                    'user_id' => $user->id,
+                    'customer_id' => $customer->id,
+                    'label' => $request->address_label,
+                    'recipient_name' => $request->recipient_name,
+                    'phone_number' => $request->phone_number,
+                    'address' => $request->address,
+                    'province_code' => $request->province_code,
+                    'city_code' => $request->city_code,
+                    'district_code' => $request->district_code,
+                    'village_code' => $request->village_code,
+                    'postal_code' => $request->postal_code,
+                    'is_primary' => !$hasAddress,
+                ]);
+            }
+
             $transaction = Transaction::create([
                 'cashier_id' => null, // Online Order
-                'customer_id' => null, // Or link to a customer record if we sync User->Customer
+                'customer_id' => $customer ? $customer->id : null,
                 'user_id' => $user->id,
                 'invoice' => $invoice,
                 'cash' => 0, // Not paid yet

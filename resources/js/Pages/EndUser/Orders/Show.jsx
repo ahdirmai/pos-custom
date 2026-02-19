@@ -31,7 +31,7 @@ function UploadPaymentProofForm({ transactionId }) {
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);
-        
+
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             const droppedFile = e.dataTransfer.files[0];
             setFile(droppedFile);
@@ -47,7 +47,7 @@ function UploadPaymentProofForm({ transactionId }) {
         const formData = new FormData();
         formData.append('payment_proof', file);
 
-        router.post(route('orders.upload-payment-proof', transactionId), formData, {
+        router.post(route('user.orders.upload-payment-proof', transactionId), formData, {
             onSuccess: () => {
                 setUploading(false);
             },
@@ -63,14 +63,13 @@ function UploadPaymentProofForm({ transactionId }) {
             <p className="text-xs text-gray-600 mb-3">
                 Silakan upload bukti transfer Anda untuk mempercepat proses verifikasi pembayaran
             </p>
-            
+
             <form onSubmit={handleSubmit} className="space-y-3">
-                <div 
-                    className={`relative border-2 border-dashed rounded-lg p-6 transition-all duration-200 ${
-                        dragActive 
-                            ? 'border-indigo-500 bg-indigo-50/50' 
-                            : 'border-gray-300 hover:border-indigo-400'
-                    }`}
+                <div
+                    className={`relative border-2 border-dashed rounded-lg p-6 transition-all duration-200 ${dragActive
+                        ? 'border-indigo-500 bg-indigo-50/50'
+                        : 'border-gray-300 hover:border-indigo-400'
+                        }`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
@@ -83,12 +82,12 @@ function UploadPaymentProofForm({ transactionId }) {
                         onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
-                    
+
                     {preview ? (
                         <div className="space-y-3">
-                            <img 
-                                src={preview} 
-                                alt="Preview" 
+                            <img
+                                src={preview}
+                                alt="Preview"
                                 className="w-full max-w-sm mx-auto rounded-lg border-2 border-gray-200"
                             />
                             <button
@@ -119,11 +118,10 @@ function UploadPaymentProofForm({ transactionId }) {
                     <button
                         type="submit"
                         disabled={uploading}
-                        className={`w-full px-4 py-2.5 rounded-lg font-medium text-white transition-all duration-200 ${
-                            uploading
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
-                        }`}
+                        className={`w-full px-4 py-2.5 rounded-lg font-medium text-white transition-all duration-200 ${uploading
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
+                            }`}
                     >
                         {uploading ? (
                             <span className="flex items-center justify-center gap-2">
@@ -143,11 +141,111 @@ function UploadPaymentProofForm({ transactionId }) {
     );
 }
 
+// Bulk Review Modal - shows all products in one modal
+function BulkReviewModal({ isOpen, onClose, transactionId, items, existingReviews }) {
+    if (!isOpen) return null;
+
+    // Filter to only unreviewed items
+    const unreviewedItems = items.filter(item =>
+        !existingReviews?.some(r => r.product_id === item.product_id)
+    );
+
+    // Initialize ratings and comments for each unreviewd product
+    const [reviews, setReviews] = useState(
+        unreviewedItems.map(item => ({
+            product_id: item.product_id,
+            rating: 5,
+            comment: ''
+        }))
+    );
+    const [submitting, setSubmitting] = useState(false);
+
+    const updateReview = (productId, field, value) => {
+        setReviews(prev => prev.map(r =>
+            r.product_id === productId ? { ...r, [field]: value } : r
+        ));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        router.post(route('user.orders.bulk-review', transactionId), { reviews }, {
+            onSuccess: () => { setSubmitting(false); onClose(); },
+            onError: () => { setSubmitting(false); }
+        });
+    };
+
+    if (unreviewedItems.length === 0) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <h3 className="text-lg font-bold text-gray-900 mb-1">Beri Ulasan</h3>
+                <p className="text-sm text-gray-500 mb-5">Berikan ulasan untuk produk yang Anda beli</p>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {unreviewedItems.map((item, idx) => {
+                        const rev = reviews.find(r => r.product_id === item.product_id);
+                        return (
+                            <div key={item.product_id} className={`${idx > 0 ? 'border-t border-gray-200 pt-5' : ''}`}>
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                        {item.product?.image ? (
+                                            <img src={item.product.image} alt={item.product.title} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">img</div>
+                                        )}
+                                    </div>
+                                    <p className="font-medium text-gray-900 text-sm line-clamp-1">{item.product?.title || 'Produk'}</p>
+                                </div>
+                                <div className="mb-2">
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Rating</label>
+                                    <div className="flex gap-1">
+                                        {[1, 2, 3, 4, 5].map(star => (
+                                            <button key={star} type="button" onClick={() => updateReview(item.product_id, 'rating', star)}
+                                                className={`p-0.5 transition-colors ${(rev?.rating || 5) >= star ? 'text-yellow-400' : 'text-gray-300'}`}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                </svg>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Komentar (Opsional)</label>
+                                    <textarea rows="2" value={rev?.comment || ''}
+                                        onChange={(e) => updateReview(item.product_id, 'comment', e.target.value)}
+                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        placeholder="Bagaimana kualitas produk ini?" />
+                                </div>
+                            </div>
+                        );
+                    })}
+                    <div className="flex justify-end pt-2">
+                        <button type="submit" disabled={submitting}
+                            className="px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                            {submitting ? 'Mengirim...' : 'Kirim Semua Ulasan'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 export default function OrderShow({ transaction }) {
     const { storeProfile } = usePage().props;
-    const [showPaymentProof, setShowPaymentProof] = useState(false);
+    const [showPaymentProof, setShowPaymentProof] = useState(!transaction.payment_proof);
+    const [showReviewModal, setShowReviewModal] = useState(false);
 
-    const formatPrice = (value) => 
+    const formatPrice = (value) =>
         new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -157,8 +255,8 @@ export default function OrderShow({ transaction }) {
     // Parsing Shipping Address JSON
     let shippingAddress = {};
     try {
-        shippingAddress = typeof transaction.shipping_address === 'string' 
-            ? JSON.parse(transaction.shipping_address) 
+        shippingAddress = typeof transaction.shipping_address === 'string'
+            ? JSON.parse(transaction.shipping_address)
             : transaction.shipping_address;
     } catch (e) {
         shippingAddress = {};
@@ -171,11 +269,10 @@ export default function OrderShow({ transaction }) {
     const subtotal = items.reduce((acc, item) => acc + (parseFloat(item.price) * item.qty), 0);
 
     const getStatusLabel = (status, paymentProof) => {
-        // If pending but has payment proof, show as processing
         if (status === 'pending' && paymentProof) {
             return 'Sedang Diproses';
         }
-        
+
         switch (status) {
             case 'pending': return 'Menunggu Pembayaran';
             case 'processing': return 'Sedang Diproses';
@@ -186,24 +283,36 @@ export default function OrderShow({ transaction }) {
         }
     };
 
+    const handleCompleteOrder = () => {
+        if (confirm('Apakah Anda yakin pesanan sudah diterima dengan baik?')) {
+            router.post(route('user.orders.complete', transaction.id), {}, {
+                preserveScroll: true
+            });
+        }
+    };
+
+    const hasUnreviewedItems = items.some(item =>
+        !transaction.reviews?.some(r => r.product_id === item.product_id)
+    );
+
     return (
         <AuthenticatedUserLayout>
             <Head title={`Invoice ${transaction.invoice}`} />
             <div className="max-w-3xl mx-auto px-4 py-8">
-                <Link 
-                        href={route('user.profile')} 
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm hover:shadow mb-4"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        <span>Kembali</span>
-                    </Link>
-                {/* Success Banner (Conditional) */}
+                <Link
+                    href={`${route('user.profile')}#pesanan`}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm hover:shadow mb-4"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    <span>Kembali</span>
+                </Link>
+
                 {/* Status Banner */}
                 {transaction.order_status === 'pending' && !transaction.payment_proof && (
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-center gap-3">
-                         <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 text-amber-600">
+                        <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 text-amber-600">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -214,10 +323,10 @@ export default function OrderShow({ transaction }) {
                         </div>
                     </div>
                 )}
-                
+
                 {transaction.order_status === 'pending' && transaction.payment_proof && (
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-center gap-3">
-                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 text-blue-600">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 text-blue-600">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -267,11 +376,10 @@ export default function OrderShow({ transaction }) {
                             <div className="md:text-right">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Status Order</p>
                                 <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full 
-                                    ${transaction.order_status === 'completed' ? 'bg-green-100 text-green-800' : 
-                                      transaction.order_status === 'cancelled' ? 'bg-red-100 text-red-800' : 
-                                      // Show blue/processing color if payment proof exists
-                                      (transaction.order_status === 'pending' && transaction.payment_proof) ? 'bg-blue-100 text-blue-800' :
-                                      'bg-amber-100 text-amber-800'}`}>
+                                    ${transaction.order_status === 'completed' ? 'bg-green-100 text-green-800' :
+                                        transaction.order_status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                            (transaction.order_status === 'pending' && transaction.payment_proof) ? 'bg-blue-100 text-blue-800' :
+                                                'bg-amber-100 text-amber-800'}`}>
                                     {getStatusLabel(transaction.order_status, transaction.payment_proof)}
                                 </span>
                                 <p className="text-sm text-gray-600 mt-2 font-medium">Kurir: {transaction.shipping_courier}</p>
@@ -318,91 +426,85 @@ export default function OrderShow({ transaction }) {
                         </table>
                     </div>
 
-                    {/* Payment Proof Section */}
-                  {transaction.payment_method === 'manual_transfer' && (
-  <div className="px-6 py-5 border-t border-gray-200">
-    {/* Header with Toggle */}
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900">Bukti Pembayaran</h3>
-          {transaction.payment_proof && (
-            <p className="text-xs text-gray-500 mt-0.5">
-              {transaction.order_status === 'pending' 
-                ? 'Sedang diverifikasi' 
-                : 'Terverifikasi'}
-            </p>
-          )}
-        </div>
-      </div>
-      
-      {/* Toggle Button */}
-      {transaction.payment_proof && (
-        <button
-          onClick={() => setShowPaymentProof(!showPaymentProof)}
-          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-          aria-label="Toggle payment proof"
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${showPaymentProof ? 'rotate-180' : ''}`}
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-      )}
-    </div>
+                    {/* Payment Proof Section - KEPT SAME */}
+                    {transaction.payment_method === 'manual_transfer' && (
+                        <div className="px-6 py-5 border-t border-gray-200">
+                            {/* Header with Toggle */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-900">Bukti Pembayaran</h3>
+                                        {transaction.payment_proof && (
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                {transaction.order_status === 'pending'
+                                                    ? 'Sedang diverifikasi'
+                                                    : 'Terverifikasi'}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
 
-    {/* Collapsible Content */}
-    <div className={`overflow-hidden transition-all duration-300 ${showPaymentProof ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-      {transaction.payment_proof ? (
-        <div className="space-y-3">
-          {/* Status Message - hanya tampil jika pending */}
-          {transaction.order_status === 'pending' && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-xs text-amber-700">Admin sedang memverifikasi pembayaran Anda</p>
-            </div>
-          )}
+                                {/* Toggle Button */}
+                                <button
+                                    onClick={() => setShowPaymentProof(!showPaymentProof)}
+                                    className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                                    aria-label="Toggle payment proof"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${showPaymentProof ? 'rotate-180' : ''}`}
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
 
-          {/* Image Preview */}
-          <div 
-            className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 bg-gray-50 hover:border-indigo-300 transition-all duration-200"
-            onClick={() => window.open(`/storage/${transaction.payment_proof}`, '_blank')}
-          >
-            <img 
-              src={`/storage/${transaction.payment_proof}`}
-              alt="Bukti Pembayaran"
-              className="w-full max-w-md object-cover"
-            />
-            
-            {/* Hover Overlay */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center">
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white rounded-lg px-3 py-2 shadow-lg flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                <span className="text-xs font-medium text-gray-700">Buka gambar</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <UploadPaymentProofForm transactionId={transaction.id} />
-      )}
-    </div>
-  </div>
-)}
+                            {/* Collapsible Content */}
+                            <div className={`overflow-hidden transition-all duration-300 ${showPaymentProof ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                {transaction.payment_proof ? (
+                                    <div className="space-y-3">
+                                        {transaction.order_status === 'pending' && (
+                                            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <p className="text-xs text-amber-700">Admin sedang memverifikasi pembayaran Anda</p>
+                                            </div>
+                                        )}
+
+                                        <div
+                                            className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 bg-gray-50 hover:border-indigo-300 transition-all duration-200"
+                                            onClick={() => window.open(`/storage/${transaction.payment_proof}`, '_blank')}
+                                        >
+                                            <img
+                                                src={`/storage/${transaction.payment_proof}`}
+                                                alt="Bukti Pembayaran"
+                                                className="w-full max-w-md object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center">
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white rounded-lg px-3 py-2 shadow-lg flex items-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                    </svg>
+                                                    <span className="text-xs font-medium text-gray-700">Buka gambar</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <UploadPaymentProofForm transactionId={transaction.id} />
+                                )}
+                            </div>
+                        </div>
+                    )}
 
 
                     {/* Summary */}
@@ -416,7 +518,7 @@ export default function OrderShow({ transaction }) {
                                 <span>Ongkos Kirim</span>
                                 <span>{formatPrice(shippingCost)}</span>
                             </div>
-                             {discount > 0 && (
+                            {discount > 0 && (
                                 <div className="flex justify-between text-red-600">
                                     <span>Voucher Discount</span>
                                     <span>- {formatPrice(discount)}</span>
@@ -431,35 +533,57 @@ export default function OrderShow({ transaction }) {
                 </div>
 
                 {/* Actions */}
-                {/* Action Buttons */}
                 <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                   
-                    
-                    <button 
-                        onClick={() => window.print()}
-                        className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        <span>Cetak Invoice</span>
-                    </button>
-                    
+                    {/* Pesanan Diterima Button - Only if shipped */}
+                    {transaction.order_status === 'shipped' && (
+                        <button
+                            onClick={handleCompleteOrder}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 transition-all shadow-md hover:shadow-lg"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Pesanan Diterima</span>
+                        </button>
+                    )}
+
+                    {/* Beri Ulasan - only if completed and has unreviewd items */}
+                    {transaction.order_status === 'completed' && hasUnreviewedItems && (
+                        <button
+                            onClick={() => setShowReviewModal(true)}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                            </svg>
+                            <span>Beri Ulasan</span>
+                        </button>
+                    )}
+
                     {/* WhatsApp Confirmation - only show if pending */}
                     {transaction.order_status === 'pending' && (
-                        <a 
+                        <a
                             href={`https://wa.me/?text=Halo saya ingin konfirmasi pembayaran untuk pesanan ${transaction.invoice}`}
                             target="_blank"
                             rel="noreferrer"
                             className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 transition-all shadow-md hover:shadow-lg"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.572-.347-.299-.149-1.774-.875-2.05-.974-.277-.1-.478-.149-.679.149-.2.297-.774.974-.95 1.175-.173.198-.347.223-.646.074-.3-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.3-.347.449-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.572-.347-.299-.149-1.774-.875-2.05-.974-.277-.1-.478-.149-.679.149-.2.297-.774.974-.95 1.175-.173.198-.347.223-.646.074-.3-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.3-.347.449-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
                             </svg>
                             <span>Konfirmasi via WhatsApp</span>
                         </a>
                     )}
                 </div>
+
+                {/* Bulk Review Modal */}
+                <BulkReviewModal
+                    isOpen={showReviewModal}
+                    onClose={() => setShowReviewModal(false)}
+                    transactionId={transaction.id}
+                    items={items}
+                    existingReviews={transaction.reviews}
+                />
             </div>
         </AuthenticatedUserLayout>
     );

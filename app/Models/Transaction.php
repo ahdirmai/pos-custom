@@ -39,6 +39,7 @@ class Transaction extends Model
         'tracking_number',
         'voucher_id',
         'snap_token',
+        'snap_token',
     ];
 
     /**
@@ -129,5 +130,10 @@ class Transaction extends Model
     public function shipping()
     {
         return $this->hasOne(TransactionShipping::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
     }
 }

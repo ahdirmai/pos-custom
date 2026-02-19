@@ -4,12 +4,12 @@ import UserLayout from '@/Layouts/UserLayout';
 import ProductCard from '@/Components/EndUser/ProductCard';
 import toast from 'react-hot-toast';
 
-export default function ProductShow({ product, relatedProducts }) {
+export default function ProductShow({ product, reviews, relatedProducts }) {
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState('description');
     const [isWishlisted, setIsWishlisted] = useState(false);
 
-    const formatPrice = (value) => 
+    const formatPrice = (value) =>
         new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -19,7 +19,7 @@ export default function ProductShow({ product, relatedProducts }) {
     const hasDiscount = product.sell_price < product.buy_price * 1.5; // Example logic, or use real original price if available
     // Note: Product model only has buy_price and sell_price. I'll use sell_price.
     // Assuming no specific discount logic in model yet, relying on sell_price.
-    
+
     const hasStock = product.stock > 0;
     const lowStock = product.stock > 0 && product.stock <= 5;
 
@@ -50,7 +50,7 @@ export default function ProductShow({ product, relatedProducts }) {
     return (
         <UserLayout>
             <Head title={product.title} />
-            
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
                 {/* Breadcrumb */}
                 <nav className="hidden md:flex items-center gap-2 text-sm text-gray-500 mb-6">
@@ -65,13 +65,13 @@ export default function ProductShow({ product, relatedProducts }) {
                     {/* Left: Product Image */}
                     <div className="w-full lg:w-1/2 xl:w-[45%]">
                         <div className="relative aspect-square md:aspect-[4/5] bg-gray-100 rounded-2xl overflow-hidden mb-3">
-                            <img 
-                                src={product.image || '/images/placeholder.png'} 
+                            <img
+                                src={product.image || '/images/placeholder.png'}
                                 alt={product.title}
                                 className="w-full h-full object-cover"
                             />
                             {/* Wishlist Button */}
-                            <button 
+                            <button
                                 onClick={() => {
                                     setIsWishlisted(!isWishlisted);
                                     toast.success(isWishlisted ? 'Dihapus dari wishlist' : 'Ditambahkan ke wishlist');
@@ -118,7 +118,7 @@ export default function ProductShow({ product, relatedProducts }) {
                             <p className="text-sm font-medium text-gray-700 mb-2">Jumlah</p>
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center border border-gray-200 rounded-lg">
-                                    <button 
+                                    <button
                                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
                                         className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700"
                                         disabled={!hasStock}
@@ -128,7 +128,7 @@ export default function ProductShow({ product, relatedProducts }) {
                                         </svg>
                                     </button>
                                     <span className="w-12 text-center font-medium text-gray-900">{quantity}</span>
-                                    <button 
+                                    <button
                                         onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                                         className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700"
                                         disabled={!hasStock}
@@ -163,14 +163,14 @@ export default function ProductShow({ product, relatedProducts }) {
 
                         {/* CTA Buttons */}
                         <div className="flex gap-3">
-                            <button 
+                            <button
                                 onClick={handleAddToCart}
                                 disabled={!hasStock}
                                 className="flex-1 py-3.5 px-6 border-2 border-indigo-600 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Tambah Keranjang
                             </button>
-                            <button 
+                            <button
                                 onClick={handleBuyNow}
                                 disabled={!hasStock}
                                 className="flex-1 py-3.5 px-6 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -187,23 +187,90 @@ export default function ProductShow({ product, relatedProducts }) {
                         <div className="flex gap-8">
                             <button
                                 onClick={() => setActiveTab('description')}
-                                className={`pb-4 text-sm font-medium border-b-2 transition-colors ${
-                                    activeTab === 'description'
+                                className={`pb-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'description'
                                         ? 'border-indigo-600 text-indigo-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700'
-                                }`}
+                                    }`}
                             >
                                 Deskripsi
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('reviews')}
+                                className={`pb-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'reviews'
+                                        ? 'border-indigo-600 text-indigo-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                Ulasan ({product.reviews_count || 0})
                             </button>
                         </div>
                     </div>
 
                     <div className="py-6">
                         {activeTab === 'description' && (
-                            <div 
+                            <div
                                 className="prose prose-sm max-w-none text-gray-700"
                                 dangerouslySetInnerHTML={{ __html: product.description || 'Tidak ada deskripsi.' }}
                             />
+                        )}
+
+                        {activeTab === 'reviews' && (
+                            <div>
+                                {/* Rating Summary */}
+                                <div className="flex items-center gap-6 mb-6 p-4 bg-gray-50 rounded-xl">
+                                    <div className="text-center">
+                                        <div className="text-4xl font-bold text-gray-900">
+                                            {product.average_rating ? Number(product.average_rating).toFixed(1) : '-'}
+                                        </div>
+                                        <div className="flex gap-0.5 mt-1 justify-center">
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <svg key={star} xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${(product.average_rating || 0) >= star ? 'text-yellow-400' : 'text-gray-300'}`} viewBox="0 0 20 20" fill="currentColor">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                </svg>
+                                            ))}
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">{product.reviews_count || 0} ulasan</p>
+                                    </div>
+                                </div>
+
+                                {/* Review List */}
+                                {reviews?.data?.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {reviews.data.map(review => (
+                                            <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-sm font-bold text-indigo-600">
+                                                            {review.user?.name?.charAt(0)?.toUpperCase() || '?'}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-900">{review.user?.name || 'Anonim'}</p>
+                                                            <p className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-0.5">
+                                                        {[1, 2, 3, 4, 5].map(star => (
+                                                            <svg key={star} xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${review.rating >= star ? 'text-yellow-400' : 'text-gray-200'}`} viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                            </svg>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                {review.comment && (
+                                                    <p className="text-sm text-gray-600 ml-10">{review.comment}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                        </svg>
+                                        <p className="text-gray-500 text-sm">Belum ada ulasan untuk produk ini</p>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -224,14 +291,14 @@ export default function ProductShow({ product, relatedProducts }) {
             {/* Mobile Sticky CTA */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                 <div className="flex gap-3 max-w-md mx-auto">
-                    <button 
+                    <button
                         onClick={handleAddToCart}
                         disabled={!hasStock}
                         className="flex-1 py-3 border-2 border-indigo-600 text-indigo-600 font-bold rounded-xl disabled:opacity-50"
                     >
                         Keranjang
                     </button>
-                    <button 
+                    <button
                         onClick={handleBuyNow}
                         disabled={!hasStock}
                         className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl disabled:opacity-50"

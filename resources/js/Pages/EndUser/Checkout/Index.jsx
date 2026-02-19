@@ -11,7 +11,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
     const [useMode, setUseMode] = useState(savedAddresses.length > 0 ? 'saved' : 'new'); // 'saved' or 'new'
     const [selectedSavedAddress, setSelectedSavedAddress] = useState(null);
     const [saveNewAddress, setSaveNewAddress] = useState(false);
-    
+
     // Laravolt Region State
     const [regencies, setRegencies] = useState([]);
     const [districts, setDistricts] = useState([]);
@@ -39,7 +39,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
 
     const [couriers, setCouriers] = useState([]);
     const [loadingRates, setLoadingRates] = useState(false);
-    
+
     // Voucher State
     const [voucherCode, setVoucherCode] = useState('');
     const [appliedVoucher, setAppliedVoucher] = useState(null);
@@ -58,7 +58,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
         setRegencies([]);
         setDistricts([]);
         setVillages([]);
-        
+
         if (provinceCode) {
             try {
                 const res = await axios.get(route('regions.regencies'), {
@@ -81,7 +81,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
         });
         setDistricts([]);
         setVillages([]);
-        
+
         if (cityCode) {
             try {
                 const res = await axios.get(route('regions.districts'), {
@@ -102,7 +102,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
             postal_code: ''
         });
         setVillages([]);
-        
+
         if (districtCode) {
             try {
                 const res = await axios.get(route('regions.villages'), {
@@ -116,7 +116,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
     };
 
     const handleVillageChange = (villageCode) => {
-        setFormData({...formData, village_code: villageCode});
+        setFormData({ ...formData, village_code: villageCode });
     };
 
     // Handle Saved Address Selection
@@ -135,7 +135,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
         });
     };
 
-    const formatPrice = (value) => 
+    const formatPrice = (value) =>
         new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -152,12 +152,12 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
 
         setLoadingRates(true);
         setCouriers([]);
-        
+
         try {
             const response = await axios.post(route('user.checkout.check-rates'), {
                 postal_code: formData.postal_code
             });
-            
+
             // Biteship response structure handling
             // Assuming response.data.rates is array of { courier_name, service_type, price, duration, ... }
             const rates = response.data.rates || [];
@@ -184,12 +184,12 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
             });
             if (response.data.valid) {
                 setAppliedVoucher(response.data.voucher);
-                setFormData({...formData, voucher_code: response.data.voucher.code});
+                setFormData({ ...formData, voucher_code: response.data.voucher.code });
                 toast.success('Voucher berhasil digunakan!');
             }
         } catch (error) {
             setAppliedVoucher(null);
-            setFormData({...formData, voucher_code: ''});
+            setFormData({ ...formData, voucher_code: '' });
             toast.error(error.response?.data?.message || 'Voucher tidak valid');
         } finally {
             setCheckingVoucher(false);
@@ -198,7 +198,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
 
     const calculateDiscount = () => {
         if (!appliedVoucher) return 0;
-        
+
         let base = appliedVoucher.discount_target === 'shipping' ? formData.shipping_cost : subtotal;
         if (base <= 0) return 0; // cannot discount 0
 
@@ -211,7 +211,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                 discount = parseFloat(appliedVoucher.max_discount);
             }
         }
-        
+
         if (discount > base) discount = base;
         return discount;
     };
@@ -221,7 +221,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
+
         if (!formData.shipping_courier) {
             toast.error('Pilih metode pengiriman');
             return;
@@ -245,11 +245,11 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
 
     if (!carts || carts.length === 0) {
         return (
-             <UserLayout>
+            <UserLayout>
                 <div className="text-center py-20">
                     <p>Keranjang kosong. <a href={route('user.products')} className="text-indigo-600">Belanja sekarang</a></p>
                 </div>
-             </UserLayout>
+            </UserLayout>
         );
     }
 
@@ -258,7 +258,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
             <Head title="Checkout" />
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <h1 className="text-2xl font-bold text-gray-900 mb-8">Checkout Pesanan</h1>
-                
+
                 <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-8">
                     {/* Left Column: Shipping Info */}
                     <div className="flex-grow space-y-6">
@@ -278,18 +278,16 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                     <button
                                         type="button"
                                         onClick={() => setUseMode('saved')}
-                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                                            useMode === 'saved' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                                        }`}
+                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${useMode === 'saved' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                                            }`}
                                     >
                                         Pilih Alamat Tersimpan
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setUseMode('new')}
-                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                                            useMode === 'new' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                                        }`}
+                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${useMode === 'new' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                                            }`}
                                     >
                                         Alamat Baru
                                     </button>
@@ -303,11 +301,10 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                         <div
                                             key={addr.id}
                                             onClick={() => handleSelectSavedAddress(addr)}
-                                            className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                                                selectedSavedAddress?.id === addr.id
+                                            className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedSavedAddress?.id === addr.id
                                                     ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
                                                     : 'border-gray-200 hover:border-gray-300'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex justify-between items-start">
                                                 <div>
@@ -336,23 +333,23 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-1">
                                             <label className="text-sm font-medium text-gray-700">Nama Penerima</label>
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 required
                                                 className="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                                 value={formData.recipient_name}
-                                                onChange={e => setFormData({...formData, recipient_name: e.target.value})}
+                                                onChange={e => setFormData({ ...formData, recipient_name: e.target.value })}
                                             />
                                         </div>
                                         <div className="space-y-1">
                                             <label className="text-sm font-medium text-gray-700">Nomor Telepon</label>
-                                            <input 
-                                                type="tel" 
+                                            <input
+                                                type="tel"
                                                 required
                                                 className="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                                 placeholder="08..."
                                                 value={formData.phone_number}
-                                                onChange={e => setFormData({...formData, phone_number: e.target.value})}
+                                                onChange={e => setFormData({ ...formData, phone_number: e.target.value })}
                                             />
                                         </div>
                                     </div>
@@ -427,28 +424,28 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
 
                                     <div className="space-y-1 md:col-span-2">
                                         <label className="text-sm font-medium text-gray-700">Alamat Lengkap</label>
-                                        <textarea 
+                                        <textarea
                                             rows="2"
                                             required
                                             placeholder="Jalan, No. Rumah, RT/RW"
                                             className="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                             value={formData.address}
-                                            onChange={e => setFormData({...formData, address: e.target.value})}
+                                            onChange={e => setFormData({ ...formData, address: e.target.value })}
                                         />
                                     </div>
 
                                     <div className="space-y-1 relative">
                                         <label className="text-sm font-medium text-gray-700">Kode Pos (Wajib)</label>
                                         <div className="flex gap-2">
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 required
                                                 maxLength={5}
                                                 className="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                                 value={formData.postal_code}
-                                                onChange={e => setFormData({...formData, postal_code: e.target.value})}
+                                                onChange={e => setFormData({ ...formData, postal_code: e.target.value })}
                                             />
-                                            <button 
+                                            <button
                                                 type="button"
                                                 onClick={checkRates}
                                                 disabled={loadingRates}
@@ -466,17 +463,18 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                                 type="checkbox"
                                                 className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                                 checked={formData.save_address}
-                                                onChange={e => setFormData({...formData, save_address: e.target.checked})}
+                                                onChange={e => setFormData({ ...formData, save_address: e.target.checked })}
                                             />
                                             <span className="text-sm text-gray-600">Simpan alamat ini untuk penggunaan berikutnya</span>
                                         </label>
                                         {formData.save_address && (
                                             <input
                                                 type="text"
-                                                placeholder="Label (Opsional, contoh: Rumah, Kantor)"
+                                                required
+                                                placeholder="Label (Wajib, contoh: Rumah, Kantor)"
                                                 className="mt-2 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                                 value={formData.address_label}
-                                                onChange={e => setFormData({...formData, address_label: e.target.value})}
+                                                onChange={e => setFormData({ ...formData, address_label: e.target.value })}
                                             />
                                         )}
                                     </div>
@@ -486,29 +484,28 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
 
                         {/* Courier Selection */}
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                                 Pilihan Kurir
                             </h2>
-                            
+
                             {couriers.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar">
                                     {couriers.map((rate, idx) => (
-                                        <div 
+                                        <div
                                             key={`${rate.courier_name}-${rate.service_type}-${idx}`}
                                             onClick={() => setFormData({
-                                                ...formData, 
+                                                ...formData,
                                                 shipping_courier: rate.courier_name,
                                                 shipping_service: rate.service_type,
                                                 shipping_cost: rate.price
                                             })}
-                                            className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                                                formData.shipping_courier === rate.courier_name && formData.shipping_service === rate.service_type
-                                                ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500' 
-                                                : 'border-gray-200 hover:border-gray-300'
-                                            }`}
+                                            className={`p-3 border rounded-lg cursor-pointer transition-all ${formData.shipping_courier === rate.courier_name && formData.shipping_service === rate.service_type
+                                                    ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                }`}
                                         >
                                             <div className="flex justify-between items-center mb-1">
                                                 <span className="font-bold text-gray-800 uppercase">{rate.courier_name}</span>
@@ -529,7 +526,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                         </div>
 
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                 </svg>
@@ -537,9 +534,9 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                             </h2>
                             <div className="space-y-3">
                                 <label className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500`}>
-                                    <input 
-                                        type="radio" 
-                                        name="payment" 
+                                    <input
+                                        type="radio"
+                                        name="payment"
                                         value="manual_transfer"
                                         checked
                                         readOnly
@@ -556,7 +553,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                     </div>
 
                                 </label>
-                                
+
                                 {/* Payment Proof Upload */}
                                 {formData.paymentMethod === 'manual_transfer' && (
                                     <div className="mt-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
@@ -566,14 +563,14 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                         <div className="flex items-center gap-4">
                                             {formData.payment_proof ? (
                                                 <div className="relative h-24 w-24 rounded-lg overflow-hidden border border-gray-200 group">
-                                                    <img 
-                                                        src={URL.createObjectURL(formData.payment_proof)} 
-                                                        alt="Preview" 
+                                                    <img
+                                                        src={URL.createObjectURL(formData.payment_proof)}
+                                                        alt="Preview"
                                                         className="h-full w-full object-cover"
                                                     />
                                                     <button
                                                         type="button"
-                                                        onClick={() => setFormData({...formData, payment_proof: null})}
+                                                        onClick={() => setFormData({ ...formData, payment_proof: null })}
                                                         className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                                     >
                                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -588,10 +585,10 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                                             <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                                                             <p className="text-xs text-gray-500">Upload JPG/PNG (Max 2MB)</p>
                                                         </div>
-                                                        <input 
-                                                            type="file" 
+                                                        <input
+                                                            type="file"
                                                             accept="image/*"
-                                                            className="hidden" 
+                                                            className="hidden"
                                                             onChange={(e) => {
                                                                 const file = e.target.files[0];
                                                                 if (file) {
@@ -599,7 +596,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                                                         toast.error('Ukuran file maksimal 2MB');
                                                                         return;
                                                                     }
-                                                                    setFormData({...formData, payment_proof: file});
+                                                                    setFormData({ ...formData, payment_proof: file });
                                                                 }
                                                             }}
                                                         />
@@ -617,7 +614,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                     <div className="w-full lg:w-96 flex-shrink-0">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
                             <h2 className="text-lg font-bold text-gray-900 mb-4">Ringkasan Pesanan</h2>
-                            
+
                             <div className="space-y-4 mb-6 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                                 {carts.map((item) => (
                                     <div key={item.id} className="flex gap-3">
@@ -645,7 +642,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                     <span>{formData.shipping_cost > 0 ? formatPrice(formData.shipping_cost) : '-'}</span>
                                 </div>
                                 {appliedVoucher && (
-                                     <div className="flex justify-between text-sm text-red-600">
+                                    <div className="flex justify-between text-sm text-red-600">
                                         <span>Voucher ({appliedVoucher.code})</span>
                                         <span>- {formatPrice(discountAmount)}</span>
                                     </div>
@@ -660,8 +657,8 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                             <div className="mb-6">
                                 <label className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1 block">Kode Voucher</label>
                                 <div className="flex gap-2">
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         className="w-full text-sm rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 uppercase"
                                         placeholder="DISKON10"
                                         value={voucherCode}
@@ -669,12 +666,12 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                         disabled={!!appliedVoucher}
                                     />
                                     {appliedVoucher ? (
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             onClick={() => {
-                                                setAppliedVoucher(null); 
-                                                setVoucherCode(''); 
-                                                setFormData({...formData, voucher_code: ''});
+                                                setAppliedVoucher(null);
+                                                setVoucherCode('');
+                                                setFormData({ ...formData, voucher_code: '' });
                                             }}
                                             className="px-3 py-2 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200"
                                         >
@@ -683,7 +680,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                             </svg>
                                         </button>
                                     ) : (
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={handleApplyVoucher}
                                             disabled={checkingVoucher || !voucherCode}
@@ -695,7 +692,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                 </div>
                             </div>
 
-                            <button 
+                            <button
                                 type="submit"
                                 className="w-full py-3 px-4 bg-indigo-600 text-white font-bold rounded-lg shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                             >

@@ -84,6 +84,11 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
 
     // route transaction
     Route::get('/transactions', [TransactionController::class, 'index'])->middleware('permission:transactions-access')->name('transactions.index');
+    
+    // route online orders (admin)
+    Route::get('/transactions/orders', [TransactionController::class, 'orders'])->middleware('permission:transactions-access')->name('transactions.orders');
+    Route::patch('/transactions/{transaction}/status', [TransactionController::class, 'updateStatus'])->middleware('permission:transactions-access')->name('transactions.updateStatus');
+    Route::patch('/transactions/{transaction}/resi', [TransactionController::class, 'updateResi'])->middleware('permission:transactions-access')->name('transactions.updateResi');
 
     // route transaction searchProduct
     Route::post('/transactions/searchProduct', [TransactionController::class, 'searchProduct'])->middleware('permission:transactions-access')->name('transactions.searchProduct');
@@ -148,6 +153,11 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     // pdf documents
     Route::resource('shipping-couriers', \App\Http\Controllers\Apps\ShippingCourierController::class);
     Route::patch('/shipping-couriers/{shippingCourier}/toggle', [\App\Http\Controllers\Apps\ShippingCourierController::class, 'toggleActive'])->middleware('permission:dashboard-access')->name('shipping-couriers.toggle');
+
+    // reviews moderation (per product)
+    Route::get('/products/{product}/reviews', [\App\Http\Controllers\Apps\ReviewController::class, 'index'])->middleware('permission:dashboard-access')->name('products.reviews');
+    Route::patch('/reviews/{review}/toggle', [\App\Http\Controllers\Apps\ReviewController::class, 'toggleVisibility'])->middleware('permission:dashboard-access')->name('reviews.toggle');
+    Route::delete('/reviews/{review}', [\App\Http\Controllers\Apps\ReviewController::class, 'destroy'])->middleware('permission:dashboard-access')->name('reviews.destroy');
 
     // pdf documents
     Route::get('/documents/transactions/{invoice}/pdf/invoice', [\App\Http\Controllers\DocumentController::class, 'invoice'])->middleware('permission:transactions-access')->name('pdf.transactions.invoice');
@@ -217,6 +227,9 @@ Route::middleware(['auth'])->name('user.')->group(function () {
 
     // Orders
     Route::get('/pesanan', [\App\Http\Controllers\User\OrderController::class, 'index'])->name('orders.index');
+    Route::post('/pesanan/{id}/complete', [\App\Http\Controllers\User\OrderController::class, 'complete'])->name('orders.complete');
+    Route::post('/pesanan/{id}/review', [\App\Http\Controllers\User\OrderController::class, 'storeReview'])->name('orders.review');
+    Route::post('/pesanan/{id}/bulk-review', [\App\Http\Controllers\User\OrderController::class, 'storeBulkReview'])->name('orders.bulk-review');
     Route::get('/nota/{id}', [\App\Http\Controllers\User\OrderController::class, 'show'])->name('invoice');
 
     // Cart

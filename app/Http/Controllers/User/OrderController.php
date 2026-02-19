@@ -46,10 +46,125 @@ class OrderController extends Controller
         // But for now, I can eager load it if relationship exists. 
         // Let's assume I need to add it or load it manually if missing.
         
-        $transaction->load('shipping', 'voucherUsage.voucher'); // Assuming 'shipping' relationship exists or will be added.
+        $transaction->load('shipping', 'voucherUsage.voucher', 'reviews');
 
         return Inertia::render('EndUser/Orders/Show', [
             'transaction' => $transaction
         ]);
+    }
+
+    /**
+     * Complete Order
+     */
+    public function complete(Request $request, $id)
+    {
+        $transaction = Transaction::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        if ($transaction->order_status !== 'shipped') {
+            return back()->with('error', 'Pesanan belum dikirim atau status tidak valid.');
+        }
+
+        $transaction->update([
+            'order_status' => 'completed'
+        ]);
+
+        return back()->with('success', 'Pesanan diterima! Terimakasih telah berbelanja.');
+    }
+
+    /**
+     * Submit Review
+     */
+    /**
+     * Submit Review
+     */
+    public function storeReview(Request $request, $id)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string',
+            // 'images' => 'array' // Optional
+        ]);
+
+        $transaction = Transaction::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        if ($transaction->order_status !== 'completed') {
+            return back()->with('error', 'Selesaikan pesanan terlebih dahulu.');
+        }
+
+        // Check if product is in transaction
+        $hasProduct = $transaction->details()->where('product_id', $request->product_id)->exists();
+        if (!$hasProduct) {
+            return back()->with('error', 'Produk tidak ditemukan dalam pesanan ini.');
+        }
+
+        // Check if already reviewed
+        $existingReview = \App\Models\Review::where('transaction_id', $transaction->id)
+            ->where('product_id', $request->product_id)
+            ->where('user_id', Auth::id())
+            ->exists();
+
+        if ($existingReview) {
+            return back()->with('error', 'Anda sudah mengulas produk ini.');
+        }
+
+        \App\Models\Review::create([
+            'user_id' => Auth::id(),
+            'product_id' => $request->product_id,
+            'transaction_id' => $transaction->id,
+            'rating' => $request->rating,
+            'comment' => $request->comment,
+        ]);
+
+        return back()->with('success', 'Ulasan berhasil dikirim!');
+    }
+
+    /**
+     * Submit Bulk Review
+     */
+    public function storeBulkReview(Request $request, $id)
+    {
+        $request->validate([
+            'reviews' => 'required|array',
+            'reviews.*.product_id' => 'required|exists:products,id',
+            'reviews.*.rating' => 'required|integer|min:1|max:5',
+            'reviews.*.comment' => 'nullable|string',
+        ]);
+
+        $transaction = Transaction::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        if ($transaction->order_status !== 'completed') {
+            return back()->with('error', 'Selesaikan pesanan terlebih dahulu.');
+        }
+
+        foreach ($request->reviews as $reviewData) {
+            // Check if product is in transaction
+            $hasProduct = $transaction->details()->where('product_id', $reviewData['product_id'])->exists();
+            if (!$hasProduct) continue;
+
+            // Check if already reviewed
+            $existingReview = \App\Models\Review::where('transaction_id', $transaction->id)
+                ->where('product_id', $reviewData['product_id'])
+                ->where('user_id', Auth::id())
+                ->exists();
+
+            if ($existingReview) continue;
+
+            \App\Models\Review::create([
+                'user_id' => Auth::id(),
+                'product_id' => $reviewData['product_id'],
+                'transaction_id' => $transaction->id,
+                'rating' => $reviewData['rating'],
+                'comment' => $reviewData['comment'] ?? null,
+            ]);
+        }
+
+        return back()->with('success', 'Ulasan berhasil dikirim!');
     }
 }

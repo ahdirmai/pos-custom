@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             PaymentSettingSeeder::class,
             ShippingCourierSeeder::class,
             SampleDataSeeder::class,
+            ShippingCourierSeeder::class,
+            
         ]);
     }
 }

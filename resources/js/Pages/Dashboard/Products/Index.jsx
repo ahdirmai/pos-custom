@@ -14,6 +14,7 @@ import {
     IconSearch,
     IconBarcode,
     IconPrinter,
+    IconMessageCircle,
 } from "@tabler/icons-react";
 import Search from "@/Components/Dashboard/Search";
 import Table from "@/Components/Dashboard/Table";
@@ -40,16 +41,15 @@ function ProductCard({
     const rowNumber = index + 1 + (currentPage - 1) * perPage;
     const lowStock = product.stock > 0 && product.stock <= 5;
     const outOfStock = product.stock === 0;
-    
+
     const profit = product.sell_price - product.buy_price;
 
     return (
         <div
-            className={`group bg-white dark:bg-slate-900 rounded-xl border overflow-hidden hover:shadow-xl transition-all duration-300 ${
-                isSelected
-                    ? "border-primary-500 ring-2 ring-primary-500/10"
-                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-            }`}
+            className={`group bg-white dark:bg-slate-900 rounded-xl border overflow-hidden hover:shadow-xl transition-all duration-300 ${isSelected
+                ? "border-primary-500 ring-2 ring-primary-500/10"
+                : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                }`}
         >
             {/* Image Section - Radius disesuaikan */}
             <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden m-1.5 rounded-lg">
@@ -92,9 +92,8 @@ function ProductCard({
                             Habis
                         </span>
                     ) : (
-                        <span className={`px-2 py-0.5 text-[9px] font-bold rounded-md uppercase tracking-wider ${
-                            lowStock ? "bg-amber-500 text-white animate-pulse" : "bg-slate-900/60 text-white"
-                        }`}>
+                        <span className={`px-2 py-0.5 text-[9px] font-bold rounded-md uppercase tracking-wider ${lowStock ? "bg-amber-500 text-white animate-pulse" : "bg-slate-900/60 text-white"
+                            }`}>
                             Stok: {product.stock}
                         </span>
                     )}
@@ -102,6 +101,13 @@ function ProductCard({
 
                 {/* Actions Overlay */}
                 <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[1px]">
+                    <Link
+                        href={route("products.reviews", product.id)}
+                        className="p-2 rounded-lg bg-white text-primary-600 hover:bg-primary-50 shadow-lg transition-all active:scale-95"
+                        title="Ulasan"
+                    >
+                        <IconMessageCircle size={18} />
+                    </Link>
                     <Link
                         href={route("products.edit", product.id)}
                         className="p-2 rounded-lg bg-white text-amber-600 hover:bg-amber-50 shadow-lg transition-all active:scale-95"
@@ -129,7 +135,7 @@ function ProductCard({
                         </span>
                     )}
                 </div>
-                
+
                 <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-1 mb-2 group-hover:text-primary-600 transition-colors">
                     {product.title}
                 </h3>
@@ -255,7 +261,7 @@ export default function Index({ products }) {
                             type="checkbox"
                             checked={
                                 selectedProducts.length ===
-                                    products.data.length &&
+                                products.data.length &&
                                 products.data.length > 0
                             }
                             onChange={toggleSelectAll}
@@ -279,22 +285,20 @@ export default function Index({ products }) {
                     )}
                     <button
                         onClick={() => setViewMode("grid")}
-                        className={`p-2.5 rounded-lg transition-colors ${
-                            viewMode === "grid"
-                                ? "bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
-                                : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        }`}
+                        className={`p-2.5 rounded-lg transition-colors ${viewMode === "grid"
+                            ? "bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
+                            : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            }`}
                         title="Grid View"
                     >
                         <IconLayoutGrid size={20} />
                     </button>
                     <button
                         onClick={() => setViewMode("list")}
-                        className={`p-2.5 rounded-lg transition-colors ${
-                            viewMode === "list"
-                                ? "bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
-                                : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        }`}
+                        className={`p-2.5 rounded-lg transition-colors ${viewMode === "list"
+                            ? "bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
+                            : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            }`}
                         title="List View"
                     >
                         <IconList size={20} />
@@ -343,7 +347,7 @@ export default function Index({ products }) {
                                         <Table.Td className="text-center">
                                             {++i +
                                                 (products.current_page - 1) *
-                                                    products.per_page}
+                                                products.per_page}
                                         </Table.Td>
                                         <Table.Td>
                                             <div className="flex items-center gap-3">
@@ -396,19 +400,34 @@ export default function Index({ products }) {
                                         </Table.Td>
                                         <Table.Td>
                                             <span
-                                                className={`px-2 py-0.5 text-xs font-medium rounded ${
-                                                    product.stock === 0
-                                                        ? "bg-danger-100 text-danger-700 dark:bg-danger-900/50 dark:text-danger-400"
-                                                        : product.stock <= 5
+                                                className={`px-2 py-0.5 text-xs font-medium rounded ${product.stock === 0
+                                                    ? "bg-danger-100 text-danger-700 dark:bg-danger-900/50 dark:text-danger-400"
+                                                    : product.stock <= 5
                                                         ? "bg-warning-100 text-warning-700 dark:bg-warning-900/50 dark:text-warning-400"
                                                         : "bg-success-100 text-success-700 dark:bg-success-900/50 dark:text-success-400"
-                                                }`}
+                                                    }`}
                                             >
                                                 {product.stock}
                                             </span>
                                         </Table.Td>
                                         <Table.Td>
                                             <div className="flex gap-2">
+                                                <Button
+                                                    type={"link"}
+                                                    icon={
+                                                        <IconMessageCircle
+                                                            size={16}
+                                                            strokeWidth={1.5}
+                                                        />
+                                                    }
+                                                    className={
+                                                        "border bg-primary-100 border-primary-200 text-primary-600 hover:bg-primary-200 dark:bg-primary-900/50 dark:border-primary-800 dark:text-primary-400"
+                                                    }
+                                                    href={route(
+                                                        "products.reviews",
+                                                        product.id
+                                                    )}
+                                                />
                                                 <Button
                                                     type={"edit"}
                                                     icon={

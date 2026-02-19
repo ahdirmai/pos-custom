@@ -98,4 +98,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Customer::class, 'customer_has_accounts', 'user_id', 'customer_id');
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 }

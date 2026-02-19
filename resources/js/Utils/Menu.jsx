@@ -31,6 +31,7 @@ import {
     IconTruckDelivery,
     IconCalculator,
     IconPhoto,
+    IconPackage,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -123,20 +124,27 @@ export default function Menu() {
             title: "Transaksi",
             details: [
                 {
-    title: "Transaksi",
-    href: route("transactions.index"),
-    // Gunakan .split('?')[0] agar tetap active meski ada query string (?page=1)
-    active: url.split('?')[0] === "/dashboard/transactions", 
-    icon: <IconShoppingCart size={20} strokeWidth={1.5} />,
-    permissions: hasAnyPermission(["transactions-access"]),
-},
-{
-    title: "Riwayat Transaksi",
-    href: route("transactions.history"),
-    active: url.split('?')[0] === "/dashboard/transactions-history",
-    icon: <IconClockHour6 size={20} strokeWidth={1.5} />,
-    permissions: hasAnyPermission(["transactions-access"]),
-},
+                    title: "Transaksi",
+                    href: route("transactions.index"),
+                    // Gunakan .split('?')[0] agar tetap active meski ada query string (?page=1)
+                    active: url.split('?')[0] === "/dashboard/transactions",
+                    icon: <IconShoppingCart size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["transactions-access"]),
+                },
+                {
+                    title: "Pesanan Online",
+                    href: route("transactions.orders"),
+                    active: url.startsWith("/dashboard/transactions/orders"),
+                    icon: <IconPackage size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["transactions-access"]),
+                },
+                {
+                    title: "Riwayat Transaksi",
+                    href: route("transactions.history"),
+                    active: url.split('?')[0] === "/dashboard/transactions-history",
+                    icon: <IconClockHour6 size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["transactions-access"]),
+                },
                 {
                     title: "Nota Barang (Piutang)",
                     href: route("receivables.index"),

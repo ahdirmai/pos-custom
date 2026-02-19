@@ -940,4 +940,78 @@ class TransactionController extends Controller
             ->back()
             ->with('success', "Pembayaran untuk invoice {$transaction->invoice} berhasil dikonfirmasi.");
     }
+
+    /**
+     * Display a listing of online orders (transactions without cashier).
+     */
+    public function orders(Request $request)
+    {
+        $filters = [
+            'invoice' => $request->invoice,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'status' => $request->status,
+        ];
+
+        $query = Transaction::query()
+            ->with(['customer', 'receivable', 'shipping'])
+            ->withSum('details as total_items', 'qty')
+            // Online orders have null cashier_id
+            ->whereNull('cashier_id')
+            ->latest();
+
+        $query
+            ->when($filters['invoice'], function (Builder $builder, $invoice) {
+                $builder->where('invoice', 'like', '%'.$invoice.'%');
+            })
+            ->when($filters['start_date'], function (Builder $builder, $date) {
+                $builder->whereDate('created_at', '>=', $date);
+            })
+            ->when($filters['end_date'], function (Builder $builder, $date) {
+                $builder->whereDate('created_at', '<=', $date);
+            })
+            ->when($filters['status'], function (Builder $builder, $status) {
+                $builder->where('order_status', $status);
+            });
+
+        $transactions = $query->paginate(10)->withQueryString();
+
+        return Inertia::render('Dashboard/Transactions/Orders', [
+            'transactions' => $transactions,
+            'filters' => $filters,
+        ]);
+    }
+
+    /**
+     * Update the order status of a transaction.
+     */
+    public function updateStatus(Request $request, Transaction $transaction)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,processing,shipped,completed,cancelled',
+        ]);
+
+        $transaction->update([
+            'order_status' => $request->status,
+        ]);
+
+        return back()->with('success', 'Status pesanan berhasil diperbarui.');
+    }
+
+    /**
+     * Update the tracking number (resi) of a transaction.
+     */
+    public function updateResi(Request $request, Transaction $transaction)
+    {
+        $request->validate([
+            'tracking_number' => 'required|string|max:255',
+        ]);
+
+        $transaction->update([
+            'tracking_number' => $request->tracking_number,
+            'order_status' => 'shipped',
+        ]);
+
+        return back()->with('success', 'Nomor resi berhasil dinput dan status diubah menjadi dikirim.');
+    }
 }
