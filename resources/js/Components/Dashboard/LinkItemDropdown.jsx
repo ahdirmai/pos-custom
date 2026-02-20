@@ -18,8 +18,8 @@ export default function LinkItemDropdown({ icon, title, data, access, sidebarOpe
     const checkIsActive = (item) => {
         if (item.active !== undefined) return item.active;
         const targetPath = getPathName(item.href);
-        return targetPath === '/dashboard' 
-            ? currentPath === '/dashboard' 
+        return targetPath === '/dashboard'
+            ? currentPath === '/dashboard'
             : (currentPath === targetPath || currentPath.startsWith(targetPath + '/'));
     };
 
@@ -28,7 +28,7 @@ export default function LinkItemDropdown({ icon, title, data, access, sidebarOpe
 
     useEffect(() => {
         if (hasActiveChild) setIsOpen(true);
-    }, [hasActiveChild, url]); // Re-check saat URL berubah
+    }, [hasActiveChild, url]);
 
     const canAccess = auth.super === true || access === true;
     if (!canAccess) return null;
@@ -37,27 +37,38 @@ export default function LinkItemDropdown({ icon, title, data, access, sidebarOpe
         <div className="w-full">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`min-w-full flex items-center font-medium gap-x-3.5 px-4 py-2.5 transition-all duration-200 text-sm justify-between ${
-                    hasActiveChild ? 'bg-primary-50 text-primary-700 border-l-[3px] border-primary-500' : 'text-slate-600 hover:bg-slate-100 border-l-[3px] border-transparent'
-                }`}
+                className={`
+                    w-full flex items-center font-medium gap-x-3 mx-3 px-3 py-2.5 rounded-xl
+                    transition-all duration-200 text-sm justify-between
+                    ${hasActiveChild
+                        ? 'bg-[#d5f2ee] dark:bg-teal-900/40 text-slate-800 dark:text-teal-300'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }
+                `}
+                style={{ width: 'calc(100% - 1.5rem)' }}
             >
-                <div className='flex items-center gap-x-3.5'>
-                    <span className={hasActiveChild ? 'text-primary-600' : ''}>{icon}</span>
+                <div className='flex items-center gap-x-3'>
+                    <span className={`flex-shrink-0 ${hasActiveChild ? 'text-slate-700 dark:text-teal-400' : ''}`}>{icon}</span>
                     {sidebarOpen && title}
                 </div>
                 {sidebarOpen && (isOpen ? <IconChevronUp size={18} /> : <IconChevronDown size={18} />)}
             </button>
-            
+
             {isOpen && sidebarOpen && data.map((item, i) => (
                 item.permissions && (
                     <Link
                         key={i}
                         href={item.href}
-                        className={`min-w-full flex items-center gap-x-3.5 px-5 py-2.5 text-sm transition-all ${
-                            checkIsActive(item) ? 'bg-primary-100 text-primary-800 border-l-[3px] border-primary-600' : 'text-slate-600 hover:bg-slate-50'
-                        }`}
+                        className={`
+                            flex items-center gap-x-3 ml-8 mr-3 px-3 py-2 rounded-lg text-sm
+                            transition-all duration-200
+                            ${checkIsActive(item)
+                                ? 'bg-[#d5f2ee]/70 dark:bg-teal-900/30 text-slate-800 dark:text-teal-300'
+                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                            }
+                        `}
                     >
-                        <IconCornerDownRight size={18} />
+                        <IconCornerDownRight size={16} />
                         {item.title}
                     </Link>
                 )

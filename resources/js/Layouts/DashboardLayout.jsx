@@ -40,12 +40,11 @@ export default function AppLayout({ children }) {
 
     return (
         <div className="min-h-screen flex bg-slate-100 dark:bg-slate-950 transition-colors duration-200">
-            <Sidebar sidebarOpen={sidebarOpen} />
+            <Sidebar sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
             {/* Mobile overlay */}
             <div
-                className={`fixed inset-0 bg-slate-900/40 md:hidden transition-opacity duration-300 ${
-                    sidebarOpen ? "opacity-100 pointer-events-auto z-30" : "opacity-0 pointer-events-none"
-                }`}
+                className={`fixed inset-0 bg-slate-900/40 md:hidden transition-opacity duration-300 ${sidebarOpen ? "opacity-100 pointer-events-auto z-30" : "opacity-0 pointer-events-none"
+                    }`}
                 onClick={() => setSidebarOpen(false)}
             />
             <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
@@ -64,9 +63,8 @@ export default function AppLayout({ children }) {
                                 style: {
                                     background: darkMode ? "#1e293b" : "#fff",
                                     color: darkMode ? "#f1f5f9" : "#1e293b",
-                                    border: `1px solid ${
-                                        darkMode ? "#334155" : "#e2e8f0"
-                                    }`,
+                                    border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"
+                                        }`,
                                     borderRadius: "12px",
                                 },
                             }}
