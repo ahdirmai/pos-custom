@@ -16,15 +16,28 @@ export default function Header() {
         return url.startsWith(path);
     };
 
-    const { auth } = usePage().props;
+    const { auth, storeProfile } = usePage().props;
 
     return (
         <header className="bg-white shadow-sm sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center">
-                        <ApplicationLogo className="h-8 w-auto" />
+                    <Link href="/" className="flex items-center gap-2">
+                        {storeProfile?.logo ? (
+                            <img
+                                src={storeProfile.logo}
+                                alt={storeProfile?.name || 'Store Logo'}
+                                className="h-8 w-auto object-contain"
+                            />
+                        ) : (
+                            <ApplicationLogo className="h-8 w-auto" />
+                        )}
+                        {storeProfile?.name && (
+                            <span className="hidden md:block text-base font-bold text-gray-900 truncate max-w-[160px]">
+                                {storeProfile.name}
+                            </span>
+                        )}
                     </Link>
 
                     {/* ...Nav... */}

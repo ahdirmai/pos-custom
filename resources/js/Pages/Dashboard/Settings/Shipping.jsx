@@ -39,7 +39,7 @@ export default function Shipping({ settings }) {
 
                 <form onSubmit={submit} className="pb-10">
                     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                        
+
                         <div className="border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white">
                                 Integrasi Biteship
@@ -55,13 +55,14 @@ export default function Shipping({ settings }) {
                                     label="Kode Pos Asal (Origin)"
                                     value={data.shop_postal_code}
                                     errors={errors.shop_postal_code}
-                                    onChange={(e) => setData("shop_postal_code", e.target.value)}
-                                    placeholder="Contoh: 12345"
+                                    placeholder="Terisi otomatis dari pengaturan toko"
                                     icon={<IconMapPin size={18} />}
+                                    disabled
+                                    className="!bg-slate-100 dark:!bg-slate-800/50 !cursor-not-allowed !opacity-70"
                                 />
                                 <p className="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1">
                                     <IconMapPin size={12} />
-                                    Kode pos ini digunakan sebagai lokasi penjemputan paket.
+                                    Kode pos ini diambil otomatis dari kelurahan yang dipilih di <a href={route('settings.store')} className="text-primary-500 hover:underline font-medium">Pengaturan Toko</a>.
                                 </p>
                             </div>
 
@@ -81,7 +82,7 @@ export default function Shipping({ settings }) {
                                         <div className="text-red-500 text-xs mt-1">{errors.shipping_provider}</div>
                                     )}
                                 </div>
-                                
+
                                 <Input
                                     label="Base URL API"
                                     value={data.biteship_base_url}
