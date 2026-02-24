@@ -7,3 +7,14 @@
 @import 'tailwindcss/utilities';
 
 /* Google Fonts - loaded via HTML head for better performance */
+
+/* Custom Utilities */
+@layer utilities {
+    .hide-scrollbar {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none; /* Chrome, Safari and Opera */
+    }
+}

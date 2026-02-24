@@ -82,7 +82,8 @@ class ProductController extends Controller
             ->paginate(10);
 
         // Get related products (same category)
-        $relatedProducts = Product::where('category_id', $product->category_id)
+        $relatedProducts = Product::with('category')
+            ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->take(4)
             ->get();
