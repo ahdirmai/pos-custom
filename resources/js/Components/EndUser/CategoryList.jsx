@@ -6,7 +6,7 @@ export default function CategoryList({ categories }) {
         <div className="py-8">
             <div className="flex justify-between items-end mb-6 px-4 md:px-0">
                 <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Kategori Pilihan</h2>
-                <Link href={route('user.products')} className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center gap-1 transition-colors">
+                <Link href={route('user.categories')} className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center gap-1 transition-colors">
                     Lihat Semua <span aria-hidden="true">&rarr;</span>
                 </Link>
             </div>

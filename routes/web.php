@@ -210,6 +210,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
 Route::name('user.')->group(function () {
     Route::get('/', [\App\Http\Controllers\User\HomeController::class, 'index'])->name('index');
     Route::get('/products', [\App\Http\Controllers\User\ProductController::class, 'index'])->name('products');
+    Route::get('/categories', [\App\Http\Controllers\User\ProductController::class, 'categories'])->name('categories');
     Route::get('/search', [\App\Http\Controllers\User\ProductController::class, 'search'])->name('search');
     Route::get('/articles', [\App\Http\Controllers\User\HomeController::class, 'articles'])->name('articles');
     // Article Detail

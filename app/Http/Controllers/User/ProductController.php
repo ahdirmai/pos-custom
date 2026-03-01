@@ -135,4 +135,13 @@ class ProductController extends Controller
             'categories' => $categories,
         ]);
     }
+
+    public function categories()
+    {
+        $categories = Category::withCount('products')->get();
+
+        return Inertia::render('EndUser/Categories/Index', [
+            'categories' => $categories,
+        ]);
+    }
 }
