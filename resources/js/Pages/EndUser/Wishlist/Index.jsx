@@ -22,7 +22,7 @@ export default function WishlistIndex({ products, wishlist_ids }) {
                     </div>
                 ) : (
                     <div className="text-center py-24 bg-white rounded-2xl border border-gray-100">
-                        <div className="text-6xl mb-4">💔</div>
+                        {/* <div className="text-6xl mb-4">💔</div> */}
                         <h3 className="text-xl font-bold text-gray-800 mb-2">Wishlist masih kosong</h3>
                         <p className="text-gray-500 text-sm mb-6">Yuk, simpan produk favoritmu di sini!</p>
                         <Link
