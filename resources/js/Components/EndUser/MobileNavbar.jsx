@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import { useWishlist } from '@/Context/WishlistContext';
 
 export default function MobileNavbar() {
     const { url } = usePage();
+    const { wishlistCount } = useWishlist();
 
     const isActive = (path) => {
         if (path === '/') {
@@ -41,13 +43,14 @@ export default function MobileNavbar() {
             )
         },
         {
-            label: 'Artikel',
-            href: '/articles',
+            label: 'Wishlist',
+            href: '/wishlist',
             icon: (
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
-            )
+            ),
+            badge: wishlistCount,
         },
         {
             label: 'Akun',
@@ -90,13 +93,20 @@ export default function MobileNavbar() {
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`inline-flex flex-col items-center justify-center px-2 hover:bg-gray-50 group transition-colors duration-200 ${active ? 'text-indigo-600' : 'text-gray-500'
+                            className={`relative inline-flex flex-col items-center justify-center px-2 hover:bg-gray-50 group transition-colors duration-200 ${active ? 'text-indigo-600' : 'text-gray-500'
                                 }`}
                         >
-                            {React.cloneElement(item.icon, {
-                                className: `w-6 h-6 mb-1 transition-colors duration-200 ${active ? 'text-indigo-600' : 'group-hover:text-indigo-600'
-                                    }`
-                            })}
+                            <div className="relative">
+                                {React.cloneElement(item.icon, {
+                                    className: `w-6 h-6 mb-1 transition-colors duration-200 ${active ? 'text-indigo-600' : 'group-hover:text-indigo-600'
+                                        }`
+                                })}
+                                {item.badge > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                                        {item.badge > 9 ? '9+' : item.badge}
+                                    </span>
+                                )}
+                            </div>
                             <span className={`text-[10px] transition-colors duration-200 ${active ? 'text-indigo-600' : 'group-hover:text-indigo-600'
                                 }`}>
                                 {item.label}

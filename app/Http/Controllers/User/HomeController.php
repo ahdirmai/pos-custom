@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
@@ -47,12 +48,17 @@ class HomeController extends Controller
                 ];
             });
 
+        $wishlistIds = Auth::check()
+            ? Auth::user()->wishlistedProducts()->pluck('products.id')->all()
+            : [];
+
         return Inertia::render('EndUser/Home/Index', [
             'heroBanners' => $heroBanners,
             'promoBanners' => $promoBanners,
             'productCategories' => $productCategories,
             'products' => $products,
             'latestPosts' => $latestPosts,
+            'wishlist_ids' => $wishlistIds,
         ]);
     }
 

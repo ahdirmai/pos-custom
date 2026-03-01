@@ -2,12 +2,14 @@ import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { useCart } from '@/Context/CartContext';
+import { useWishlist } from '@/Context/WishlistContext';
 
 import Dropdown from '@/Components/Dropdown';
 
 export default function Header() {
     const { url } = usePage();
     const { cartCount, setIsCartOpen } = useCart();
+    const { wishlistCount } = useWishlist();
 
     const isActive = (path) => {
         if (path === '/') {
@@ -78,12 +80,6 @@ export default function Header() {
                                 </Link>
                             </div>
                         )}
-                        <button className="text-gray-500 hover:text-gray-900 relative">
-                            <span className="sr-only">Favorit</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                            </svg>
-                        </button>
                         <button
                             onClick={() => setIsCartOpen(true)}
                             className="text-gray-500 hover:text-gray-900 relative"

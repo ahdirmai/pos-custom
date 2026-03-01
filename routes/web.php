@@ -246,6 +246,10 @@ Route::middleware(['auth'])->name('user.')->group(function () {
     // Payment Proof Upload
     Route::post('/orders/{id}/upload-payment-proof', [\App\Http\Controllers\User\PaymentProofController::class, 'upload'])->name('orders.upload-payment-proof');
 
+    // Wishlist
+    Route::get('/wishlist', [\App\Http\Controllers\User\WishlistController::class, 'index'])->name('wishlist');
+    Route::post('/wishlist/toggle/{product}', [\App\Http\Controllers\User\WishlistController::class, 'toggle'])->name('wishlist.toggle');
+
     Route::get('/profile', [\App\Http\Controllers\User\ProfileController::class, 'index'])->name('profile');
 });
 

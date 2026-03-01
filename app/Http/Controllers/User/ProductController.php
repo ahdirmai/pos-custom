@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class ProductController extends Controller
@@ -66,10 +67,15 @@ class ProductController extends Controller
 
         $products = $query->paginate(12)->withQueryString();
 
+        $wishlistIds = Auth::check()
+            ? Auth::user()->wishlistedProducts()->pluck('products.id')->all()
+            : [];
+
         return Inertia::render('EndUser/Products/Index', [
             'products' => $products,
             'filters' => $request->all(['category', 'q', 'min_price', 'max_price', 'sort', 'min_rating']),
             'categories' => Category::all(),
+            'wishlist_ids' => $wishlistIds,
         ]);
     }
 
