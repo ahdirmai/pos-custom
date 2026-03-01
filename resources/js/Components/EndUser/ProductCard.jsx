@@ -7,7 +7,7 @@ export default function ProductCard({ product }) {
     const { addToCart } = useCart();
 
     // Format price to IDR
-    const formatPrice = (value) => 
+    const formatPrice = (value) =>
         new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -56,19 +56,19 @@ export default function ProductCard({ product }) {
     };
 
     return (
-        <Link 
-            href={route('user.product.show', product.id)} 
+        <Link
+            href={route('user.product.show', product.id)}
             className={`group relative flex flex-col bg-white rounded-2xl border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${!hasStock ? 'opacity-75' : ''}`}
         >
             {/* Image Section */}
             <div className="relative aspect-square bg-gray-100 overflow-hidden">
-                <img 
-                    src={product.image || '/images/placeholder.png'} 
-                    alt={product.title} 
+                <img
+                    src={product.image || '/images/placeholder.png'}
+                    alt={product.title}
                     className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:blur-[2px] ${!hasStock ? 'grayscale' : ''}`}
                     loading="lazy"
                 />
-                               {/* Out of Stock Overlay */}
+                {/* Out of Stock Overlay */}
                 {!hasStock && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
                         <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white border border-white/50 text-xs font-bold uppercase tracking-widest rounded-full">
@@ -76,11 +76,11 @@ export default function ProductCard({ product }) {
                         </span>
                     </div>
                 )}
-                 
-                 {/* Hover Action Buttons */}
-                 <div className="hidden md:flex absolute inset-0 z-20 items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+
+                {/* Hover Action Buttons */}
+                <div className="hidden md:flex absolute inset-0 z-20 items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     {/* Detail Button */}
-                    <button 
+                    <button
                         className="w-10 h-10 rounded-full bg-white text-gray-900 flex items-center justify-center shadow-lg hover:bg-gray-100 hover:scale-110 transition-all duration-200"
                         title="Lihat Detail"
                     >
@@ -92,7 +92,7 @@ export default function ProductCard({ product }) {
 
                     {/* Add to Cart Button */}
                     {hasStock && (
-                        <button 
+                        <button
                             onClick={handleAddToCart}
                             className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg hover:bg-indigo-700 hover:scale-110 transition-all duration-200"
                             title="Tambah ke Keranjang"
@@ -102,36 +102,42 @@ export default function ProductCard({ product }) {
                             </svg>
                         </button>
                     )}
-                 </div>
+                </div>
             </div>
 
             {/* Content Section */}
             <div className="p-2 sm:p-3 flex-1 flex flex-col bg-white">
                 {/* Category Label */}
                 <div className="mb-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                    <span
+                        className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 line-clamp-1 block"
+                        title={product.category?.name || 'Umum'}
+                    >
                         {product.category?.name || 'Umum'}
                     </span>
                 </div>
 
-                <div className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug mb-2 group-hover:text-indigo-600 transition-colors">
+                <div
+                    className="text-base sm:text-lg font-bold text-gray-900 line-clamp-1 leading-snug mb-2 group-hover:text-indigo-600 transition-colors"
+                    title={product.title}
+                >
                     {product.title}
                 </div>
-                
+
                 {/* Rating & Sold */}
-                {(product.rating || product.sold_count || hasStock) && (
+                {(product.average_rating || product.sold_count || hasStock) && (
                     <div className="flex flex-wrap items-center gap-2 mt-auto text-[11px] text-gray-500">
-                        {product.rating && (
+                        {product.average_rating && (
                             <div className="flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
-                                <span className="font-medium text-gray-700">{product.rating}</span>
+                                <span className="font-medium text-gray-700">{Number(product.average_rating).toFixed(1)}</span>
                             </div>
                         )}
-                        {product.rating && product.sold_count && <span className="text-gray-300">|</span>}
+                        {product.average_rating && product.sold_count && <span className="text-gray-300">|</span>}
                         {product.sold_count > 0 && <span>{product.sold_count} terjual</span>}
-                        
+
                         {/* Stock Info */}
                         {lowStock && (
                             <>
@@ -141,14 +147,14 @@ export default function ProductCard({ product }) {
                         )}
                     </div>
                 )}
-                
+
                 <div className="mt-auto border-t mt-1 border-gray-50 flex flex-col gap-2">
                     <p className="text-sm sm:text-base font-bold text-indigo-600">
                         {formatPrice(product.sell_price)}
                     </p>
                     {/* Mobile Only: Full Width Add Button */}
                     {hasStock && (
-                        <button 
+                        <button
                             onClick={handleAddToCart}
                             className="md:hidden w-full py-1.5 rounded-md bg-indigo-600 text-white text-xs font-bold flex items-center justify-center gap-1 active:bg-indigo-700 transition-colors"
                         >

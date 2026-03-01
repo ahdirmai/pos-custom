@@ -61,27 +61,25 @@ export default function MobileNavbar() {
     ];
 
     return (
-        <nav className="fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200 md:hidden">
-            <div className="grid h-full max-w-lg grid-cols-5 mx-auto font-medium relative">
+        <nav className="fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200">
+            <div className="grid h-full max-w-2xl grid-cols-5 mx-auto font-medium relative">
                 {navItems.map((item) => {
                     const active = isActive(item.href);
-                    
+
                     if (item.isFloating) {
                         return (
                             <div key={item.href} className="relative flex justify-center items-center h-full">
-                                <Link 
-                                    href={item.href} 
-                                    className={`absolute -top-6 left-1/2 transform -translate-x-1/2 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white transition-all duration-200 ${
-                                        active 
-                                            ? 'bg-indigo-700 ring-4 ring-indigo-300 scale-110' 
-                                            : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300'
-                                    }`}
+                                <Link
+                                    href={item.href}
+                                    className={`absolute -top-6 left-1/2 transform -translate-x-1/2 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white transition-all duration-200 ${active
+                                        ? 'bg-indigo-700 ring-4 ring-indigo-300 scale-110'
+                                        : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300'
+                                        }`}
                                 >
                                     {item.icon}
                                 </Link>
-                                <span className={`absolute bottom-2 text-[10px] font-medium transition-colors duration-200 ${
-                                    active ? 'text-indigo-600' : 'text-gray-500'
-                                }`}>
+                                <span className={`absolute bottom-2 text-[10px] font-medium transition-colors duration-200 ${active ? 'text-indigo-600' : 'text-gray-500'
+                                    }`}>
                                     {item.label}
                                 </span>
                             </div>
@@ -89,21 +87,18 @@ export default function MobileNavbar() {
                     }
 
                     return (
-                        <Link 
-                            key={item.href} 
-                            href={item.href} 
-                            className={`inline-flex flex-col items-center justify-center px-2 hover:bg-gray-50 group transition-colors duration-200 ${
-                                active ? 'text-indigo-600' : 'text-gray-500'
-                            }`}
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`inline-flex flex-col items-center justify-center px-2 hover:bg-gray-50 group transition-colors duration-200 ${active ? 'text-indigo-600' : 'text-gray-500'
+                                }`}
                         >
                             {React.cloneElement(item.icon, {
-                                className: `w-6 h-6 mb-1 transition-colors duration-200 ${
-                                    active ? 'text-indigo-600' : 'group-hover:text-indigo-600'
-                                }`
+                                className: `w-6 h-6 mb-1 transition-colors duration-200 ${active ? 'text-indigo-600' : 'group-hover:text-indigo-600'
+                                    }`
                             })}
-                            <span className={`text-[10px] transition-colors duration-200 ${
-                                active ? 'text-indigo-600' : 'group-hover:text-indigo-600'
-                            }`}>
+                            <span className={`text-[10px] transition-colors duration-200 ${active ? 'text-indigo-600' : 'group-hover:text-indigo-600'
+                                }`}>
                                 {item.label}
                             </span>
                         </Link>

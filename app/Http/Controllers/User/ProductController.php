@@ -12,7 +12,12 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with('category');
+        $query = Product::with('category')
+            ->withSum('transactionDetails as sold_count', 'qty')
+            ->withAvg('reviews as average_rating', 'rating')
+            ->withCount(['reviews' => function ($q) {
+                $q->where('is_hidden', false);
+            }]);
 
         // Filter by Category
         if ($request->filled('category') && $request->category != 'Semua') {
@@ -54,11 +59,16 @@ class ProductController extends Controller
             $query->latest();
         }
 
+        // Filter by minimum average rating
+        if ($request->filled('min_rating')) {
+            $query->having('average_rating', '>=', (float) $request->min_rating);
+        }
+
         $products = $query->paginate(12)->withQueryString();
 
         return Inertia::render('EndUser/Products/Index', [
             'products' => $products,
-            'filters' => $request->all(['category', 'q', 'min_price', 'max_price', 'sort']),
+            'filters' => $request->all(['category', 'q', 'min_price', 'max_price', 'sort', 'min_rating']),
             'categories' => Category::all(),
         ]);
     }

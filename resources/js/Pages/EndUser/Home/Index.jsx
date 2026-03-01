@@ -36,7 +36,7 @@ export default function Index({ heroBanners = [], promoBanners = [], productCate
         <UserLayout>
             <Head title="Home" />
 
-            <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-8 space-y-12">
+            <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-8 space-y-8 pb-24">
 
                 {/* Hero Banner Carousel */}
                 <div className="relative">
@@ -50,7 +50,7 @@ export default function Index({ heroBanners = [], promoBanners = [], productCate
                                     image={activeHeroBanner.image}
                                     title={activeHeroBanner.title}
                                     subtitle={activeHeroBanner.subtitle}
-                                    className="h-[400px] md:h-[500px]"
+                                    className="h-[250px] sm:h-[300px]"
                                 />
                             </div>
 
@@ -73,15 +73,15 @@ export default function Index({ heroBanners = [], promoBanners = [], productCate
                         </div>
                     ) : (
                         // Fallback if no hero banner
-                        <div className="h-[400px] md:h-[500px] bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400">
+                        <div className="h-[250px] sm:h-[300px] bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400">
                             No Active Hero Banner
                         </div>
                     )}
                 </div>
 
                 {/* Search Bar */}
-                <div className="hidden md:block px-4 md:px-0">
-                    <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
+                <div className="block px-4 md:px-0">
+                    <form onSubmit={handleSearch} className="relative w-full mx-auto">
                         <div className="relative">
                             <input
                                 type="text"
@@ -110,7 +110,7 @@ export default function Index({ heroBanners = [], promoBanners = [], productCate
                 {activePromoBanner && (
                     <Banner
                         image={activePromoBanner.image}
-                        className="h-40 md:h-60"
+                        className="h-32 sm:h-40 rounded-xl"
                         title={activePromoBanner.title} // Optional: display title if needed
                         subtitle={activePromoBanner.subtitle} // Optional: display subtitle if needed
                     />
@@ -124,7 +124,7 @@ export default function Index({ heroBanners = [], promoBanners = [], productCate
                             <p className="text-gray-500 mt-1">Produk paling diminati minggu ini</p>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 px-4 md:px-0">
+                    <div className="grid grid-cols-2 gap-3 px-4 md:px-0">
                         {products.map((product) => (
                             <ProductCard key={product.id} product={product} />
                         ))}
@@ -166,7 +166,7 @@ export default function Index({ heroBanners = [], promoBanners = [], productCate
                                             {post.date}
                                         </div>
                                     </div>
-                                    <div className="flex-shrink-0 w-28 h-16 md:w-32 md:h-20 rounded-lg overflow-hidden bg-gray-100 shadow-sm relative mt-0.5">
+                                    <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-gray-100 shadow-sm relative mt-0.5">
                                         <img
                                             src={post.image}
                                             alt={post.title}

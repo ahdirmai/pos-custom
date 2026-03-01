@@ -51,9 +51,9 @@ export default function ProductShow({ product, reviews, relatedProducts }) {
         <UserLayout>
             <Head title={product.title} />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 py-2 md:py-4">
+            <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-4 md:py-8 pb-24">
                 {/* Back Button & Breadcrumb */}
-                <div className="flex items-center gap-4 mb-2 md:mb-5">
+                <div className="flex items-center gap-4 mb-4 md:mb-6">
                     <button
                         onClick={() => window.history.back()}
                         className="p-1.5 sm:p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center focus:outline-none"
@@ -72,10 +72,10 @@ export default function ProductShow({ product, reviews, relatedProducts }) {
                     </nav>
                 </div>
 
-                <div className="flex flex-col lg:flex-row">
-                    {/* Left: Product Image */}
-                    <div className="w-full lg:w-1/2 xl:w-[45%]">
-                        <div className="relative aspect-square md:aspect-[4/5] bg-gray-100 rounded-2xl overflow-hidden mb-3">
+                <div className="flex flex-col gap-6">
+                    {/* Top: Product Image */}
+                    <div className="w-full">
+                        <div className="relative aspect-square md:aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden mb-3">
                             <img
                                 src={product.image || '/images/placeholder.png'}
                                 alt={product.title}
@@ -96,8 +96,8 @@ export default function ProductShow({ product, reviews, relatedProducts }) {
                         </div>
                     </div>
 
-                    {/* Right: Product Info */}
-                    <div className="flex-1 lg:sticky lg:top-24 lg:self-start">
+                    {/* Bottom: Product Info */}
+                    <div className="flex-1">
                         {/* Category */}
                         <div className="flex items-center gap-2 mb-2">
                             <span className="px-2.5 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-lg">{product.category?.name || 'Umum'}</span>
