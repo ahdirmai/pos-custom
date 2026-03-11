@@ -4,10 +4,23 @@ import UserLayout from '@/Layouts/UserLayout';
 import ProductCard from '@/Components/EndUser/ProductCard';
 import toast from 'react-hot-toast';
 
-export default function ProductShow({ product, reviews, relatedProducts }) {
+export default function ProductShow({ product, reviews, relatedProducts, vouchers = [] }) {
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState('description');
     const [isWishlisted, setIsWishlisted] = useState(false);
+    const [activeVouchers, setActiveVouchers] = useState([]);
+
+    const toggleVoucher = (voucher) => {
+        setActiveVouchers((prev) => {
+            const isSelected = prev.find(v => v.id === voucher.id);
+            if (isSelected) {
+                return prev.filter(v => v.id !== voucher.id);
+            } else {
+                const filtered = prev.filter(v => v.discount_target !== voucher.discount_target);
+                return [...filtered, voucher];
+            }
+        });
+    };
 
     const formatPrice = (value) =>
         new Intl.NumberFormat('id-ID', {
@@ -41,8 +54,9 @@ export default function ProductShow({ product, reviews, relatedProducts }) {
         router.post(route('user.cart.store'), {
             product_id: product.id,
             qty: quantity,
+            is_buy_now: true,
+            vouchers: activeVouchers.map(v => v.code)
         }, {
-            onSuccess: () => router.visit(route('user.checkout')),
             onError: () => toast.error('Gagal memproses pesanan'),
         });
     };
@@ -116,13 +130,59 @@ export default function ProductShow({ product, reviews, relatedProducts }) {
                         </div>
 
                         {/* Price */}
-                        <div className="bg-gray-50 rounded-xl mb-2">
+                        <div className="bg-gray-50 rounded-xl mb-2 p-3">
                             <div className="flex items-baseline gap-3">
                                 <span className="text-2xl sm:text-3xl font-bold text-indigo-600">
                                     {formatPrice(product.sell_price)}
                                 </span>
                             </div>
                         </div>
+
+                        {/* Vouchers */}
+                        {vouchers && vouchers.length > 0 && (
+                            <div className="mb-4">
+                                <p className="text-sm font-medium text-gray-700 mb-2">Voucher Tersedia</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {vouchers.map(v => {
+                                        const isSelected = activeVouchers.some(selected => selected.id === v.id);
+                                        return (
+                                            <div key={v.id} className="group relative">
+                                                <button
+                                                    onClick={() => toggleVoucher(v)}
+                                                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-colors flex items-center gap-1.5 ${isSelected ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300 hover:bg-indigo-50'}`}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
+                                                    </svg>
+                                                    {v.name}
+                                                    {isSelected && (
+                                                        <span className="ml-1 flex h-2 w-2 relative">
+                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                                                        </span>
+                                                    )}
+                                                </button>
+
+                                                {/* Tooltip */}
+                                                <div className="absolute opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg pointer-events-none">
+                                                    <p className="font-semibold mb-1">{v.name}</p>
+                                                    <p className="text-gray-300">
+                                                        Diskon {v.discount_type === 'fixed' ? formatPrice(v.amount) : `${parseFloat(v.amount)}%`} dari total {v.discount_target === 'shipping' ? 'ongkir' : 'harga'}
+                                                    </p>
+                                                    {(v.min_spend > 0 || v.max_discount > 0) && (
+                                                        <ul className="list-disc pl-3 mt-1.5 space-y-0.5 text-gray-400 text-[10px]">
+                                                            {v.min_spend > 0 && <li>Min. Belanja: {formatPrice(v.min_spend)}</li>}
+                                                            {v.max_discount > 0 && <li>Maks. Diskon: {formatPrice(v.max_discount)}</li>}
+                                                        </ul>
+                                                    )}
+                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Quantity */}
                         <div className="mb-4">

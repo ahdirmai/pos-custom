@@ -4,7 +4,7 @@ import UserLayout from '@/Layouts/UserLayout';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
-export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces = [], savedAddresses = [] }) {
+export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces = [], savedAddresses = [], initialVouchers = [], availableVouchers = [] }) {
     const { auth } = usePage().props;
 
     // Address Management State
@@ -30,7 +30,7 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
         shipping_courier: '',
         shipping_service: '',
         shipping_cost: 0,
-        voucher_code: '',
+        voucher_codes: [],
         paymentMethod: 'manual_transfer',
         payment_proof: null,
         save_address: false,
@@ -42,8 +42,32 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
 
     // Voucher State
     const [voucherCode, setVoucherCode] = useState('');
-    const [appliedVoucher, setAppliedVoucher] = useState(null);
+    const [appliedVouchers, setAppliedVouchers] = useState([]);
     const [checkingVoucher, setCheckingVoucher] = useState(false);
+
+    useEffect(() => {
+        if (initialVouchers && initialVouchers.length > 0) {
+            const checkInitialVouchers = async () => {
+                const applied = [];
+                for (const code of initialVouchers) {
+                    try {
+                        const response = await axios.post(route('user.checkout.check-voucher'), {
+                            code,
+                            cart_ids: carts.map(c => c.id)
+                        });
+                        if (response.data.valid) {
+                            applied.push(response.data.voucher);
+                        }
+                    } catch (error) {
+                        console.error('Invalid initial voucher:', code);
+                    }
+                }
+                setAppliedVouchers(applied);
+                setFormData(prev => ({ ...prev, voucher_codes: applied.map(v => v.code) }));
+            };
+            checkInitialVouchers();
+        }
+    }, [initialVouchers]);
 
     // Laravolt Region Handlers
     const handleProvinceChange = async (provinceCode) => {
@@ -182,35 +206,38 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
         setCheckingVoucher(true);
         try {
             const response = await axios.post(route('user.checkout.check-voucher'), {
-                code: voucherCode
+                code: voucherCode,
+                cart_ids: carts.map(c => c.id)
             });
             if (response.data.valid) {
-                setAppliedVoucher(response.data.voucher);
-                setFormData({ ...formData, voucher_code: response.data.voucher.code });
+                const newVoucher = response.data.voucher;
+                setAppliedVouchers(prev => {
+                    const filtered = prev.filter(v => v.discount_target !== newVoucher.discount_target);
+                    const updated = [...filtered, newVoucher];
+                    setFormData(fd => ({ ...fd, voucher_codes: updated.map(v => v.code) }));
+                    return updated;
+                });
+                setVoucherCode('');
                 toast.success('Voucher berhasil digunakan!');
             }
         } catch (error) {
-            setAppliedVoucher(null);
-            setFormData({ ...formData, voucher_code: '' });
             toast.error(error.response?.data?.message || 'Voucher tidak valid');
         } finally {
             setCheckingVoucher(false);
         }
     };
 
-    const calculateDiscount = () => {
-        if (!appliedVoucher) return 0;
-
-        let base = appliedVoucher.discount_target === 'shipping' ? formData.shipping_cost : subtotal;
-        if (base <= 0) return 0; // cannot discount 0
+    const calculateVoucherDiscount = (voucher) => {
+        let base = voucher.discount_target === 'shipping' ? formData.shipping_cost : subtotal;
+        if (base <= 0) return 0;
 
         let discount = 0;
-        if (appliedVoucher.discount_type === 'fixed') {
-            discount = parseFloat(appliedVoucher.amount);
+        if (voucher.discount_type === 'fixed') {
+            discount = parseFloat(voucher.amount);
         } else {
-            discount = base * (parseFloat(appliedVoucher.amount) / 100);
-            if (appliedVoucher.max_discount && discount > parseFloat(appliedVoucher.max_discount)) {
-                discount = parseFloat(appliedVoucher.max_discount);
+            discount = base * (parseFloat(voucher.amount) / 100);
+            if (voucher.max_discount && discount > parseFloat(voucher.max_discount)) {
+                discount = parseFloat(voucher.max_discount);
             }
         }
 
@@ -218,7 +245,12 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
         return discount;
     };
 
-    const discountAmount = calculateDiscount();
+    const calculateTotalDiscount = () => {
+        if (!appliedVouchers || appliedVouchers.length === 0) return 0;
+        return appliedVouchers.reduce((acc, v) => acc + calculateVoucherDiscount(v), 0);
+    };
+
+    const discountAmount = calculateTotalDiscount();
     const grandTotal = (subtotal + formData.shipping_cost) - discountAmount;
 
     const handleSubmit = (e) => {
@@ -660,12 +692,19 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                     <span>Ongkos Kirim</span>
                                     <span>{formData.shipping_cost > 0 ? formatPrice(formData.shipping_cost) : '-'}</span>
                                 </div>
-                                {appliedVoucher && (
-                                    <div className="flex justify-between text-sm text-red-600">
-                                        <span>Voucher ({appliedVoucher.code})</span>
-                                        <span>- {formatPrice(discountAmount)}</span>
+                                {appliedVouchers.map(v => (
+                                    <div key={v.code} className="flex justify-between items-center text-sm text-red-600">
+                                        <span>Voucher ({v.code})</span>
+                                        <div className="flex items-center gap-2">
+                                            <span>- {formatPrice(calculateVoucherDiscount(v))}</span>
+                                            <button type="button" onClick={() => {
+                                                const updated = appliedVouchers.filter(ap => ap.code !== v.code);
+                                                setAppliedVouchers(updated);
+                                                setFormData({ ...formData, voucher_codes: updated.map(up => up.code) });
+                                            }} className="text-gray-400 hover:text-red-500 rounded p-1">&times;</button>
+                                        </div>
                                     </div>
-                                )}
+                                ))}
                                 <div className="flex justify-between items-center pt-2 border-t border-gray-100 mt-2">
                                     <span className="text-base font-bold text-gray-900">Total Pembayaran</span>
                                     <span className="text-xl font-bold text-indigo-600">{formatPrice(grandTotal)}</span>
@@ -674,40 +713,39 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
 
                             {/* Voucher Input */}
                             <div className="mb-6">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1 block">Kode Voucher</label>
+                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1 block">Pilih Voucher</label>
                                 <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        className="w-full text-sm rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 uppercase"
-                                        placeholder="DISKON10"
+                                    <select
+                                        className="w-full text-sm rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                         value={voucherCode}
                                         onChange={e => setVoucherCode(e.target.value)}
-                                        disabled={!!appliedVoucher}
-                                    />
-                                    {appliedVoucher ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setAppliedVoucher(null);
-                                                setVoucherCode('');
-                                                setFormData({ ...formData, voucher_code: '' });
-                                            }}
-                                            className="px-3 py-2 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={handleApplyVoucher}
-                                            disabled={checkingVoucher || !voucherCode}
-                                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 disabled:opacity-50"
-                                        >
-                                            {checkingVoucher ? '...' : 'Gunakan'}
-                                        </button>
-                                    )}
+                                        disabled={appliedVouchers.length >= 2 || availableVouchers.length === 0}
+                                    >
+                                        <option value="">-- Pilih Voucher --</option>
+                                        {availableVouchers.map(v => {
+                                            const isSelected = appliedVouchers.some(ap => ap.code === v.code);
+                                            const meetMinSpend = subtotal >= parseFloat(v.min_spend);
+                                            const isDisabled = isSelected || !meetMinSpend;
+
+                                            let labelText = `${v.name} (${v.code})`;
+                                            if (isSelected) labelText += ' - Sudah Dipilih';
+                                            else if (!meetMinSpend) labelText += ` - Min. belanja ${formatPrice(v.min_spend)}`;
+
+                                            return (
+                                                <option key={v.id} value={v.code} disabled={isDisabled}>
+                                                    {labelText}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={handleApplyVoucher}
+                                        disabled={checkingVoucher || !voucherCode || appliedVouchers.length >= 2}
+                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 disabled:opacity-50 whitespace-nowrap"
+                                    >
+                                        {checkingVoucher ? '...' : 'Gunakan'}
+                                    </button>
                                 </div>
                             </div>
 

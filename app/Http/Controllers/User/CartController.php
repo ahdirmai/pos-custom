@@ -18,6 +18,8 @@ class CartController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'qty' => 'required|integer|min:1',
+            'is_buy_now' => 'nullable|boolean',
+            'vouchers' => 'nullable|array',
         ]);
 
         $product = Product::findOrFail($request->product_id);
@@ -45,12 +47,19 @@ class CartController extends Controller
             ]);
         } else {
             // Create new
-            Cart::create([
+            $cart = Cart::create([
                 'user_id' => Auth::id(),
                 'cashier_id' => null,
                 'product_id' => $product->id,
                 'qty' => $request->qty,
                 'price' => $product->sell_price,
+            ]);
+        }
+
+        if ($request->is_buy_now) {
+            return redirect()->route('user.checkout', [
+                'cart_ids' => [$cart->id],
+                'vouchers' => $request->vouchers,
             ]);
         }
 

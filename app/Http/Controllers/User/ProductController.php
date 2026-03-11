@@ -104,10 +104,13 @@ class ProductController extends Controller
             ->take(4)
             ->get();
 
+        $vouchers = \App\Models\Voucher::active()->get();
+
         return Inertia::render('EndUser/Products/Show', [
             'product' => $product,
             'reviews' => $reviews,
             'relatedProducts' => $relatedProducts,
+            'vouchers' => $vouchers,
         ]);
     }
 

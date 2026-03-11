@@ -34,6 +34,7 @@ class CheckoutController extends Controller
     public function index()
     {
         $cartIds = request('cart_ids'); // Optional: Filter by selected IDs
+        $vouchers = request('vouchers'); // Optional: Auto apply vouchers
 
         $carts = Cart::with('product')
             ->where('user_id', Auth::id())
@@ -64,12 +65,21 @@ class CheckoutController extends Controller
             ->orderBy('is_primary', 'desc')
             ->get();
 
+        // Fetch available vouchers
+        $availableVouchers = \App\Models\Voucher::where('is_active', true)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->whereColumn('used_count', '<', 'quota')
+            ->get();
+
         return Inertia::render('EndUser/Checkout/Index', [
             'carts' => $carts,
             'subtotal' => $subtotal,
             'totalWeight' => $totalWeight,
             'provinces' => \Laravolt\Indonesia\Models\Province::all(),
             'savedAddresses' => $savedAddresses,
+            'initialVouchers' => $vouchers,
+            'availableVouchers' => $availableVouchers,
         ]);
     }
 
@@ -125,9 +135,19 @@ class CheckoutController extends Controller
      */
     public function checkVoucher(Request $request)
     {
-        $request->validate(['code' => 'required|string']);
+        $request->validate([
+            'code' => 'required|string',
+            'cart_ids' => 'nullable|array',
+            'cart_ids.*' => 'integer'
+        ]);
 
-        $carts = Cart::where('user_id', Auth::id())->whereNull('cashier_id')->get();
+        $carts = Cart::where('user_id', Auth::id())
+            ->whereNull('cashier_id')
+            ->when($request->cart_ids, function ($query, $cartIds) {
+                return $query->whereIn('id', $cartIds);
+            })
+            ->get();
+            
         $subtotal = $carts->sum(fn ($c) => $c->price * $c->qty);
 
         $result = $this->voucherService->validate($request->code, $subtotal, Auth::id());
@@ -165,7 +185,7 @@ class CheckoutController extends Controller
             'shipping_courier' => 'required|string',
             'shipping_service' => 'required|string',
             'shipping_cost' => 'required|numeric|min:0',
-            'voucher_code' => 'nullable|string',
+            'voucher_codes' => 'nullable|array',
             'payment_proof' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -197,13 +217,15 @@ class CheckoutController extends Controller
 
             // 3. Validate Voucher (Server Side Check)
             $discountAmount = 0;
-            $voucherId = null;
-            if ($request->voucher_code) {
-                $vCheck = $this->voucherService->validate($request->voucher_code, $subtotal, $user->id);
-                if ($vCheck['valid']) {
-                    $voucher = $vCheck['voucher'];
-                    $discountAmount = $this->voucherService->calculateDiscount($voucher, $subtotal, $request->shipping_cost);
-                    $voucherId = $voucher->id;
+            $voucherIds = [];
+            if ($request->voucher_codes && is_array($request->voucher_codes)) {
+                foreach ($request->voucher_codes as $code) {
+                    $vCheck = $this->voucherService->validate($code, $subtotal, $user->id);
+                    if ($vCheck['valid']) {
+                        $voucher = $vCheck['voucher'];
+                        $discountAmount += $this->voucherService->calculateDiscount($voucher, $subtotal, $request->shipping_cost);
+                        $voucherIds[] = $voucher->id;
+                    }
                 }
             }
 
@@ -296,7 +318,7 @@ class CheckoutController extends Controller
                     'postal_code' => $request->postal_code,
                 ]),
                 'shipping_courier' => $request->shipping_courier.' - '.$request->shipping_service,
-                'voucher_id' => $voucherId,
+                'voucher_id' => $voucherIds[0] ?? null,
                 'payment_proof' => $paymentProofPath,
             ]);
 
@@ -324,18 +346,20 @@ class CheckoutController extends Controller
             ]);
 
             // 7. Record Voucher Usage
-            if ($voucherId) {
-                VoucherUsage::create([
-                    'voucher_id' => $voucherId,
-                    'transaction_id' => $transaction->id,
-                    'customer_id' => null,
-                    'user_id' => $user->id,
-                    'discount_amount' => $discountAmount,
-                    'used_at' => now(),
-                ]);
-
-                // Increment used count
-                \App\Models\Voucher::where('id', $voucherId)->increment('used_count');
+            if (!empty($voucherIds)) {
+                foreach ($voucherIds as $vId) {
+                    $v = \App\Models\Voucher::find($vId);
+                    $vDiscount = $this->voucherService->calculateDiscount($v, $subtotal, $request->shipping_cost);
+                    VoucherUsage::create([
+                        'voucher_id' => $vId,
+                        'transaction_id' => $transaction->id,
+                        'customer_id' => null,
+                        'user_id' => $user->id,
+                        'discount_amount' => $vDiscount,
+                        'used_at' => now(),
+                    ]);
+                    $v->increment('used_count');
+                }
             }
 
             // 8. Clear Cart
