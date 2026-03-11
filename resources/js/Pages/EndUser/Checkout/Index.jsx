@@ -722,14 +722,12 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                         disabled={appliedVouchers.length >= 2 || availableVouchers.length === 0}
                                     >
                                         <option value="">-- Pilih Voucher --</option>
-                                        {availableVouchers.map(v => {
+                                        {availableVouchers.filter(v => subtotal >= parseFloat(v.min_spend)).map(v => {
                                             const isSelected = appliedVouchers.some(ap => ap.code === v.code);
-                                            const meetMinSpend = subtotal >= parseFloat(v.min_spend);
-                                            const isDisabled = isSelected || !meetMinSpend;
+                                            const isDisabled = isSelected;
 
                                             let labelText = `${v.name} (${v.code})`;
                                             if (isSelected) labelText += ' - Sudah Dipilih';
-                                            else if (!meetMinSpend) labelText += ` - Min. belanja ${formatPrice(v.min_spend)}`;
 
                                             return (
                                                 <option key={v.id} value={v.code} disabled={isDisabled}>

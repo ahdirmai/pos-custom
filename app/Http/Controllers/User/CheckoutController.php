@@ -65,12 +65,33 @@ class CheckoutController extends Controller
             ->orderBy('is_primary', 'desc')
             ->get();
 
+        $userId = Auth::id();
+        $customer = Auth::user()->customer;
+        $customerId = $customer instanceof \Illuminate\Database\Eloquent\Collection ? $customer->first()?->id : $customer?->id;
+
         // Fetch available vouchers
         $availableVouchers = \App\Models\Voucher::where('is_active', true)
             ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
             ->whereColumn('used_count', '<', 'quota')
-            ->get();
+            ->get()
+            ->filter(function ($voucher) use ($userId, $customerId) {
+                if ($voucher->limit_per_user) {
+                    $userUsageCount = \App\Models\VoucherUsage::where('voucher_id', $voucher->id)
+                        ->where(function($q) use ($userId, $customerId) {
+                            $q->where('user_id', $userId);
+                            if ($customerId) {
+                                $q->orWhere('customer_id', $customerId);
+                            }
+                        })
+                        ->count();
+                    
+                    if ($userUsageCount >= $voucher->limit_per_user) {
+                        return false;
+                    }
+                }
+                return true;
+            })->values();
 
         return Inertia::render('EndUser/Checkout/Index', [
             'carts' => $carts,
