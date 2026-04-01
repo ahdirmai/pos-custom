@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import UserLayout from '@/Layouts/UserLayout';
 import ProductCard from '@/Components/EndUser/ProductCard';
 import toast from 'react-hot-toast';
 
 export default function ProductShow({ product, reviews, relatedProducts, vouchers = [] }) {
+    const { storeProfile } = usePage().props;
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState('description');
     const [isWishlisted, setIsWishlisted] = useState(false);
@@ -62,7 +63,7 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
         <UserLayout>
             <Head title={product.title} />
 
-            <div className="max-w-[1240px] px-4 md:px-0 mx-auto w-full py-4 md:py-8 pb-24">
+            <div className="max-w-[1240px] px-4 md:px-0 mx-auto w-full py-4 md:py-8 pb-4 md:pb-8">
                 
                 {/* Breadcrumb Navigation */}
                 <div className="flex items-center gap-2 mb-6 text-[13px] text-gray-500 bg-white p-3 rounded-lg shadow-[0_1px_6px_0_rgba(49,53,59,0.12)]">
@@ -108,44 +109,71 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
                     <div className="flex-1 flex flex-col xl:flex-row gap-8">
                         {/* Main Details Area */}
                         <div className="flex-1">
-                            <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-snug mb-2">
-                                {product.title}
-                            </h1>
-
-                            <div className="flex items-center divide-x-2 divide-gray-200 mb-4 text-[13px]">
-                                <div className="pr-3 flex items-center text-gray-600">
-                                    <span className="font-bold text-gray-900 mr-1">Terkirim dari:</span>
-                                    Gudang Pusat
-                                </div>
-                                <div className="px-3 flex items-center text-gray-500">
-                                    <svg className="w-4 h-4 text-amber-400 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                    </svg>
-                                    <span className="font-bold text-gray-900 mr-1">{product.average_rating ? Number(product.average_rating).toFixed(1) : '-'}</span> 
-                                    ({product.reviews_count || 0} Ulasan)
-                                </div>
-                                <div className="pl-3 text-gray-500 font-medium">
-                                    <span className="text-gray-900 font-bold">{product.sold_count || 0}</span> Terjual
-                                </div>
-                            </div>
-
-                            <div className="bg-gray-50 bg-opacity-70 border border-gray-100 rounded-2xl p-4 md:p-6 mb-6 inline-block min-w-full lg:min-w-[70%]">
+                            <div className="mb-[15px]">
+                                <h2 className="text-[28px] md:text-3xl font-extrabold text-[#212121] tracking-tight leading-none mb-1">
+                                    {formatPrice(product.sell_price)}
+                                </h2>
                                 {product.discount > 0 && (
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="px-1.5 py-0.5 bg-red-100 text-red-600 font-bold text-[10px] rounded shrink-0">
-                                            {product.discount}%
-                                        </span>
-                                        <span className="text-[13px] text-gray-400 line-through">
-                                            {formatPrice(product.original_price || product.sell_price * 1.2)}
-                                        </span>
+                                    <div className="text-[16px] font-medium text-[#9fa6b0] line-through mb-4">
+                                        {formatPrice(product.original_price || product.sell_price * 1.2)}
                                     </div>
                                 )}
-                                <div className="flex items-baseline gap-3">
-                                    <span className="text-3xl md:text-4xl font-extrabold text-[#212121] tracking-tight">
-                                        {formatPrice(product.sell_price)}
-                                    </span>
+                                
+                                <h1 className="text-[16px] md:text-[18px] text-[#212121] leading-snug mb-2">
+                                    {product.title}
+                                </h1>
+
+                                <div className="flex items-center text-[13px] text-[#6d7588] mt-2 mb-4">
+                                    <svg className="w-4 h-4 text-amber-400 mr-1 pb-[1px]" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    <span className="font-extrabold text-[#212121] mr-1">{product.average_rating ? Number(product.average_rating).toFixed(1) : '-'}</span> 
+                                    <span className="mr-1">({product.reviews_count || 0})</span>
+                                    <span className="mx-1 text-[#aab4c8]">•</span>
+                                    <span>{product.sold_count || '500rb+'} terjual</span>
                                 </div>
                             </div>
+                            
+                            {/* Thin Divider */}
+                            <hr className="border-gray-200" />
+
+                            {/* Shipping Estimate Info */}
+                            <div className="flex justify-between items-center py-4">
+                                <div className="flex items-center text-[14px] font-bold text-[#212121]">
+                                    <svg className="w-[18px] h-[18px] mr-2 text-[#6d7588]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8h-4V7M6 16v-3m10 3v-3m0 3h-4m-6 0H4M8 16A2 2 0 108 20 2 2 0 008 16zM18 16A2 2 0 1018 20 2 2 0 0018 16z" />
+                                    </svg>
+                                    Dikirim dari <span className="ml-[3px] text-[#212121]">{storeProfile?.city || 'Gudang Pusat'}</span>
+                                </div>
+                            </div>
+                            
+                            {/* Thick Divider */}
+                            <div className="h-2 bg-gray-50 -mx-4 md:mx-0 md:rounded-lg mb-4"></div>
+
+                            {/* Store Info */}
+                            <div className="flex items-center pt-2 pb-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-[#1019A1] to-[#01B9FD] rounded-full flex items-center justify-center text-white italic text-3xl mr-3 font-serif overflow-hidden">
+                                    {storeProfile?.logo ? (
+                                        <img src={storeProfile.logo} className="w-full h-full object-cover" alt={storeProfile?.name || 'Logo'} />
+                                    ) : (
+                                        <span className="relative top-[-2px]">{storeProfile?.name?.charAt(0) || 'T'}</span>
+                                    )}
+                                </div>
+                                <div className="flex flex-col">
+                                    <div className="flex items-center text-[18px] font-bold text-[#212121]">
+                                        <svg className="w-5 h-5 text-[#863df7] mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        {storeProfile?.name || 'Toko Utama'}
+                                    </div>
+                                    <div className="text-[14px] text-[#6d7588] mt-0.5 ml-1">
+                                        {storeProfile?.city || storeProfile?.address || 'Lokasi Toko'}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Keep any extra divs aligned properly below */}
+                        
 
                             {/* Additional Information details */}
                             {product.productDetail && (
@@ -194,7 +222,7 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
                                     </button>
                                 </div>
 
-                                <div className='pt-6 min-h-[250px]'>
+                                <div className='pt-4'>
                                     {activeTab === 'description' && (
                                         <div
                                             className="prose prose-sm max-w-none text-[#31353b] leading-relaxed text-[14px]"
@@ -353,7 +381,7 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
 
                 {/* Related Products */}
                 {relatedProducts && relatedProducts.length > 0 && (
-                    <div className="mt-12 md:mt-16 pt-8 border-t border-gray-100">
+                    <div className="mt-6 md:mt-8 pt-6 border-t border-gray-100">
                         <div className="flex items-center gap-2 mb-6">
                             <div className="w-1.5 h-6 bg-primary-600 rounded-full"></div>
                             <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Produk Terkait</h2>
