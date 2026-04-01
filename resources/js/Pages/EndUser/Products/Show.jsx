@@ -300,7 +300,7 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
 
                         {/* Floating Action Card (Sticky on Desktop) */}
                         <div className="xl:w-[320px] flex-shrink-0">
-                            <div className="sticky top-24 bg-white border border-gray-200 rounded-2xl p-5 shadow-[0_4px_12px_rgba(49,53,59,0.08)] hidden md:block">
+                            <div className="sticky top-24 bg-white border border-gray-200 rounded-2xl p-5 shadow-[0_4px_12px_rgba(49,53,59,0.08)]">
                                 <h3 className="font-bold text-gray-900 mb-4">Pengaturan Pesanan</h3>
                                 
                                 <div className="flex items-center justify-between mb-5 border-b border-gray-100 pb-5">
@@ -396,46 +396,6 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
                 )}
             </div>
 
-            {/* Mobile Fixed Bottom Action Bar */}
-            <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:hidden z-40 flex gap-2">
-                 <button
-                    onClick={() => {
-                        setIsWishlisted(!isWishlisted);
-                        toast.success(isWishlisted ? 'Dihapus dari wishlist' : 'Ditambahkan ke wishlist');
-                    }}
-                    className={`flex-shrink-0 w-12 h-full flex items-center justify-center rounded-lg border border-gray-300 transition-colors ${isWishlisted ? 'bg-red-50 border-red-200 text-red-500' : 'text-gray-600'}`}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${isWishlisted ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isWishlisted ? 0 : 2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                </button>
-                <div className="flex-shrink-0 w-24">
-                     <div className="flex items-center h-full border border-gray-300 rounded-lg overflow-hidden relative">
-                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-full flex items-center justify-center text-primary-600 absolute left-0 bg-white" disabled={!hasStock || quantity <= 1}>-</button>
-                        <input type="number" readOnly value={quantity} className="w-full text-center text-sm font-bold border-none" />
-                        <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="w-8 h-full flex items-center justify-center text-primary-600 absolute right-0 bg-white" disabled={!hasStock || quantity >= product.stock}>+</button>
-                    </div>
-                </div>
-                <button
-                    onClick={handleBuyNow}
-                    disabled={!hasStock}
-                    className="flex-1 bg-primary-600 text-white font-bold rounded-lg disabled:opacity-50"
-                >
-                   Beli
-                </button>
-                <button
-                    onClick={handleAddToCart}
-                    disabled={!hasStock}
-                    className="w-12 h-12 flex-shrink-0 rounded-lg border border-primary-600 text-primary-600 flex items-center justify-center disabled:opacity-50 disabled:border-gray-300 disabled:text-gray-400"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                </button>
-            </div>
-            
-            {/* Added padding to prevent overlap with fixed bottom menu */}
-            <div className="md:hidden h-24"></div>
 
         </UserLayout>
     );
