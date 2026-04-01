@@ -147,8 +147,9 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
                                 </div>
                             </div>
                             
-                            {/* Thick Divider */}
-                            <div className="h-2 bg-gray-50 -mx-4 md:mx-0 md:rounded-lg mb-4"></div>
+                            {/* Thick Divider / Space (Mobile Only) */}
+                            <div className="h-[8px] md:hidden bg-[#f3f4f5] -mx-4 my-4"></div>
+                            <hr className="hidden md:block border-gray-200 mt-2 mb-4" />
 
                             {/* Store Info */}
                             <div className="flex items-center pt-2 pb-4">
