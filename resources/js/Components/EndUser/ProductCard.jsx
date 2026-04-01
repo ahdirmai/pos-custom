@@ -8,7 +8,6 @@ export default function ProductCard({ product }) {
     const { addToCart } = useCart();
     const { isWishlisted, toggle: toggleWishlist } = useWishlist();
 
-    // Format price to IDR
     const formatPrice = (value) =>
         new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -17,9 +16,7 @@ export default function ProductCard({ product }) {
         }).format(value);
 
     const hasStock = product.stock > 0;
-    const lowStock = product.stock > 0 && product.stock <= 5;
-
-    const { auth } = usePage().props; // Get auth from page props
+    const { auth } = usePage().props;
 
     const handleAddToCart = (e) => {
         e.preventDefault();
@@ -42,7 +39,7 @@ export default function ProductCard({ product }) {
                         (t) => (
                             <div className="flex items-center gap-2">
                                 <span className="font-medium">{product.title}</span>
-                                <span className="text-green-600 font-bold">+1</span>
+                                <span className="text-primary-600 font-bold">+1</span>
                             </div>
                         ),
                         {
@@ -58,135 +55,100 @@ export default function ProductCard({ product }) {
     };
 
     return (
-        <Link
-            href={route('user.product.show', product.id)}
-            className={`group relative flex flex-col bg-white rounded-2xl border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${!hasStock ? 'opacity-75' : ''}`}
-        >
-            {/* Image Section */}
-            <div className="relative aspect-square bg-gray-100 overflow-hidden">
-                <img
-                    src={product.image || '/images/placeholder.png'}
-                    alt={product.title}
-                    className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:blur-[2px] ${!hasStock ? 'grayscale' : ''}`}
-                    loading="lazy"
-                />
-                {/* Out of Stock Overlay */}
-                {!hasStock && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-                        <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white border border-white/50 text-xs font-bold uppercase tracking-widest rounded-full">
-                            Habis
+        <article className="group relative bg-white rounded-lg flex flex-col h-full shadow-[0_1px_6px_0_rgba(49,53,59,0.12)] hover:shadow-[0_4px_12px_rgba(49,53,59,0.16)] transition-shadow duration-200">
+            <Link
+                href={route('user.product.show', product.id)}
+                className={`flex flex-col h-full w-full ${!hasStock ? 'opacity-75' : ''}`}
+                title={product.title}
+            >
+                {/* Image Section */}
+                <div className="relative w-full pt-[100%] overflow-hidden rounded-t-lg bg-gray-50">
+                    <img
+                        src={product.image || '/images/placeholder.png'}
+                        alt={product.title}
+                        className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${!hasStock ? 'grayscale' : ''}`}
+                        loading="lazy"
+                    />
+                    
+                    {/* Out of Stock Overlay */}
+                    {!hasStock && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                            <span className="px-3 py-1 bg-gray-800 text-white text-xs font-bold rounded">
+                                Habis
+                            </span>
+                        </div>
+                    )}
+                    
+                    {/* Discount Label (Example: hardcoded if no prop, replace later) */}
+                    {hasStock && product.discount > 0 && (
+                        <div className="absolute top-2 left-0 z-10 flex flex-col">
+                            <span className="bg-[#f3673b] text-white text-[10px] font-bold px-2 py-1 rounded-r-lg">
+                                {product.discount}% OFF
+                            </span>
+                            <span className="block w-[5px] h-[5px] bg-[#e03f0d] rounded-bl-sm"></span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Content Section */}
+                <div className="flex flex-col flex-1 p-[8px]">
+                    <h2 className="text-[13px] md:text-[14px] leading-[1.5] text-[#212121] line-clamp-2 overflow-hidden break-words mb-1">
+                        {product.title}
+                    </h2>
+                    
+                    <div className="flex flex-col mt-auto mb-[2px]">
+                        <span className="text-[14px] font-bold text-[#212121] leading-[18px]">
+                            {formatPrice(product.sell_price)}
+                        </span>
+                        {product.discount > 0 && (
+                            <span className="text-[10px] text-[#aab4c8] line-through mt-0.5">
+                                {formatPrice(product.original_price || product.sell_price * 1.2)}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Rating and Sold */}
+                    <div className="flex items-center mt-1 text-[12px] text-[#6d7588]">
+                        <svg className="w-4 h-4 text-amber-400 mr-1" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                        <span className="mr-1">{product.average_rating ? Number(product.average_rating).toFixed(1) : '0.0'}</span>
+                        <span className="w-0.5 h-0.5 rounded-full bg-[#aab4c8] mx-1"></span>
+                        <span className="truncate">{product.sold_count || 0} terjual</span>
+                    </div>
+
+                    {/* Location / Shop (Dummy or from relation) */}
+                    <div className="flex flex-col flex-1 text-left mt-2">
+                        <span className="text-[12px] text-[#6d7588] truncate">
+                            {product.category?.name || 'Umum'}
+                        </span>
+                        <span className="text-[12px] text-[#6d7588] truncate font-medium">
+                            Toko Utama
                         </span>
                     </div>
-                )}
+                </div>
+            </Link>
 
-                {/* Wishlist Button */}
+            {/* Hover Actions (Wishlist & Cart logic) */}
+            <div className="absolute right-2 top-2 z-20 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                     onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         toggleWishlist(product);
                     }}
-                    className="absolute top-2 right-2 z-30 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white transition-all duration-200 hover:scale-110"
-                    title={isWishlisted(product.id) ? 'Hapus dari wishlist' : 'Tambah ke wishlist'}
+                    className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow hover:text-primary-600 transition-colors"
+                    title={isWishlisted(product.id) ? 'Hapus wishlist' : 'Tambah wishlist'}
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className={`h-4 w-4 transition-colors duration-200 ${isWishlisted(product.id) ? 'text-red-500 fill-red-500' : 'text-gray-400'}`}
+                        className={`h-4 w-4 ${isWishlisted(product.id) ? 'text-red-500 fill-red-500' : 'text-gray-400'}`}
                         fill="none" viewBox="0 0 24 24" stroke="currentColor"
                     >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                 </button>
-
-                {/* Hover Action Buttons */}
-                <div className="hidden md:flex absolute inset-0 z-20 items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {/* Detail Button */}
-                    <button
-                        className="w-10 h-10 rounded-full bg-white text-gray-900 flex items-center justify-center shadow-lg hover:bg-gray-100 hover:scale-110 transition-all duration-200"
-                        title="Lihat Detail"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                    </button>
-
-                    {/* Add to Cart Button */}
-                    {hasStock && (
-                        <button
-                            onClick={handleAddToCart}
-                            className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg hover:bg-indigo-700 hover:scale-110 transition-all duration-200"
-                            title="Tambah ke Keranjang"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                            </svg>
-                        </button>
-                    )}
-                </div>
             </div>
-
-            {/* Content Section */}
-            <div className="p-2 sm:p-3 flex-1 flex flex-col bg-white">
-                {/* Category Label */}
-                <div className="mb-1">
-                    <span
-                        className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 line-clamp-1 block"
-                        title={product.category?.name || 'Umum'}
-                    >
-                        {product.category?.name || 'Umum'}
-                    </span>
-                </div>
-
-                <div
-                    className="text-base sm:text-lg font-bold text-gray-900 line-clamp-1 leading-snug mb-2 group-hover:text-indigo-600 transition-colors"
-                    title={product.title}
-                >
-                    {product.title}
-                </div>
-
-                {/* Rating & Sold */}
-                {(product.average_rating || product.sold_count || hasStock) && (
-                    <div className="flex flex-wrap items-center gap-2 mt-auto text-[11px] text-gray-500">
-                        {product.average_rating && (
-                            <div className="flex items-ceNnter gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                                <span className="font-medium text-gray-700">{Number(product.average_rating).toFixed(1)}</span>
-                            </div>
-                        )}
-                        {product.average_rating && product.sold_count && <span className="text-gray-300">|</span>}
-                        {product.sold_count > 0 && <span>{product.sold_count} terjual</span>}
-
-                        {/* Stock Info */}
-                        {lowStock && (
-                            <>
-                                <span className="text-gray-300">|</span>
-                                <span className="text-red-600 font-medium">Sisa {product.stock}</span>
-                            </>
-                        )}
-                    </div>
-                )}
-
-                <div className="mt-auto border-t mt-1 border-gray-50 flex flex-col gap-2">
-                    <p className="text-sm sm:text-base font-bold text-indigo-600">
-                        {formatPrice(product.sell_price)}
-                    </p>
-                    {/* Mobile Only: Full Width Add Button */}
-                    {hasStock && (
-                        <button
-                            onClick={handleAddToCart}
-                            className="md:hidden w-full py-1.5 rounded-md bg-indigo-600 text-white text-xs font-bold flex items-center justify-center gap-1 active:bg-indigo-700 transition-colors"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                            </svg>
-                            Add
-                        </button>
-                    )}
-                </div>
-            </div>
-        </Link>
+        </article>
     );
 }

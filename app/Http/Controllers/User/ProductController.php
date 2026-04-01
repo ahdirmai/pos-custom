@@ -119,12 +119,21 @@ class ProductController extends Controller
         // Popular products (most sold)
         $popularProducts = Product::with('category')
             ->withSum('transactionDetails as sold_count', 'qty')
+            ->withAvg('reviews as average_rating', 'rating')
+            ->withCount(['reviews as reviews_count' => function ($q) {
+                $q->where('is_hidden', false);
+            }])
             ->orderByDesc('sold_count')
             ->take(8)
             ->get();
 
         // Latest products
         $latestProducts = Product::with('category')
+            ->withSum('transactionDetails as sold_count', 'qty')
+            ->withAvg('reviews as average_rating', 'rating')
+            ->withCount(['reviews as reviews_count' => function ($q) {
+                $q->where('is_hidden', false);
+            }])
             ->latest()
             ->take(8)
             ->get();

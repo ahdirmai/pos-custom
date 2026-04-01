@@ -29,10 +29,7 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
             minimumFractionDigits: 0,
         }).format(value);
 
-    const hasDiscount = product.sell_price < product.buy_price * 1.5; // Example logic, or use real original price if available
-    // Note: Product model only has buy_price and sell_price. I'll use sell_price.
-    // Assuming no specific discount logic in model yet, relying on sell_price.
-
+    const hasDiscount = product.sell_price < product.buy_price * 1.5; 
     const hasStock = product.stock > 0;
     const lowStock = product.stock > 0 && product.stock <= 5;
 
@@ -65,292 +62,303 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
         <UserLayout>
             <Head title={product.title} />
 
-            <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-4 md:py-8 pb-24">
-                {/* Back Button & Breadcrumb */}
-                <div className="flex items-center gap-4 mb-4 md:mb-6">
+            <div className="max-w-[1240px] px-4 md:px-0 mx-auto w-full py-4 md:py-8 pb-24">
+                
+                {/* Breadcrumb Navigation */}
+                <div className="flex items-center gap-2 mb-6 text-[13px] text-gray-500 bg-white p-3 rounded-lg shadow-[0_1px_6px_0_rgba(49,53,59,0.12)]">
                     <button
                         onClick={() => window.history.back()}
-                        className="p-1.5 sm:p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center focus:outline-none"
+                        className="mr-2 text-gray-400 hover:text-primary-600 transition-colors"
                         title="Kembali"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
                         </svg>
                     </button>
-                    <nav className="hidden md:flex items-center gap-2 text-sm text-gray-500">
-                        <Link href="/" className="hover:text-indigo-600">Home</Link>
-                        <span>/</span>
-                        <Link href={route('user.products')} className="hover:text-indigo-600">Katalog</Link>
-                        <span>/</span>
-                        <span className="text-gray-900">{product.category?.name || 'Umum'}</span>
-                    </nav>
+                    <Link href="/" className="hover:text-primary-600 font-medium">Beranda</Link>
+                    <span className="text-gray-300">/</span>
+                    <Link href={route('user.products')} className="hover:text-primary-600 font-medium">Katalog</Link>
+                    <span className="text-gray-300">/</span>
+                    <span className="text-gray-900 font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] sm:max-w-xs">{product.category?.name || 'Umum'}</span>
                 </div>
 
-                <div className="flex flex-col gap-6">
-                    {/* Top: Product Image */}
-                    <div className="w-full">
-                        <div className="relative aspect-square md:aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden mb-3">
-                            <img
-                                src={product.image || '/images/placeholder.png'}
-                                alt={product.title}
-                                className="w-full h-full object-cover"
-                            />
-                            {/* Wishlist Button */}
-                            <button
-                                onClick={() => {
-                                    setIsWishlisted(!isWishlisted);
-                                    toast.success(isWishlisted ? 'Dihapus dari wishlist' : 'Ditambahkan ke wishlist');
-                                }}
-                                className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 transition-colors ${isWishlisted ? 'text-red-500 fill-current' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Bottom: Product Info */}
-                    <div className="flex-1">
-                        {/* Category */}
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="px-2.5 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-lg">{product.category?.name || 'Umum'}</span>
-                        </div>
-
-                        {/* Name */}
-                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight mb-2">
-                            {product.title}
-                        </h1>
-
-                        {/* SKU & Sold */}
-                        <div className="flex items-center gap-4 mb-3 text-sm text-gray-500">
-                            <span>SKU: {product.sku || '-'}</span>
-                            <span className="text-gray-300">|</span>
-                            <span>{product.sold_count || 0} Terjual</span>
-                        </div>
-
-                        {/* Price */}
-                        <div className="bg-gray-50 rounded-xl mb-2 p-3">
-                            <div className="flex items-baseline gap-3">
-                                <span className="text-2xl sm:text-3xl font-bold text-indigo-600">
-                                    {formatPrice(product.sell_price)}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Vouchers */}
-                        {vouchers && vouchers.length > 0 && (
-                            <div className="mb-4">
-                                <p className="text-sm font-medium text-gray-700 mb-2">Voucher Tersedia</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {vouchers.map(v => {
-                                        const isSelected = activeVouchers.some(selected => selected.id === v.id);
-                                        return (
-                                            <div key={v.id} className="group relative">
-                                                <button
-                                                    onClick={() => toggleVoucher(v)}
-                                                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-colors flex items-center gap-1.5 ${isSelected ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300 hover:bg-indigo-50'}`}
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
-                                                    </svg>
-                                                    {v.name}
-                                                    {isSelected && (
-                                                        <span className="ml-1 flex h-2 w-2 relative">
-                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                                                        </span>
-                                                    )}
-                                                </button>
-
-                                                {/* Tooltip */}
-                                                <div className="absolute opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg pointer-events-none">
-                                                    <p className="font-semibold mb-1">{v.name}</p>
-                                                    <p className="text-gray-300">
-                                                        Diskon {v.discount_type === 'fixed' ? formatPrice(v.amount) : `${parseFloat(v.amount)}%`} dari total {v.discount_target === 'shipping' ? 'ongkir' : 'harga'}
-                                                    </p>
-                                                    {(v.min_spend > 0 || v.max_discount > 0) && (
-                                                        <ul className="list-disc pl-3 mt-1.5 space-y-0.5 text-gray-400 text-[10px]">
-                                                            {v.min_spend > 0 && <li>Min. Belanja: {formatPrice(v.min_spend)}</li>}
-                                                            {v.max_discount > 0 && <li>Maks. Diskon: {formatPrice(v.max_discount)}</li>}
-                                                        </ul>
-                                                    )}
-                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Quantity */}
-                        <div className="mb-4">
-                            <p className="text-sm font-medium text-gray-700 mb-2">Jumlah</p>
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center border border-gray-200 rounded-lg">
-                                    <button
-                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                        className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700"
-                                        disabled={!hasStock}
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                                        </svg>
-                                    </button>
-                                    <span className="w-12 text-center font-medium text-gray-900">{quantity}</span>
-                                    <button
-                                        onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                                        className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700"
-                                        disabled={!hasStock}
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
-                                <span className="text-sm text-gray-500">
-                                    Stok: <span className={lowStock ? 'text-orange-600 font-medium' : ''}>{product.stock}</span>
-                                    {lowStock && <span className="text-orange-600"> (Sisa sedikit!)</span>}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Use ProductDetail for extra info if available */}
-                        {product.productDetail && (
-                            <div className="mb-4 grid grid-cols-2 gap-4 text-sm">
-                                <div className="p-3 bg-gray-50 rounded-lg">
-                                    <span className="text-gray-500 block">Berat</span>
-                                    <span className="font-medium">{product.productDetail.weight} gram</span>
-                                </div>
-                                <div className="p-3 bg-gray-50 rounded-lg">
-                                    <span className="text-gray-500 block">Dimensi</span>
-                                    <span className="font-medium">
-                                        {product.productDetail.length}x{product.productDetail.width}x{product.productDetail.height} cm
-                                    </span>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* CTA Buttons */}
-                        <div className="flex gap-3">
-                            <button
-                                onClick={handleAddToCart}
-                                disabled={!hasStock}
-                                className="flex-1 py-2.5 px-4 border-2 border-indigo-600 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-                            >
-                                Tambah Keranjang
-                            </button>
-                            <button
-                                onClick={handleBuyNow}
-                                disabled={!hasStock}
-                                className="flex-1 py-2.5 px-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-                            >
-                                Beli Sekarang
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Tabs Section */}
-                <div className="mt-6 md:mt-8">
-                    <div className="border-b border-gray-200">
-                        <div className="flex gap-8">
-                            <button
-                                onClick={() => setActiveTab('description')}
-                                className={`pb-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'description'
-                                    ? 'border-indigo-600 text-indigo-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                Deskripsi
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('reviews')}
-                                className={`pb-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'reviews'
-                                    ? 'border-indigo-600 text-indigo-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                Ulasan ({product.reviews_count || 0})
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className='pt-2'>
-                        {activeTab === 'description' && (
-                            <div
-                                className="prose prose-sm max-w-none text-gray-700"
-                                dangerouslySetInnerHTML={{ __html: product.description || 'Tidak ada deskripsi.' }}
-                            />
-                        )}
-
-                        {activeTab === 'reviews' && (
-                            <div>
-                                {/* Rating Summary */}
-                                <div className="flex items-center gap-6 mb-4 p-4 bg-gray-50 rounded-xl">
-                                    <div className="text-center">
-                                        <div className="text-4xl font-bold text-gray-900">
-                                            {product.average_rating ? Number(product.average_rating).toFixed(1) : '-'}
-                                        </div>
-                                        <div className="flex gap-0.5 mt-1 justify-center">
-                                            {[1, 2, 3, 4, 5].map(star => (
-                                                <svg key={star} xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${(product.average_rating || 0) >= star ? 'text-yellow-400' : 'text-gray-300'}`} viewBox="0 0 20 20" fill="currentColor">
-                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                </svg>
-                                            ))}
-                                        </div>
-                                        <p className="text-xs text-gray-500 mt-1">{product.reviews_count || 0} ulasan</p>
-                                    </div>
-                                </div>
-
-                                {/* Review List */}
-                                {reviews?.data?.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {reviews.data.map(review => (
-                                            <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-sm font-bold text-indigo-600">
-                                                            {review.user?.name?.charAt(0)?.toUpperCase() || '?'}
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-900">{review.user?.name || 'Anonim'}</p>
-                                                            <p className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex gap-0.5">
-                                                        {[1, 2, 3, 4, 5].map(star => (
-                                                            <svg key={star} xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${review.rating >= star ? 'text-yellow-400' : 'text-gray-200'}`} viewBox="0 0 20 20" fill="currentColor">
-                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                            </svg>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                {review.comment && (
-                                                    <p className="text-sm text-gray-600 ml-10">{review.comment}</p>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-12">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                                        </svg>
-                                        <p className="text-gray-500 text-sm">Belum ada ulasan untuk produk ini</p>
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+                    {/* Left: Product Image */}
+                    <div className="w-full lg:w-5/12 xl:w-4/12 flex-shrink-0">
+                        <div className="sticky top-24 relative aspect-square bg-gray-50 rounded-2xl overflow-hidden shadow-[0_1px_6px_0_rgba(49,53,59,0.12)] border border-gray-100 p-2">
+                            <div className="w-full h-full rounded-xl overflow-hidden relative">
+                                <img
+                                    src={product.image || '/images/placeholder.png'}
+                                    alt={product.title}
+                                    className="absolute inset-0 w-full h-full object-cover rounded-xl"
+                                />
+                                {/* Overlay / Status */}
+                                {!hasStock && (
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                                        <span className="px-4 py-2 bg-gray-900 text-white text-sm font-bold tracking-widest uppercase rounded">
+                                            Habis Terjual
+                                        </span>
                                     </div>
                                 )}
                             </div>
-                        )}
+                        </div>
+                    </div>
+
+                    {/* Right: Product Info & Actions */}
+                    <div className="flex-1 flex flex-col xl:flex-row gap-8">
+                        {/* Main Details Area */}
+                        <div className="flex-1">
+                            <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-snug mb-2">
+                                {product.title}
+                            </h1>
+
+                            <div className="flex items-center divide-x-2 divide-gray-200 mb-4 text-[13px]">
+                                <div className="pr-3 flex items-center text-gray-600">
+                                    <span className="font-bold text-gray-900 mr-1">Terkirim dari:</span>
+                                    Gudang Pusat
+                                </div>
+                                <div className="px-3 flex items-center text-gray-500">
+                                    <svg className="w-4 h-4 text-amber-400 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    <span className="font-bold text-gray-900 mr-1">{product.average_rating ? Number(product.average_rating).toFixed(1) : '-'}</span> 
+                                    ({product.reviews_count || 0} Ulasan)
+                                </div>
+                                <div className="pl-3 text-gray-500 font-medium">
+                                    <span className="text-gray-900 font-bold">{product.sold_count || 0}</span> Terjual
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 bg-opacity-70 border border-gray-100 rounded-2xl p-4 md:p-6 mb-6 inline-block min-w-full lg:min-w-[70%]">
+                                {product.discount > 0 && (
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="px-1.5 py-0.5 bg-red-100 text-red-600 font-bold text-[10px] rounded shrink-0">
+                                            {product.discount}%
+                                        </span>
+                                        <span className="text-[13px] text-gray-400 line-through">
+                                            {formatPrice(product.original_price || product.sell_price * 1.2)}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="flex items-baseline gap-3">
+                                    <span className="text-3xl md:text-4xl font-extrabold text-[#212121] tracking-tight">
+                                        {formatPrice(product.sell_price)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Additional Information details */}
+                            {product.productDetail && (
+                                <div className="py-4 border-y border-gray-100 mb-6 flex flex-wrap gap-y-4 text-[13px]">
+                                    <div className="w-1/2">
+                                        <span className="block text-gray-500 mb-1">Berat Standar</span>
+                                        <span className="font-bold text-gray-900">{product.productDetail.weight} gram</span>
+                                    </div>
+                                    <div className="w-1/2">
+                                        <span className="block text-gray-500 mb-1">Kondisi</span>
+                                        <span className="font-bold text-gray-900">Baru</span>
+                                    </div>
+                                    <div className="w-1/2">
+                                        <span className="block text-gray-500 mb-1">Dimensi</span>
+                                        <span className="font-bold text-gray-900">
+                                            {product.productDetail.length} x {product.productDetail.width} x {product.productDetail.height} cm
+                                        </span>
+                                    </div>
+                                    <div className="w-1/2">
+                                        <span className="block text-gray-500 mb-1">Kategori</span>
+                                        <span className="font-bold text-primary-600">{product.category?.name || 'Umum'}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tabs Component embedded gracefully */}
+                            <div className="mt-8">
+                                <div className="flex gap-6 border-b border-gray-200">
+                                    <button
+                                        onClick={() => setActiveTab('description')}
+                                        className={`pb-3 text-[15px] font-bold border-b-2 transition-colors ${activeTab === 'description'
+                                            ? 'border-primary-600 text-primary-600'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        Detail Produk
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('reviews')}
+                                        className={`pb-3 text-[15px] font-bold border-b-2 transition-colors ${activeTab === 'reviews'
+                                            ? 'border-primary-600 text-primary-600'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        Ulasan ({product.reviews_count || 0})
+                                    </button>
+                                </div>
+
+                                <div className='pt-6 min-h-[250px]'>
+                                    {activeTab === 'description' && (
+                                        <div
+                                            className="prose prose-sm max-w-none text-[#31353b] leading-relaxed text-[14px]"
+                                            dangerouslySetInnerHTML={{ __html: product.description || '<p>Tidak ada detail deskripsi untuk produk ini.</p>' }}
+                                        />
+                                    )}
+
+                                    {activeTab === 'reviews' && (
+                                        <div className="animate-fade-in">
+                                            {/* Rating Summary */}
+                                            {product.reviews_count > 0 ? (
+                                                <div className="flex flex-col md:flex-row items-center gap-6 mb-8 p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
+                                                    <div className="text-center md:border-r md:border-gray-200 md:pr-8">
+                                                        <div className="text-5xl font-extrabold text-gray-900 mb-2">
+                                                            {Number(product.average_rating).toFixed(1)}
+                                                            <span className="text-xl text-gray-400 font-medium">/5</span>
+                                                        </div>
+                                                        <div className="flex justify-center gap-1 mb-2">
+                                                            {[1, 2, 3, 4, 5].map(star => (
+                                                                <svg key={star} xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${(product.average_rating || 0) >= star ? 'text-amber-400' : 'text-gray-200'}`} viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                </svg>
+                                                            ))}
+                                                        </div>
+                                                        <p className="text-[13px] font-bold text-gray-500">{product.reviews_count} ulasan pembeli</p>
+                                                    </div>
+                                                </div>
+                                            ) : null}
+
+                                            {/* Review List */}
+                                            {reviews?.data?.length > 0 ? (
+                                                <div className="space-y-6">
+                                                    {reviews.data.map(review => (
+                                                        <div key={review.id} className="pb-6 border-b border-gray-100 last:border-0">
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-sm font-bold text-primary-600">
+                                                                        {review.user?.name?.charAt(0)?.toUpperCase() || '?'}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-[14px] font-bold text-gray-900">{review.user?.name || 'Anonim'}</p>
+                                                                        <p className="text-[12px] text-gray-400">{new Date(review.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex gap-0.5">
+                                                                    {[1, 2, 3, 4, 5].map(star => (
+                                                                        <svg key={star} xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${review.rating >= star ? 'text-amber-400' : 'text-gray-200'}`} viewBox="0 0 20 20" fill="currentColor">
+                                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                        </svg>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                            {review.comment && (
+                                                                <p className="text-[14px] text-gray-700 ml-14 leading-relaxed">{review.comment}</p>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                                    </svg>
+                                                    <p className="text-gray-900 font-bold mb-1">Belum Ada Ulasan</p>
+                                                    <p className="text-gray-500 text-[13px]">Jadilah yang pertama memberikan ulasan untuk produk ini.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                        </div>
+
+                        {/* Floating Action Card (Sticky on Desktop) */}
+                        <div className="xl:w-[320px] flex-shrink-0">
+                            <div className="sticky top-24 bg-white border border-gray-200 rounded-2xl p-5 shadow-[0_4px_12px_rgba(49,53,59,0.08)] hidden md:block">
+                                <h3 className="font-bold text-gray-900 mb-4">Pengaturan Pesanan</h3>
+                                
+                                <div className="flex items-center justify-between mb-5 border-b border-gray-100 pb-5">
+                                    <span className="text-[13px] text-[#31353B] font-medium">Jumlah</span>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center border border-gray-300 rounded-lg bg-white h-8 overflow-hidden">
+                                            <button
+                                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                                className="w-8 h-full flex items-center justify-center text-primary-600 hover:bg-gray-50 disabled:text-gray-300"
+                                                disabled={!hasStock || quantity <= 1}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 stroke-[3]" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                            </button>
+                                            <span className="w-10 text-center font-bold text-[13px] text-gray-900 leading-none">{quantity}</span>
+                                            <button
+                                                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                                                className="w-8 h-full flex items-center justify-center text-primary-600 hover:bg-gray-50 disabled:text-gray-300"
+                                                disabled={!hasStock || quantity >= product.stock}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 stroke-[3]" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <span className={`text-[12px] font-medium whitespace-nowrap ${lowStock ? 'text-red-500' : 'text-gray-500'}`}>
+                                            Sisa {product.stock}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between mb-6">
+                                    <span className="text-[14px] text-gray-500">Subtotal</span>
+                                    <span className="text-[18px] font-extrabold text-gray-900">
+                                        {formatPrice(product.sell_price * quantity)}
+                                    </span>
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        onClick={handleAddToCart}
+                                        disabled={!hasStock}
+                                        className="w-full py-2.5 px-4 font-bold border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                                        </svg>
+                                        Keranjang
+                                    </button>
+                                    <button
+                                        onClick={handleBuyNow}
+                                        disabled={!hasStock}
+                                        className="w-full py-2.5 px-4 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition-colors shadow-[0_2px_6px_rgba(3,172,14,0.3)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
+                                    >
+                                        Beli Langsung
+                                    </button>
+                                </div>
+                                
+                                <div className="mt-4 flex items-center justify-center gap-2">
+                                     <button
+                                        onClick={() => {
+                                            setIsWishlisted(!isWishlisted);
+                                            toast.success(isWishlisted ? 'Dihapus dari wishlist' : 'Ditambahkan ke wishlist');
+                                        }}
+                                        className={`flex items-center gap-1.5 text-[12px] font-bold py-1.5 px-3 rounded-full hover:bg-gray-100 transition-colors ${isWishlisted ? 'text-red-500' : 'text-gray-500'}`}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${isWishlisted ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                        {isWishlisted ? 'Tersimpan' : 'Wishlist'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
                 {/* Related Products */}
                 {relatedProducts && relatedProducts.length > 0 && (
-                    <div className="mt-6 md:mt-8">
-                        <h2 className="text-xl font-bold text-gray-900 mb-2">Produk Terkait</h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+                    <div className="mt-12 md:mt-16 pt-8 border-t border-gray-100">
+                        <div className="flex items-center gap-2 mb-6">
+                            <div className="w-1.5 h-6 bg-primary-600 rounded-full"></div>
+                            <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Produk Terkait</h2>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
                             {relatedProducts.map(item => (
                                 <ProductCard key={item.id} product={item} />
                             ))}
@@ -359,7 +367,47 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
                 )}
             </div>
 
-            <div className="md:hidden h-20"></div>
+            {/* Mobile Fixed Bottom Action Bar */}
+            <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:hidden z-40 flex gap-2">
+                 <button
+                    onClick={() => {
+                        setIsWishlisted(!isWishlisted);
+                        toast.success(isWishlisted ? 'Dihapus dari wishlist' : 'Ditambahkan ke wishlist');
+                    }}
+                    className={`flex-shrink-0 w-12 h-full flex items-center justify-center rounded-lg border border-gray-300 transition-colors ${isWishlisted ? 'bg-red-50 border-red-200 text-red-500' : 'text-gray-600'}`}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${isWishlisted ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isWishlisted ? 0 : 2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                </button>
+                <div className="flex-shrink-0 w-24">
+                     <div className="flex items-center h-full border border-gray-300 rounded-lg overflow-hidden relative">
+                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-full flex items-center justify-center text-primary-600 absolute left-0 bg-white" disabled={!hasStock || quantity <= 1}>-</button>
+                        <input type="number" readOnly value={quantity} className="w-full text-center text-sm font-bold border-none" />
+                        <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="w-8 h-full flex items-center justify-center text-primary-600 absolute right-0 bg-white" disabled={!hasStock || quantity >= product.stock}>+</button>
+                    </div>
+                </div>
+                <button
+                    onClick={handleBuyNow}
+                    disabled={!hasStock}
+                    className="flex-1 bg-primary-600 text-white font-bold rounded-lg disabled:opacity-50"
+                >
+                   Beli
+                </button>
+                <button
+                    onClick={handleAddToCart}
+                    disabled={!hasStock}
+                    className="w-12 h-12 flex-shrink-0 rounded-lg border border-primary-600 text-primary-600 flex items-center justify-center disabled:opacity-50 disabled:border-gray-300 disabled:text-gray-400"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </button>
+            </div>
+            
+            {/* Added padding to prevent overlap with fixed bottom menu */}
+            <div className="md:hidden h-24"></div>
+
         </UserLayout>
     );
 }

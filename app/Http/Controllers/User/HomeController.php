@@ -27,6 +27,10 @@ class HomeController extends Controller
 
         $products = Product::with('category')
             ->withSum('transactionDetails as sold_count', 'qty')
+            ->withCount(['reviews as reviews_count' => function ($q) {
+                $q->where('is_hidden', false);
+            }])
+            ->withAvg('reviews as average_rating', 'rating')
             ->orderByDesc('sold_count')
             ->take(10)
             ->get();
