@@ -48,7 +48,7 @@ export default function Header() {
                             <ApplicationLogo className="h-8 w-auto text-primary-600" />
                         )}
                         {storeProfile?.name && (
-                            <span className="hidden lg:block text-xl font-extrabold text-primary-600 truncate max-w-[160px] tracking-tight">
+                            <span className="text-lg sm:text-xl font-extrabold text-primary-600 truncate max-w-[130px] sm:max-w-[160px] tracking-tight">
                                 {storeProfile.name}
                             </span>
                         )}
@@ -56,25 +56,7 @@ export default function Header() {
 
 
                     {/* Search Bar */}
-                    <div className="flex-1 max-w-3xl hidden md:block">
-                        <form onSubmit={handleSearch} className="relative w-full">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Cari di toko ini..."
-                                className="w-full pl-4 pr-12 py-2 border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-lg text-sm text-gray-900 placeholder-gray-400 transition-colors"
-                            />
-                            <button
-                                type="submit"
-                                className="absolute right-0 top-0 h-full w-12 flex items-center justify-center text-gray-400 hover:text-white hover:bg-primary-600 rounded-r-lg transition-colors bg-gray-50 border-l border-gray-300 hover:border-primary-600"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </button>
-                        </form>
-                    </div>
+
 
                     {/* Right Icons */}
                     <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
@@ -137,23 +119,7 @@ export default function Header() {
                 </div>
             </div>
 
-            {/* Mobile Search - Visible only on mobile */}
-            <div className="md:hidden px-4 pb-3">
-                <form onSubmit={handleSearch} className="relative w-full">
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Cari produk..."
-                        className="w-full pl-10 pr-4 py-2 bg-gray-100 border-transparent focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-lg text-sm transition-colors"
-                    />
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                </form>
-            </div>
+
         </header>
     );
 }
