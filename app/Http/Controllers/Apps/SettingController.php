@@ -186,4 +186,47 @@ class SettingController extends Controller
 
         return back()->with('success', 'Konfigurasi pengiriman berhasil diperbarui');
     }
+
+    /**
+     * Show flash sale style settings page
+     */
+    public function flashSaleStyle()
+    {
+        $settings = [
+            'flash_sale_badge_text' => Setting::get('flash_sale_badge_text', 'Flash Sale'),
+            'flash_sale_bg_from' => Setting::get('flash_sale_bg_from', '#b91c1c'),
+            'flash_sale_bg_via' => Setting::get('flash_sale_bg_via', '#ea580c'),
+            'flash_sale_bg_to' => Setting::get('flash_sale_bg_to', '#f59e0b'),
+            'flash_sale_text_color' => Setting::get('flash_sale_text_color', '#ffffff'),
+            'flash_sale_muted_text_color' => Setting::get('flash_sale_muted_text_color', '#ffe7d6'),
+        ];
+
+        return Inertia::render('Dashboard/Settings/FlashSaleStyle', [
+            'settings' => $settings,
+        ]);
+    }
+
+    /**
+     * Update flash sale style settings
+     */
+    public function updateFlashSaleStyle(Request $request)
+    {
+        $request->validate([
+            'flash_sale_badge_text' => 'required|string|max:50',
+            'flash_sale_bg_from' => ['required', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+            'flash_sale_bg_via' => ['required', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+            'flash_sale_bg_to' => ['required', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+            'flash_sale_text_color' => ['required', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+            'flash_sale_muted_text_color' => ['required', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+        ]);
+
+        Setting::set('flash_sale_badge_text', $request->flash_sale_badge_text, 'Teks badge flash sale');
+        Setting::set('flash_sale_bg_from', $request->flash_sale_bg_from, 'Warna awal background flash sale');
+        Setting::set('flash_sale_bg_via', $request->flash_sale_bg_via, 'Warna tengah background flash sale');
+        Setting::set('flash_sale_bg_to', $request->flash_sale_bg_to, 'Warna akhir background flash sale');
+        Setting::set('flash_sale_text_color', $request->flash_sale_text_color, 'Warna teks utama flash sale');
+        Setting::set('flash_sale_muted_text_color', $request->flash_sale_muted_text_color, 'Warna teks pendukung flash sale');
+
+        return back()->with('success', 'Style flash sale berhasil diperbarui');
+    }
 }

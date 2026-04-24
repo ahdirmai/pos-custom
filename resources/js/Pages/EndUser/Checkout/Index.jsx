@@ -687,7 +687,14 @@ export default function CheckoutIndex({ carts, subtotal, totalWeight, provinces 
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[13px] font-bold text-[#31353B] leading-tight limit-2-lines">{item.product?.title}</p>
-                                            <p className="text-[12px] text-gray-500 mt-1">{item.qty} x {formatPrice(item.price)}</p>
+                                            <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-gray-500">
+                                                <span>{item.qty} x {formatPrice(item.price)}</span>
+                                                {item.has_flash_sale && (
+                                                    <span className="line-through text-gray-400">
+                                                        {formatPrice(item.original_price)}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

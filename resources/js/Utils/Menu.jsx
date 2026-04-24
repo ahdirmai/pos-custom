@@ -32,6 +32,7 @@ import {
     IconCalculator,
     IconPhoto,
     IconPackage,
+    IconBolt,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -91,6 +92,13 @@ export default function Menu() {
                     active: url.startsWith("/dashboard/vouchers"),
                     icon: <IconTicket size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["dashboard-access"]),
+                },
+                {
+                    title: "Flash Sale",
+                    href: route("flash-sales.index"),
+                    active: url.startsWith("/dashboard/flash-sales"),
+                    icon: <IconBolt size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["products-access"]),
                 },
             ],
         },
@@ -270,6 +278,13 @@ export default function Menu() {
                     href: route("settings.target"),
                     active: url === "/dashboard/settings/target",
                     icon: <IconChartInfographic size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["dashboard-access"]),
+                },
+                {
+                    title: "Style Flash Sale",
+                    href: route("settings.flash-sale-style"),
+                    active: url === "/dashboard/settings/flash-sale-style",
+                    icon: <IconBolt size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["dashboard-access"]),
                 },
             ],

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\FlashSale;
 use App\Models\Product;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,9 @@ class HomeController extends Controller
 
         $productCategories = Category::all();
 
-        $products = Product::with('category')
+        $products = Product::query()
+            ->withActiveFlashSale()
+            ->with('category')
             ->withSum('transactionDetails as sold_count', 'qty')
             ->withCount(['reviews as reviews_count' => function ($q) {
                 $q->where('is_hidden', false);
@@ -33,7 +36,41 @@ class HomeController extends Controller
             ->withAvg('reviews as average_rating', 'rating')
             ->orderByDesc('sold_count')
             ->take(10)
-            ->get();
+            ->get()
+            ->each
+            ->append(['current_price', 'original_price', 'has_flash_sale', 'discount_percentage']);
+
+        $activeFlashSale = FlashSale::query()
+            ->activeNow()
+            ->with(['items.product' => function ($query) {
+                $query->withActiveFlashSale()
+                    ->with('category')
+                    ->withSum('transactionDetails as sold_count', 'qty')
+                    ->withCount(['reviews as reviews_count' => function ($reviewQuery) {
+                        $reviewQuery->where('is_hidden', false);
+                    }])
+                    ->withAvg('reviews as average_rating', 'rating');
+            }])
+            ->latest('start_at')
+            ->first();
+
+        $flashSalePayload = null;
+
+        if ($activeFlashSale) {
+            $flashSalePayload = [
+                'id' => $activeFlashSale->id,
+                'name' => $activeFlashSale->name,
+                'description' => $activeFlashSale->description,
+                'start_at' => $activeFlashSale->start_at,
+                'end_at' => $activeFlashSale->end_at,
+                'products' => $activeFlashSale->items
+                    ->pluck('product')
+                    ->filter()
+                    ->values()
+                    ->each
+                    ->append(['current_price', 'original_price', 'has_flash_sale', 'discount_percentage']),
+            ];
+        }
 
         $latestPosts = \App\Models\BlogPost::with('category')
             ->where('is_active', true)
@@ -56,11 +93,22 @@ class HomeController extends Controller
             ? Auth::user()->wishlistedProducts()->pluck('products.id')->all()
             : [];
 
+        $flashSaleStyle = [
+            'badge_text' => \App\Models\Setting::get('flash_sale_badge_text', 'Flash Sale'),
+            'bg_from' => \App\Models\Setting::get('flash_sale_bg_from', '#b91c1c'),
+            'bg_via' => \App\Models\Setting::get('flash_sale_bg_via', '#ea580c'),
+            'bg_to' => \App\Models\Setting::get('flash_sale_bg_to', '#f59e0b'),
+            'text_color' => \App\Models\Setting::get('flash_sale_text_color', '#ffffff'),
+            'muted_text_color' => \App\Models\Setting::get('flash_sale_muted_text_color', '#ffe7d6'),
+        ];
+
         return Inertia::render('EndUser/Home/Index', [
             'heroBanners' => $heroBanners,
             'promoBanners' => $promoBanners,
             'productCategories' => $productCategories,
             'products' => $products,
+            'activeFlashSale' => $flashSalePayload,
+            'flashSaleStyle' => $flashSaleStyle,
             'latestPosts' => $latestPosts,
             'wishlist_ids' => $wishlistIds,
         ]);

@@ -22,7 +22,10 @@ class CartController extends Controller
             'vouchers' => 'nullable|array',
         ]);
 
-        $product = Product::findOrFail($request->product_id);
+        $product = Product::query()
+            ->with('activeFlashSaleItem.flashSale')
+            ->findOrFail($request->product_id);
+        $price = $product->current_price;
 
         // Check stock
         if ($product->stock < $request->qty) {
@@ -43,7 +46,7 @@ class CartController extends Controller
             }
             $cart->update([
                 'qty' => $newQty,
-                'price' => $product->sell_price, // Update price just in case
+                'price' => $price,
             ]);
         } else {
             // Create new
@@ -52,7 +55,7 @@ class CartController extends Controller
                 'cashier_id' => null,
                 'product_id' => $product->id,
                 'qty' => $request->qty,
-                'price' => $product->sell_price,
+                'price' => $price,
             ]);
         }
 
@@ -95,13 +98,15 @@ class CartController extends Controller
             ->whereNull('cashier_id')
             ->firstOrFail();
 
+        $cart->load('product.activeFlashSaleItem.flashSale');
+
         if ($cart->product->stock < $request->qty) {
             return back()->with('error', 'Stok produk tidak mencukupi.');
         }
 
         $cart->update([
             'qty' => $request->qty,
-            'price' => $cart->product->sell_price,
+            'price' => $cart->product->current_price,
         ]);
 
         return back()->with('success', 'Keranjang diperbarui.');

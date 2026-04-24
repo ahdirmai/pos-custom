@@ -1,11 +1,9 @@
 import React from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
-import { useCart } from '@/Context/CartContext';
 import { useWishlist } from '@/Context/WishlistContext';
 import toast from 'react-hot-toast';
 
 export default function ProductCard({ product }) {
-    const { addToCart } = useCart();
     const { isWishlisted, toggle: toggleWishlist } = useWishlist();
 
     const formatPrice = (value) =>
@@ -16,6 +14,7 @@ export default function ProductCard({ product }) {
         }).format(value);
 
     const hasStock = product.stock > 0;
+    const hasFlashSale = !!product.has_flash_sale;
     const { auth } = usePage().props;
 
     const handleAddToCart = (e) => {
@@ -79,13 +78,13 @@ export default function ProductCard({ product }) {
                         </div>
                     )}
                     
-                    {/* Discount Label (Example: hardcoded if no prop, replace later) */}
-                    {hasStock && product.discount > 0 && (
-                        <div className="absolute top-2 left-0 z-10 flex flex-col">
-                            <span className="bg-[#f3673b] text-white text-[10px] font-bold px-2 py-1 rounded-r-lg">
-                                {product.discount}% OFF
+                    {/* Discount Label */}
+                    {hasStock && hasFlashSale && (
+                        <div className="absolute top-2 -left-[5px] z-10 flex flex-col">
+                            <span className="bg-[#f3673b] text-white text-[10px] font-bold px-2 py-[4px] rounded-[8px_12px_12px_0] h-[20px] flex items-center justify-center tracking-[0.1px]">
+                                -{product.discount_percentage}%
                             </span>
-                            <span className="block w-[5px] h-[5px] bg-[#e03f0d] rounded-bl-sm"></span>
+                            <span className="block w-[5px] h-[5px] bg-[#e03f0d] rounded-bl-[5px]"></span>
                         </div>
                     )}
                 </div>
@@ -98,11 +97,11 @@ export default function ProductCard({ product }) {
                     
                     <div className="flex flex-col mt-auto mb-[2px]">
                         <span className="text-[14px] font-bold text-[#212121] leading-[18px]">
-                            {formatPrice(product.sell_price)}
+                            {formatPrice(product.current_price || product.sell_price)}
                         </span>
-                        {product.discount > 0 && (
+                        {hasFlashSale && (
                             <span className="text-[10px] text-[#aab4c8] line-through mt-0.5">
-                                {formatPrice(product.original_price || product.sell_price * 1.2)}
+                                {formatPrice(product.original_price || product.sell_price)}
                             </span>
                         )}
                     </div>

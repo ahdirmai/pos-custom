@@ -148,9 +148,16 @@ export default function CartDrawer() {
                                                 <div>
                                                     <div className="flex justify-between text-base font-medium text-gray-900">
                                                         <h3 className="line-clamp-2 pr-4 text-sm">{item.name}</h3>
-                                                        <p className="ml-4 font-bold text-indigo-600 sm:text-gray-900">
-                                                            {formatPrice(item.price)}
-                                                        </p>
+                                                        <div className="ml-4 text-right">
+                                                            <p className="font-bold text-indigo-600 sm:text-gray-900">
+                                                                {formatPrice(item.price)}
+                                                            </p>
+                                                            {item.has_flash_sale && (
+                                                                <p className="text-[11px] text-gray-400 line-through">
+                                                                    {formatPrice(item.original_price)}
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     <p className="mt-1 text-xs text-gray-500">{item.category?.name || item.category}</p>
                                                 </div>

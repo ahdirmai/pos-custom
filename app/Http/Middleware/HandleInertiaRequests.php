@@ -85,21 +85,21 @@ class HandleInertiaRequests extends Middleware
             'cart' => function () use ($request) {
                 if (!$request->user()) return ['items' => [], 'count' => 0, 'total' => 0];
                 
-                $cart = \App\Models\Cart::with('product.category')
+                $cart = \App\Models\Cart::with('product.category', 'product.activeFlashSaleItem.flashSale')
                     ->where('user_id', $request->user()->id)
                     ->whereNull('cashier_id')
                     ->get();
 
                 $items = $cart->map(function ($item) {
-                     // Parse price to float to avoid NaN issues
-                     // Use cart price if available, else product sell_price
-                     $price = (float) ($item->price ?: $item->product->sell_price); 
+                     $price = (float) $item->product->current_price;
                      return [
                         'id' => $item->id, // Cart ID (for update/delete)
                         'product_id' => $item->product_id,
                         'name' => $item->product->title,
                         'image' => $item->product->image,
                         'price' => $price,
+                        'original_price' => (float) $item->product->original_price,
+                        'has_flash_sale' => (bool) $item->product->has_flash_sale,
                         'qty' => (int) $item->qty,
                         'category' => $item->product->category->name ?? 'Umum',
                      ];
@@ -108,7 +108,7 @@ class HandleInertiaRequests extends Middleware
                 return [
                     'items' => $items,
                     'count' => $cart->sum('qty'),
-                    'total' => $cart->sum(fn($item) => $item->price * $item->qty),
+                    'total' => $cart->sum(fn($item) => $item->product->current_price * $item->qty),
                 ];
             },
         ];

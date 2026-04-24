@@ -7,18 +7,18 @@ import CartDrawer from '@/Components/EndUser/CartDrawer';
 import { CartProvider } from '@/Context/CartContext';
 import { WishlistProvider } from '@/Context/WishlistContext';
 
-export default function UserLayout({ children }) {
+export default function UserLayout({ children, hideMobileNav = false }) {
     return (
         <CartProvider>
             <WishlistProvider>
-                <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 antialiased">
+                <div className="min-h-screen bg-[#ffffff] flex flex-col font-sans text-[#212121] antialiased">
                     <Header />
                     <CartDrawer />
                     <main className="flex-grow">
                         {children}
                     </main>
                     <Footer />
-                    <MobileNavbar />
+                    {!hideMobileNav && <MobileNavbar />}
                     <Toaster
                         position="bottom-center"
                         toastOptions={{

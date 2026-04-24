@@ -36,7 +36,7 @@ class CheckoutController extends Controller
         $cartIds = request('cart_ids'); // Optional: Filter by selected IDs
         $vouchers = request('vouchers'); // Optional: Auto apply vouchers
 
-        $carts = Cart::with('product')
+        $carts = Cart::with('product.activeFlashSaleItem.flashSale')
             ->where('user_id', Auth::id())
             ->whereNull('cashier_id') // Ensure it's online cart
             ->when($cartIds, function ($query, $cartIds) {
@@ -50,7 +50,7 @@ class CheckoutController extends Controller
 
         // Calculate subtotal
         $subtotal = $carts->sum(function ($cart) {
-            return $cart->price * $cart->qty;
+            return $cart->product->current_price * $cart->qty;
         });
 
         // Calculate total weight
@@ -94,7 +94,20 @@ class CheckoutController extends Controller
             })->values();
 
         return Inertia::render('EndUser/Checkout/Index', [
-            'carts' => $carts,
+            'carts' => $carts->map(function ($cart) {
+                return [
+                    'id' => $cart->id,
+                    'qty' => $cart->qty,
+                    'price' => $cart->product->current_price,
+                    'original_price' => $cart->product->original_price,
+                    'has_flash_sale' => $cart->product->has_flash_sale,
+                    'product' => [
+                        'id' => $cart->product->id,
+                        'title' => $cart->product->title,
+                        'image' => $cart->product->image,
+                    ],
+                ];
+            })->values(),
             'subtotal' => $subtotal,
             'totalWeight' => $totalWeight,
             'provinces' => \Laravolt\Indonesia\Models\Province::all(),
@@ -113,7 +126,7 @@ class CheckoutController extends Controller
             'postal_code' => 'required|numeric|digits:5',
         ]);
 
-        $carts = Cart::with('product')
+        $carts = Cart::with('product.activeFlashSaleItem.flashSale')
             ->where('user_id', Auth::id())
             ->whereNull('cashier_id')
             ->get();
@@ -127,7 +140,7 @@ class CheckoutController extends Controller
             return [
                 'name' => $cart->product->title,
                 'description' => $cart->product->description ?? 'Item',
-                'value' => $cart->price,
+                'value' => $cart->product->current_price,
                 'length' => 10, // Default dimensions if not in DB
                 'width' => 10,
                 'height' => 10,
@@ -162,14 +175,15 @@ class CheckoutController extends Controller
             'cart_ids.*' => 'integer'
         ]);
 
-        $carts = Cart::where('user_id', Auth::id())
+        $carts = Cart::with('product.activeFlashSaleItem.flashSale')
+            ->where('user_id', Auth::id())
             ->whereNull('cashier_id')
             ->when($request->cart_ids, function ($query, $cartIds) {
                 return $query->whereIn('id', $cartIds);
             })
             ->get();
             
-        $subtotal = $carts->sum(fn ($c) => $c->price * $c->qty);
+        $subtotal = $carts->sum(fn ($c) => $c->product->current_price * $c->qty);
 
         $result = $this->voucherService->validate($request->code, $subtotal, Auth::id());
 
@@ -215,7 +229,7 @@ class CheckoutController extends Controller
             $user = Auth::user();
 
             // 1. Get Cart
-            $carts = Cart::with('product')
+            $carts = Cart::with('product.activeFlashSaleItem.flashSale')
                 ->where('user_id', $user->id)
                 ->whereNull('cashier_id')
                 ->when($request->cart_ids, function ($query, $cartIds) {
@@ -233,7 +247,7 @@ class CheckoutController extends Controller
                 if ($cart->product->stock < $cart->qty) {
                     throw new \Exception("Stok produk {$cart->product->title} tidak mencukupi.");
                 }
-                $subtotal += $cart->price * $cart->qty;
+                $subtotal += $cart->product->current_price * $cart->qty;
             }
 
             // 3. Validate Voucher (Server Side Check)
@@ -349,7 +363,7 @@ class CheckoutController extends Controller
                     'transaction_id' => $transaction->id,
                     'product_id' => $cart->product_id,
                     'qty' => $cart->qty,
-                    'price' => $cart->price,
+                    'price' => $cart->product->current_price,
                 ]);
 
                 // Reduce Stock

@@ -30,7 +30,7 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
             minimumFractionDigits: 0,
         }).format(value);
 
-    const hasDiscount = product.sell_price < product.buy_price * 1.5; 
+    const hasFlashSale = !!product.has_flash_sale;
     const hasStock = product.stock > 0;
     const lowStock = product.stock > 0 && product.stock <= 5;
 
@@ -60,11 +60,11 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
     };
 
     return (
-        <UserLayout>
+        <UserLayout hideMobileNav={true}>
             <Head title={product.title} />
 
             <div className="max-w-[1240px] px-4 md:px-0 mx-auto w-full py-4 md:py-8 pb-4 md:pb-8">
-                
+
                 {/* Breadcrumb Navigation */}
                 <div className="flex items-center gap-2 mb-6 text-[13px] text-gray-500 bg-white p-3 rounded-lg shadow-[0_1px_6px_0_rgba(49,53,59,0.12)]">
                     <button
@@ -105,35 +105,46 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
                         </div>
                     </div>
 
-                    {/* Right: Product Info & Actions */}
-                    <div className="flex-1 flex flex-col xl:flex-row gap-8">
+                    {/* Right: Product Info */}
+                    <div className="flex-1">
                         {/* Main Details Area */}
                         <div className="flex-1">
                             <div className="mb-[15px]">
-                                <h2 className="text-[28px] md:text-3xl font-extrabold text-[#212121] tracking-tight leading-none mb-1">
-                                    {formatPrice(product.sell_price)}
-                                </h2>
-                                {product.discount > 0 && (
-                                    <div className="text-[16px] font-medium text-[#9fa6b0] line-through mb-4">
-                                        {formatPrice(product.original_price || product.sell_price * 1.2)}
-                                    </div>
-                                )}
-                                
-                                <h1 className="text-[16px] md:text-[18px] text-[#212121] leading-snug mb-2">
+                                <h1 className="text-[16px] md:text-[18px] text-[#212121] font-bold leading-snug mb-2">
                                     {product.title}
                                 </h1>
+                                <h2 className="text-[24px] font-bold text-[#212121] tracking-tight leading-none mb-1">
+                                    {formatPrice(product.current_price || product.sell_price)}
+                                </h2>
+                                <div className="flex flex-wrap items-center gap-3 mb-4">
+                                    {hasFlashSale && (
+                                        <>
+                                            <div className="text-[16px] font-medium text-[#9fa6b0] line-through">
+                                                {formatPrice(product.original_price || product.sell_price)}
+                                            </div>
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#fff1ec] text-[#e65100] text-[12px] font-bold">
+                                                Hemat {product.discount_percentage}%
+                                            </span>
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#fee2e2] text-[#b91c1c] text-[12px] font-bold tracking-wide uppercase">
+                                                Flash Sale
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+
+
 
                                 <div className="flex items-center text-[13px] text-[#6d7588] mt-2 mb-4">
                                     <svg className="w-4 h-4 text-amber-400 mr-1 pb-[1px]" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
-                                    <span className="font-extrabold text-[#212121] mr-1">{product.average_rating ? Number(product.average_rating).toFixed(1) : '-'}</span> 
+                                    <span className="font-extrabold text-[#212121] mr-1">{product.average_rating ? Number(product.average_rating).toFixed(1) : '-'}</span>
                                     <span className="mr-1">({product.reviews_count || 0})</span>
                                     <span className="mx-1 text-[#aab4c8]">•</span>
-                                    <span>{product.sold_count || '500rb+'} terjual</span>
+                                    <span>{product.sold_count || '0'} terjual</span>
                                 </div>
                             </div>
-                            
+
                             {/* Thin Divider */}
                             <hr className="border-gray-200" />
 
@@ -146,10 +157,43 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
                                     Dikirim dari <span className="ml-[3px] text-[#212121]">{storeProfile?.city || 'Gudang Pusat'}</span>
                                 </div>
                             </div>
-                            
+
+                            <hr className="border-gray-200" />
+
+                            {/* Quantity Selector */}
+                            <div className="py-4 flex items-center justify-between">
+                                <span className="text-[14px] font-bold text-[#212121]">Atur Jumlah</span>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center border border-[#e5e7e9] rounded-lg bg-white h-8 overflow-hidden">
+                                        <button
+                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                            className="w-8 h-full flex items-center justify-center text-primary-600 hover:bg-gray-50 border-r border-[#e5e7e9] disabled:text-gray-300"
+                                            disabled={!hasStock || quantity <= 1}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 stroke-[3]" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                                            </svg>
+                                        </button>
+                                        <span className="w-12 text-center font-bold text-[13px] text-[#212121] leading-none">{quantity}</span>
+                                        <button
+                                            onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                                            className="w-8 h-full flex items-center justify-center text-primary-600 hover:bg-gray-50 border-l border-[#e5e7e9] disabled:text-gray-300"
+                                            disabled={!hasStock || quantity >= product.stock}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 stroke-[3]" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <span className={`text-[12px] font-medium ${lowStock ? 'text-red-500' : 'text-[#656C7B]'}`}>
+                                        Sisa {product.stock}
+                                    </span>
+                                </div>
+                            </div>
+
                             {/* Thick Divider / Space (Mobile Only) */}
                             <div className="h-[8px] md:hidden bg-[#f3f4f5] -mx-4 my-4"></div>
-                            <hr className="hidden md:block border-gray-200 mt-2 mb-4" />
+                            <hr className="hidden md:block border-[#e5e7e9] mt-2 mb-4" />
 
                             {/* Store Info */}
                             <div className="flex items-center pt-2 pb-4">
@@ -172,9 +216,9 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {/* Keep any extra divs aligned properly below */}
-                        
+
 
                             {/* Additional Information details */}
                             {product.productDetail && (
@@ -298,94 +342,21 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
 
                         </div>
 
-                        {/* Floating Action Card (Sticky on Desktop) */}
-                        <div className="xl:w-[320px] flex-shrink-0">
-                            <div className="sticky top-24 bg-white border border-gray-200 rounded-2xl p-5 shadow-[0_4px_12px_rgba(49,53,59,0.08)]">
-                                <h3 className="font-bold text-gray-900 mb-4">Pengaturan Pesanan</h3>
-                                
-                                <div className="flex items-center justify-between mb-5 border-b border-gray-100 pb-5">
-                                    <span className="text-[13px] text-[#31353B] font-medium">Jumlah</span>
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex items-center border border-gray-300 rounded-lg bg-white h-8 overflow-hidden">
-                                            <button
-                                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                                className="w-8 h-full flex items-center justify-center text-primary-600 hover:bg-gray-50 disabled:text-gray-300"
-                                                disabled={!hasStock || quantity <= 1}
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 stroke-[3]" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                                                </svg>
-                                            </button>
-                                            <span className="w-10 text-center font-bold text-[13px] text-gray-900 leading-none">{quantity}</span>
-                                            <button
-                                                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                                                className="w-8 h-full flex items-center justify-center text-primary-600 hover:bg-gray-50 disabled:text-gray-300"
-                                                disabled={!hasStock || quantity >= product.stock}
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 stroke-[3]" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                        <span className={`text-[12px] font-medium whitespace-nowrap ${lowStock ? 'text-red-500' : 'text-gray-500'}`}>
-                                            Sisa {product.stock}
-                                        </span>
-                                    </div>
-                                </div>
 
-                                <div className="flex items-center justify-between mb-6">
-                                    <span className="text-[14px] text-gray-500">Subtotal</span>
-                                    <span className="text-[18px] font-extrabold text-gray-900">
-                                        {formatPrice(product.sell_price * quantity)}
-                                    </span>
-                                </div>
-
-                                <div className="flex flex-col gap-3">
-                                    <button
-                                        onClick={handleAddToCart}
-                                        disabled={!hasStock}
-                                        className="w-full py-2.5 px-4 font-bold border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                                        </svg>
-                                        Keranjang
-                                    </button>
-                                    <button
-                                        onClick={handleBuyNow}
-                                        disabled={!hasStock}
-                                        className="w-full py-2.5 px-4 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition-colors shadow-[0_2px_6px_rgba(3,172,14,0.3)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
-                                    >
-                                        Beli Langsung
-                                    </button>
-                                </div>
-                                
-                                <div className="mt-4 flex items-center justify-center gap-2">
-                                     <button
-                                        onClick={() => {
-                                            setIsWishlisted(!isWishlisted);
-                                            toast.success(isWishlisted ? 'Dihapus dari wishlist' : 'Ditambahkan ke wishlist');
-                                        }}
-                                        className={`flex items-center gap-1.5 text-[12px] font-bold py-1.5 px-3 rounded-full hover:bg-gray-100 transition-colors ${isWishlisted ? 'text-red-500' : 'text-gray-500'}`}
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${isWishlisted ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                        </svg>
-                                        {isWishlisted ? 'Tersimpan' : 'Wishlist'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
 
                     </div>
                 </div>
 
                 {/* Related Products */}
                 {relatedProducts && relatedProducts.length > 0 && (
-                    <div className="mt-6 md:mt-8 pt-6 border-t border-gray-100">
-                        <div className="flex items-center gap-2 mb-6">
-                            <div className="w-1.5 h-6 bg-primary-600 rounded-full"></div>
-                            <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Produk Terkait</h2>
+                    <div className="mt-6 md:mt-8 pt-6 border-t border-[#E5E7E9]">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-[1.14286rem] md:text-xl font-bold text-[#212121] leading-[22px] tracking-tight">Produk Terkait</h3>
+                            </div>
+                            <Link href={route('user.products')} className="text-[14px] font-bold text-primary-600 hover:text-primary-700 transition-colors">
+                                Lihat Semua
+                            </Link>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
                             {relatedProducts.map(item => (
@@ -394,8 +365,80 @@ export default function ProductShow({ product, reviews, relatedProducts, voucher
                         </div>
                     </div>
                 )}
+
+                {/* Padding at the bottom for floating section */}
+                <div className="h-[90px] md:h-[80px]"></div>
             </div>
 
+            {/* Floating Action Bar (Beli Sekarang) - Reference Match */}
+            <div className="fixed z-[100] bottom-0 left-0 right-0 bg-white border-t border-[#E5E7E9] shadow-[0_-2px_6px_0_rgba(49,53,59,0.16)] pb-safe rounded-t-2xl md:rounded-none">
+                <div className="max-w-[1240px] mx-auto w-full px-5 py-3 md:py-4 flex items-center justify-between gap-4">
+
+                    {/* Left: Store Info & Product Info (Hidden on mobile) */}
+                    <div className="hidden lg:flex items-center gap-4 flex-1 overflow-hidden">
+                        <div className="w-[48px] h-[48px] rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 bg-gray-50 flex items-center justify-center font-serif text-white font-bold text-xl bg-gradient-to-br from-[#1019A1] to-[#01B9FD]">
+                            {product.image ? (
+                                <img src={product.image} className="w-full h-full object-cover" alt="Product" />
+                            ) : (
+                                <span>{product?.title?.charAt(0) || 'P'}</span>
+                            )}
+                        </div>
+                        <div className="flex flex-col overflow-hidden w-[320px]">
+                            <h3 className="text-[14px] font-bold text-[#212121] truncate w-full leading-snug">
+                                {product.title}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <span className="font-extrabold text-[14px] text-[#212121]">
+                                    {formatPrice(product.sell_price * quantity)}
+                                </span>
+                                {product.discount > 0 && (
+                                    <span className="text-[12px] text-[#9fa6b0] line-through font-normal">
+                                        {formatPrice((product.original_price || product.sell_price * 1.2) * quantity)}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-2.5 w-full lg:w-auto h-[44px]">
+                        <button
+                            onClick={() => {
+                                setIsWishlisted(!isWishlisted);
+                                toast.success(isWishlisted ? 'Dihapus dari wishlist' : 'Ditambahkan ke wishlist');
+                            }}
+                            className={`flex lg:hidden flex-shrink-0 w-[44px] h-[44px] items-center justify-center border rounded-lg transition-colors ${isWishlisted ? 'border-red-500 text-red-500 bg-red-50' : 'border-[#E5E7E9] text-[#6d7588] bg-white hover:bg-gray-50'}`}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${isWishlisted ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </button>
+
+                        <a href="#" className="hidden lg:flex min-w-[100px] h-[44px] px-4 items-center justify-center gap-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 transition-colors shadow-sm text-[15px]">
+                            <svg fill="currentColor" height="15" viewBox="0 0 16 16" width="15">
+                                <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"></path>
+                            </svg>
+                            Chat
+                        </a>
+
+                        <button
+                            onClick={handleBuyNow}
+                            disabled={!hasStock}
+                            className="flex-1 lg:flex-none h-[44px] lg:px-6 min-w-[140px] flex items-center justify-center bg-white border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.05)] disabled:opacity-50 disabled:cursor-not-allowed text-[15px] font-extrabold whitespace-nowrap"
+                        >
+                            Beli Langsung
+                        </button>
+
+                        <button
+                            onClick={handleAddToCart}
+                            disabled={!hasStock}
+                            className="flex-1 lg:flex-none h-[44px] lg:px-6 min-w-[140px] flex items-center justify-center bg-primary-600 text-white rounded-lg font-extrabold hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-[15px] whitespace-nowrap"
+                        >
+                            <span className="mr-1.5 font-normal">+</span> Keranjang
+                        </button>
+                    </div>
+                </div>
+            </div>
 
         </UserLayout>
     );

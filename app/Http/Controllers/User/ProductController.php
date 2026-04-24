@@ -13,7 +13,11 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with('category')
+        $effectivePriceSql = 'COALESCE(active_flash_sale_products.discount_price, products.sell_price)';
+
+        $query = Product::query()
+            ->withActiveFlashSale()
+            ->with('category')
             ->withSum('transactionDetails as sold_count', 'qty')
             ->withAvg('reviews as average_rating', 'rating')
             ->withCount(['reviews' => function ($q) {
@@ -29,10 +33,10 @@ class ProductController extends Controller
 
         // Filter by Price Range (Example: min-max)
         if ($request->filled('min_price')) {
-            $query->where('sell_price', '>=', $request->min_price);
+            $query->whereRaw("{$effectivePriceSql} >= ?", [(int) $request->min_price]);
         }
         if ($request->filled('max_price')) {
-            $query->where('sell_price', '<=', $request->max_price);
+            $query->whereRaw("{$effectivePriceSql} <= ?", [(int) $request->max_price]);
         }
 
         // Search
@@ -44,10 +48,10 @@ class ProductController extends Controller
         if ($request->filled('sort')) {
             switch ($request->sort) {
                 case 'price_asc':
-                    $query->orderBy('sell_price', 'asc');
+                    $query->orderByRaw("{$effectivePriceSql} asc");
                     break;
                 case 'price_desc':
-                    $query->orderBy('sell_price', 'desc');
+                    $query->orderByRaw("{$effectivePriceSql} desc");
                     break;
                 case 'newest':
                     $query->latest();
@@ -65,7 +69,10 @@ class ProductController extends Controller
             $query->having('average_rating', '>=', (float) $request->min_rating);
         }
 
-        $products = $query->paginate(12)->withQueryString();
+        $products = $query->paginate(12)->withQueryString()
+            ->through(function ($product) {
+                return $product->append(['current_price', 'original_price', 'has_flash_sale', 'discount_percentage']);
+            });
 
         $wishlistIds = Auth::check()
             ? Auth::user()->wishlistedProducts()->pluck('products.id')->all()
@@ -82,13 +89,16 @@ class ProductController extends Controller
     public function show($slug)
     {
         // Using ID for now as slug column verification was inconclusive/not found in fillable
-        $product = Product::with(['category', 'productDetail'])
+        $product = Product::query()
+            ->withActiveFlashSale()
+            ->with(['category', 'productDetail'])
             ->withSum('transactionDetails as sold_count', 'qty')
             ->withAvg('reviews as average_rating', 'rating')
             ->withCount(['reviews' => function ($q) {
                 $q->where('is_hidden', false);
             }])
-            ->findOrFail($slug);
+            ->findOrFail($slug)
+            ->append(['current_price', 'original_price', 'has_flash_sale', 'discount_percentage']);
 
         // Get visible reviews with user info
         $reviews = $product->reviews()
@@ -98,11 +108,15 @@ class ProductController extends Controller
             ->paginate(10);
 
         // Get related products (same category)
-        $relatedProducts = Product::with('category')
+        $relatedProducts = Product::query()
+            ->withActiveFlashSale()
+            ->with('category')
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->take(4)
-            ->get();
+            ->get()
+            ->each
+            ->append(['current_price', 'original_price', 'has_flash_sale', 'discount_percentage']);
 
         $vouchers = \App\Models\Voucher::active()->get();
 
@@ -117,7 +131,9 @@ class ProductController extends Controller
     public function search(Request $request)
     {
         // Popular products (most sold)
-        $popularProducts = Product::with('category')
+        $popularProducts = Product::query()
+            ->withActiveFlashSale()
+            ->with('category')
             ->withSum('transactionDetails as sold_count', 'qty')
             ->withAvg('reviews as average_rating', 'rating')
             ->withCount(['reviews as reviews_count' => function ($q) {
@@ -125,10 +141,14 @@ class ProductController extends Controller
             }])
             ->orderByDesc('sold_count')
             ->take(8)
-            ->get();
+            ->get()
+            ->each
+            ->append(['current_price', 'original_price', 'has_flash_sale', 'discount_percentage']);
 
         // Latest products
-        $latestProducts = Product::with('category')
+        $latestProducts = Product::query()
+            ->withActiveFlashSale()
+            ->with('category')
             ->withSum('transactionDetails as sold_count', 'qty')
             ->withAvg('reviews as average_rating', 'rating')
             ->withCount(['reviews as reviews_count' => function ($q) {
@@ -136,7 +156,9 @@ class ProductController extends Controller
             }])
             ->latest()
             ->take(8)
-            ->get();
+            ->get()
+            ->each
+            ->append(['current_price', 'original_price', 'has_flash_sale', 'discount_percentage']);
 
         // Categories
         $categories = Category::withCount('products')->get();

@@ -11,6 +11,7 @@ export default function Header() {
     const { cartCount, setIsCartOpen } = useCart();
     const { wishlistCount } = useWishlist();
     const [searchQuery, setSearchQuery] = useState('');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const isActive = (path) => {
         if (path === '/') {
@@ -35,9 +36,21 @@ export default function Header() {
 
             {/* Main Header */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16 gap-4 sm:gap-6">
-                    {/* Logo */}
-                    <Link href="/" className="flex-shrink-0 flex items-center gap-2">
+                <div className="flex justify-between items-center h-16 gap-3 sm:gap-6">
+                    {/* Left Section: Nav Toggle & Logo */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Hamburger Toggle (Mobile) */}
+                        <button 
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+
+                        {/* Logo */}
+                        <Link href="/" className="flex items-center gap-2">
                         {storeProfile?.logo ? (
                             <img
                                 src={storeProfile.logo}
@@ -52,13 +65,35 @@ export default function Header() {
                                 {storeProfile.name}
                             </span>
                         )}
-                    </Link>
+                        </Link>
+                    </div>
 
-
-                    {/* Search Bar */}
-
-
-                    {/* Right Icons */}
+                    {/* Kategori Dropdown & Search Bar */}
+                    <div className="hidden lg:flex flex-1 items-center gap-4 mx-4">
+                        <button className="text-gray-700 font-medium whitespace-nowrap px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                            Kategori
+                        </button>
+                        
+                        <div className="flex-1 relative">
+                            <form onSubmit={handleSearch} className="flex border border-[#B3BBC9] rounded-lg h-10 w-full overflow-hidden transition-colors hover:border-primary-600 focus-within:border-primary-600">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Cari produk..."
+                                    className="flex-1 border-none focus:ring-0 px-4 text-sm bg-transparent outline-none"
+                                />
+                                <button
+                                    type="submit"
+                                    className="px-3 bg-gray-50 border-l border-gray-200 text-gray-500 hover:bg-gray-100 transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>                    {/* Right Icons */}
                     <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
                         <button
                             onClick={() => setIsCartOpen(true)}
@@ -119,6 +154,53 @@ export default function Header() {
                 </div>
             </div>
 
+            {/* Mobile Navigation Drawer */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-[100] lg:hidden">
+                    {/* Backdrop */}
+                    <div 
+                        className="fixed inset-0 bg-black/50 transition-opacity" 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    ></div>
+                    
+                    {/* Drawer */}
+                    <div className="fixed inset-y-0 left-0 w-[280px] bg-white shadow-xl flex flex-col transform transition-transform duration-300">
+                        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                            <span className="font-bold text-lg text-primary-600">Menu</span>
+                            <button 
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-full"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+                            {!auth.user && (
+                                <div className="flex gap-2 mb-6">
+                                    <Link href={route('login')} className="flex-1 text-center py-2 px-4 border border-primary-600 text-primary-600 rounded-lg font-bold text-sm">Masuk</Link>
+                                    <Link href={route('register')} className="flex-1 text-center py-2 px-4 bg-primary-600 text-white rounded-lg font-bold text-sm">Daftar</Link>
+                                </div>
+                            )}
+
+                            <nav className="flex flex-col space-y-2">
+                                <Link onClick={() => setIsMobileMenuOpen(false)} href="/" className={`px-4 py-3 rounded-xl font-bold flex items-center gap-3 ${isActive('/') ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                    Beranda
+                                </Link>
+                                <Link onClick={() => setIsMobileMenuOpen(false)} href="/products" className={`px-4 py-3 rounded-xl font-bold flex items-center gap-3 ${isActive('/products') ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                                    Katalog Produk
+                                </Link>
+                                <Link onClick={() => setIsMobileMenuOpen(false)} href="/wishlist" className="px-4 py-3 rounded-xl font-bold flex items-center gap-3 text-gray-700 hover:bg-gray-50">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                    Wishlist ({wishlistCount})
+                                </Link>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </header>
     );

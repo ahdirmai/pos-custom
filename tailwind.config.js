@@ -25,19 +25,19 @@ export default {
                 ],
             },
             colors: {
-                // Primary - Green (Blogpedia #03ac0e)
+                // Primary - Main (#cfaa08)
                 primary: {
-                    50: "#ebffef",
-                    100: "#daf5db",
-                    200: "#bbf7d0",
-                    300: "#86efac",
-                    400: "#4ade80",
-                    500: "#3fb046",
-                    600: "#03ac0e",
-                    700: "#00aa5b",
-                    800: "#12883D",
-                    900: "#14532d",
-                    950: "#052e16",
+                    50: "#fdfae6",
+                    100: "#fbf4c1",
+                    200: "#f7e889",
+                    300: "#f1d84b",
+                    400: "#ebc51e",
+                    500: "#dfaf12",
+                    600: "#cfaa08",
+                    700: "#a58005",
+                    800: "#87640b",
+                    900: "#71500e",
+                    950: "#412b04",
                 },
                 // Accent - Cyan
                 accent: {
