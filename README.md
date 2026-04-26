@@ -1,126 +1,80 @@
-# Point of Sales – Laravel & Inertia
+# Point of Sales – Laravel & Inertia (pos-custom)
 
-> Sistem kasir modern dengan alur transaksi cepat, dukungan laporan, dan mode cetak invoice yang rapi. Kalau kamu suka proyek ini, bantu dengan menekan ⭐ di atas – itu sangat membantu visibilitas repositori ini.
+> Sistem kasir modern dengan alur transaksi cepat, dukungan laporan, fitur manajemen pelanggan (E-Commerce), dan mode cetak invoice yang rapi. 
 
-![Dashboard Preview](public/media/revamp-pos.png "Point of Sales Dashboard Preview")
-<sub>_Cuplikan antarmuka kasir revamp. Screenshot tambahan ada di bagian di bawah._</sub>
+## ✨ Keseluruhan Fitur
 
-## 🆕 What's New (Revamp 2.0)
+Aplikasi Point of Sales modern yang memiliki fitur lengkap untuk administrasi toko (*kasir & dashboard*) sekaligus antarmuka publik untuk pelanggan:
 
--   **UI/UX Redesign** – Tampilan modern dengan tema slate/primary, gradient accents, dan dark mode ready
--   **Landing Page Baru** – Halaman depan profesional dengan preview & perbandingan V1 vs Revamp
--   **Hold Transaction** – Simpan keranjang sementara, lanjutkan nanti
--   **Customer History** – Lihat riwayat transaksi pelanggan langsung dari halaman kasir
--   **Add Customer Modal** – Tambah pelanggan baru tanpa meninggalkan halaman transaksi
--   **Keyboard Shortcuts** – `/` atau `F5` untuk search, `Esc` untuk clear, dan lainnya
--   **Thermal Receipt** – Dukungan print struk 58mm dan 80mm
--   **Sample Data Seeder** – Data contoh lengkap dengan gambar produk
+### 🛍️ Modul Point of Sales (POS) & Admin
+- **Kasir Cepat & Intuitif**: Mendukung pencarian barcode, manajemen keranjang belanja, ringkasan pembayaran, dan kalkulasi diskon otomatis.
+- **Hold Transaction & Customer History**: Menyimpan antrean keranjang sementara untuk dilanjutkan nantinya dan memantau riwayat transaksi pelanggan langsung dari layar kasir.
+- **Invoice & Thermal Receipt**: Antarmuka cetak nota pelanggan spesifik ukuran struk printer thermal 58mm maupun 80mm.
+- **Laporan Laba & Analitik**: *Dashboard* statistik memvisualisasikan ringkasan pendapatan, kategori, profit, laporan penjualan, hingga perhitungan Pajak PPh23.
+- **Manajemen Produk & Stok**: Operasi CRUD pengelolaan produk yang tersinkronisasi, lengkap dengan Flash Sale, Kategori, dan otomatisasi barcode.
+- **Manajemen Piutang & Hutang (*Receivables/Payables*)**: Sistem pencatatan invoice yang belum lunas baik ke pelanggan maupun ke pihak supplier.
+- **Pengaturan & Integrasi Ekspedy/Pembayaran**: Kalkulasi ongkos kirim otomatis (*check rates*), pengaturan layanan bank, hingga opsi sistem payment link via Midtrans & Xendit.
 
-## ✨ Kenapa Menarik?
-
--   **Kasir cepat & intuitif** – pencarian barcode, keranjang, ringkasan pembayaran, dan kalkulasi diskon otomatis.
--   **Invoice siap cetak & payment link** – setelah transaksi, kasir bisa melihat preview invoice elegan, membagikan link pembayaran Midtrans/Xendit, dan memilih kapan mau mencetaknya.
--   **Laporan lengkap** – dari penjualan, profit, sampai riwayat transaksi dengan filter multi parameter.
--   **Akses berbasis role** – integrasi Spatie Permissions bawaan untuk role, user, dan hak akses yang granular.
--   **Dark mode ready** – UI sudah disiapkan untuk mode gelap/terang tanpa konfigurasi tambahan.
+### 🛒 Modul Pelanggan (Customer / Frontend)
+- **Katalog Eksternal & Checkout**: Halaman depan toko yang menyajikan list produk, fungsionalitas cari/filter barang, keranjang, hingga ke modul checkout mandiri.
+- **Riwayat Pesanan & Bukti Pembayaran**: Lacak status *order*, upload bukti transfer bank manual, dan penyertaan integrasi modul penilaian/ulasan (*reviews*) dari pelanggan.
+- **Manajemen Alamat & Wishlist**: Fitur simpan daftar tempat/alamat untuk pengiriman, serta produk yang difavoritkan (*wishlist*).
+- **Blog Content Management System**: Dokumentasi dan pembuatan rilis artikel (berita promo/toko) lengkap mendukung *tag* maupun *categories*.
 
 ## 🔧 Teknologi Inti
 
--   [Laravel 12](https://laravel.com) + [Inertia.js](https://inertiajs.com)
--   [React](https://react.dev) + [Tailwind CSS](https://tailwindcss.com)
--   [Spatie Laravel Permission](https://spatie.be/docs/laravel-permission)
--   [Tabler Icons](https://tabler-icons.io) untuk ikon kasir modern
--   Integrasi payment gateway Midtrans Snap & Xendit Invoice (opsional)
-
-## 🚀 Cara Menjalankan
-
-```bash
-git clone https://github.com/aryadwiputra/point-of-sales.git
-cd point-of-sales
-cp .env.example .env
-composer install && npm install
-php artisan key:generate
-php artisan migrate --seed
-php artisan storage:link
-npm run dev
-php artisan serve
-```
-
-### Default Login
-
--   **Admin**: `arya@gmail.com` / `password`
--   **Kasir**: `cashier@gmail.com` / `password`
-
-> **Tip:** Jalankan `php artisan db:seed --class=SampleDataSeeder` untuk data contoh lengkap dengan gambar.
-
-## 📊 Fitur Utama
-
--   **Dashboard**: ringkasan kategori, produk, transaksi, pendapatan, dan trend chart.
--   **Kelola Produk & Stok**: CRUD lengkap dengan kategori dan barcode unik.
--   **Modul Kasir**: pencarian barcode, keranjang multi item, diskon, hitung kembalian otomatis, dan pilihan gateway (tunai, Midtrans, Xendit).
--   **Hold Transaction**: Simpan keranjang sementara dan lanjutkan nanti.
--   **Customer History**: Lihat statistik dan riwayat transaksi pelanggan.
--   **Invoice / Payment Link**: tampilan siap cetak + tombol manual print dan tautan pembayaran yang bisa dibagikan ke pelanggan.
--   **Thermal Receipt**: Dukungan cetak struk thermal 58mm dan 80mm.
--   **Riwayat Transaksi**: filter per tanggal/invoice/kasir + export laporan.
--   **Laporan Profit & Penjualan**: pantau performa bisnis dalam sekali klik.
-
-## ⌨️ Keyboard Shortcuts
-
-| Shortcut      | Aksi                        |
-| ------------- | --------------------------- |
-| `/` atau `F5` | Fokus pencarian produk      |
-| `Escape`      | Clear search & tutup modal  |
-| `F1`          | Buka numpad                 |
-| `F2`          | Submit transaksi            |
-| `F4`          | Tampilkan bantuan shortcuts |
-
-## 📷 Cuplikan Layar
-
-### Versi Revamp 2.0
-
-| Modul     | Preview                                                |
-| --------- | ------------------------------------------------------ |
-| Dashboard | ![Dashboard Revamp](public/media/revamp-dashboard.png) |
-| Kasir/POS | ![POS Revamp](public/media/revamp-pos.png)             |
-
-### Versi 1.0 (Legacy)
-
-| Modul                  | Preview                                                    |
-| ---------------------- | ---------------------------------------------------------- |
-| Dashboard              | ![Dashboard Screenshot](public/media/readme-dashboard.png) |
-| Kasir / POS            | ![POS Screenshot](public/media/readme-pos.png)             |
-| Invoice Ready-to-Print | ![Invoice Screenshot](public/media/readme-invoice.png)     |
-
-<sub>_Tidak ada file? Silakan ganti dengan screenshot kamu sendiri di `public/media`._</sub>
-
-## 🧪 Pengujian
-
-```bash
-php artisan test --filter=TransactionFlowTest
-```
-
-Pengujian ini mensimulasikan checkout lengkap: keranjang ➜ transaksi ➜ invoice, termasuk validasi stok, detail transaksi, profit, hitung stok, integrasi Midtrans (HTTP fake), dan render Inertia untuk halaman print.
-
-## 🤝 Kontribusi
-
-1. Fork repo ini
-2. Buat branch fitur: `git checkout -b feature/namamu`
-3. Commit perubahanmu: `git commit -m "Tambah fitur X"`
-4. Push branch: `git push origin feature/namamu`
-5. Buka Pull Request
-
-Ada bug atau ide fitur? Buat issue supaya kita bisa diskusi bareng.
-
-## Authors
-
--   [Arya Dwi Putra](https://www.github.com/aryadwiputra)
--   Aplikasi ini menggunakan resource dari https://github.com/Raf-Taufiqurrahman/RILT-Starter dengan beberapa modifikasi yang saya lakukan terhadap komponen-komponen untuk mendukung aplikasi kasir
-
-## ⭐ Dukung Proyek Ini
-
-Kalau repositori ini membantumu membangun POS lebih cepat, klik **Star**. Dukungan kecil ini bikin proyek tetap aktif dan membantu developer lain menemukannya. Terima kasih! 🙌
+- **Backend**: [Laravel 11/12](https://laravel.com) + [Spatie Laravel Permission](https://spatie.be/docs/laravel-permission)
+- **Frontend**: [Inertia.js V3](https://inertiajs.com) + [React 19](https://react.dev) + [Tailwind CSS v4](https://tailwindcss.com) + Tabler Icons
+- **Database & Testing**: MySQL dan arsitektur pengujian dari framework [Pest PHP](https://pestphp.com/).
 
 ---
 
-Made with ❤️ menggunakan Laravel + React oleh komunitas Point of Sales.
+## 🚀 Instalasi di Local
+
+Ikuti panduan berikut untuk menyesuaikan dan menjalankan aplikasi pada lingkungan *localhost* atau terminal server pengembang:
+
+```bash
+# 1. Kloning Repositori
+git clone https://github.com/ahdirmai/pos-custom.git
+cd pos-custom
+
+# 2. Persiapkan Variabel Environment
+cp .env.example .env
+
+# 3. Instalasi Pustaka Dependensi
+composer install
+npm install
+
+# 4. Generate Kunci Aplikasi & Binding Storage
+php artisan key:generate
+php artisan storage:link
+
+# 5. Konfigurasi Database & Layanan API Integrasi
+# Edit file '.env' pada root folder, kemudian atur bagian kredensial relasi ke database MySQL/PostgreSQL.
+# Apabila API gateway pembayaran digunakan, set juga keys Midtrans/Xendit-nya.
+
+# 6. Migrasi Tabel & Pembuatan Struktur Basis Data
+php artisan migrate --seed
+
+# [Tip] Bila ingin menggunakan visual data awal sampel (foto produk dummy lengkap dsb):
+# php artisan db:seed --class=SampleDataSeeder
+
+# 7. Pengumpulan & Pengaitan Aset Frontend Vite
+npm run dev
+
+# 8. Menjalankan Server Lokal (Jika kamu tak menggunakan Laravel Herd)
+php artisan serve
+```
+
+### Akun Default (Login Dashboard)
+
+- **Admin Utama**: `arya@gmail.com` / `password`
+- **User Kasir**: `cashier@gmail.com` / `password`
+
+---
+
+## 👨‍💻 Authors
+
+- **Ridha (Ahdirmai)** – Mengadopsi (*meng-fork*) dari proyek orisinil dan melakukan rekayasa serta pembaruan fitur (*customizations*) internal mendalam untuk Point of Sales ini.
+- **[Arya Dwi Putra](https://www.github.com/aryadwiputra)** – Developer pionir yang menginisiasi platform Point of Sales *open-source* modern ini.
+- Tampilan dasar pada mulanya menggunakan set pendukung UI dari [RILT-Starter](https://github.com/Raf-Taufiqurrahman/RILT-Starter).
