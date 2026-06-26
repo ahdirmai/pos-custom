@@ -80,6 +80,13 @@ export default function Menu() {
                     permissions: hasAnyPermission(["products-access"]),
                 },
                 {
+                    title: "Manajemen Stok",
+                    href: route("stocks.index"),
+                    active: url.startsWith("/dashboard/stocks"),
+                    icon: <IconBuildingWarehouse size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["stocks-access"]),
+                },
+                {
                     title: "Pelanggan",
                     href: route("customers.index"),
                     active: url === "/dashboard/customers" ? true : false, // Update comparison here

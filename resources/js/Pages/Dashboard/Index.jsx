@@ -19,6 +19,7 @@ import {
     IconPackageOff,
     IconTarget,
     IconMapPin,
+    IconClockExclamation,
 } from "@tabler/icons-react";
 
 const formatCurrency = (value = 0) =>
@@ -203,6 +204,7 @@ export default function Dashboard({
     topCustomers = [],
     topLocations = [],
     lowStockProducts = [],
+    expiryBatches = [],
 }) {
     const chartRef = useRef(null);
     const chartInstance = useRef(null);
@@ -658,6 +660,47 @@ export default function Dashboard({
                                     </div>
                                     <span className="text-xs font-semibold text-rose-700 dark:text-rose-200">
                                         {product.stock} pcs
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </ListCard>
+
+                {/* Expiry Alert */}
+                <ListCard
+                    title="Antisipasi Kadaluarsa"
+                    subtitle="Expired / mendekati 30 hari"
+                    icon={IconClockExclamation}
+                    emptyMessage="Tidak ada batch mendekati kadaluarsa"
+                >
+                    {expiryBatches.length > 0 && (
+                        <div className="space-y-2">
+                            {expiryBatches.map((batch, index) => (
+                                <div
+                                    key={index}
+                                    className={`flex items-center justify-between p-3 rounded-xl border ${
+                                        batch.is_expired
+                                            ? "bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-800"
+                                            : "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800"
+                                    }`}
+                                >
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                            {batch.product}
+                                        </p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            {batch.batch_code} · sisa {batch.qty_remaining}
+                                        </p>
+                                    </div>
+                                    <span
+                                        className={`text-xs font-semibold whitespace-nowrap ml-3 ${
+                                            batch.is_expired
+                                                ? "text-rose-600 dark:text-rose-300"
+                                                : "text-amber-600 dark:text-amber-300"
+                                        }`}
+                                    >
+                                        {batch.is_expired ? "Expired" : "Exp"} {batch.expired_date}
                                     </span>
                                 </div>
                             ))}

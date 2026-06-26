@@ -10,6 +10,7 @@ use App\Models\TransactionDetail;
 use App\Models\TransactionShipping;
 use App\Models\VoucherUsage;
 use App\Services\BiteshipService;
+use App\Services\StockService;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,10 +23,13 @@ class CheckoutController extends Controller
 
     protected $voucherService;
 
-    public function __construct(BiteshipService $biteshipService, VoucherService $voucherService)
+    protected $stockService;
+
+    public function __construct(BiteshipService $biteshipService, VoucherService $voucherService, StockService $stockService)
     {
         $this->biteshipService = $biteshipService;
         $this->voucherService = $voucherService;
+        $this->stockService = $stockService;
     }
 
     /**
@@ -78,18 +82,19 @@ class CheckoutController extends Controller
             ->filter(function ($voucher) use ($userId, $customerId) {
                 if ($voucher->limit_per_user) {
                     $userUsageCount = \App\Models\VoucherUsage::where('voucher_id', $voucher->id)
-                        ->where(function($q) use ($userId, $customerId) {
+                        ->where(function ($q) use ($userId, $customerId) {
                             $q->where('user_id', $userId);
                             if ($customerId) {
                                 $q->orWhere('customer_id', $customerId);
                             }
                         })
                         ->count();
-                    
+
                     if ($userUsageCount >= $voucher->limit_per_user) {
                         return false;
                     }
                 }
+
                 return true;
             })->values();
 
@@ -172,7 +177,7 @@ class CheckoutController extends Controller
         $request->validate([
             'code' => 'required|string',
             'cart_ids' => 'nullable|array',
-            'cart_ids.*' => 'integer'
+            'cart_ids.*' => 'integer',
         ]);
 
         $carts = Cart::with('product.activeFlashSaleItem.flashSale')
@@ -182,7 +187,7 @@ class CheckoutController extends Controller
                 return $query->whereIn('id', $cartIds);
             })
             ->get();
-            
+
         $subtotal = $carts->sum(fn ($c) => $c->product->current_price * $c->qty);
 
         $result = $this->voucherService->validate($request->code, $subtotal, Auth::id());
@@ -244,7 +249,11 @@ class CheckoutController extends Controller
             // 2. Validate Stock & Calculate Subtotal
             $subtotal = 0;
             foreach ($carts as $cart) {
-                if ($cart->product->stock < $cart->qty) {
+                $sellable = (int) $cart->product->stockBatches()
+                    ->available()
+                    ->notExpired()
+                    ->sum('qty_remaining');
+                if ($sellable < $cart->qty) {
                     throw new \Exception("Stok produk {$cart->product->title} tidak mencukupi.");
                 }
                 $subtotal += $cart->product->current_price * $cart->qty;
@@ -302,9 +311,9 @@ class CheckoutController extends Controller
                 // Add to CustomerAddress List
                 // Check if user has any address, if not, make this primary
                 $hasAddress = \App\Models\CustomerAddress::where('user_id', $user->id)->exists();
-                
+
                 // Validate Label
-                if (!$request->address_label) {
+                if (! $request->address_label) {
                     throw new \Exception('Label alamat wajib diisi jika simpan alamat dipilih.');
                 }
 
@@ -320,7 +329,7 @@ class CheckoutController extends Controller
                     'district_code' => $request->district_code,
                     'village_code' => $request->village_code,
                     'postal_code' => $request->postal_code,
-                    'is_primary' => !$hasAddress,
+                    'is_primary' => ! $hasAddress,
                 ]);
             }
 
@@ -366,8 +375,8 @@ class CheckoutController extends Controller
                     'price' => $cart->product->current_price,
                 ]);
 
-                // Reduce Stock
-                $cart->product->decrement('stock', $cart->qty);
+                // Reduce Stock (FIFO across batches)
+                $this->stockService->consumeFifo($cart->product, $cart->qty, 'checkout', $transaction->id);
             }
 
             // 6. Create Transaction Shipping (Biteship Info)
@@ -381,7 +390,7 @@ class CheckoutController extends Controller
             ]);
 
             // 7. Record Voucher Usage
-            if (!empty($voucherIds)) {
+            if (! empty($voucherIds)) {
                 foreach ($voucherIds as $vId) {
                     $v = \App\Models\Voucher::find($vId);
                     $vDiscount = $this->voucherService->calculateDiscount($v, $subtotal, $request->shipping_cost);

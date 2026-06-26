@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -53,6 +53,45 @@ class Product extends Model
     }
 
     /**
+     * stockBatches
+     */
+    public function stockBatches(): HasMany
+    {
+        return $this->hasMany(StockBatch::class);
+    }
+
+    /**
+     * stockMovements
+     */
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    /**
+     * Available stock = SUM of remaining quantity across all batches.
+     */
+    protected function availableStock(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => (int) $this->stockBatches()->sum('qty_remaining'),
+        );
+    }
+
+    /**
+     * Nearest upcoming expiry date among batches that still have stock.
+     */
+    protected function nearestExpiry(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->stockBatches()
+                ->available()
+                ->whereNotNull('expired_date')
+                ->min('expired_date'),
+        );
+    }
+
+    /**
      * image
      */
     protected function image(): Attribute
@@ -83,6 +122,7 @@ class Product extends Model
             }
         });
     }
+
     public function reviews()
     {
         return $this->hasMany(Review::class);

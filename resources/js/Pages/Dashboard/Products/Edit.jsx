@@ -256,13 +256,25 @@ export default function Edit({ categories, product }) {
                                     placeholder="0"
                                     icon={<IconCurrencyDollar size={16} />}
                                 />
-                                <Input
-                                    type="number"
-                                    label="Jumlah Stok"
-                                    value={data.stock}
-                                    onChange={(e) => setData("stock", e.target.value)}
-                                    placeholder="0"
-                                />
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                                        Jumlah Stok
+                                    </label>
+                                    <div className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 text-sm flex items-center justify-between">
+                                        <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                            {product.stock}
+                                        </span>
+                                        <a
+                                            href={route("stocks.show", product.id)}
+                                            className="text-xs font-medium text-primary-600 hover:underline"
+                                        >
+                                            Kelola Stok &rarr;
+                                        </a>
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-1">
+                                        Stok dikelola lewat Barang Masuk / Opname (FIFO).
+                                    </p>
+                                </div>
                                 <div className="md:col-span-3 pt-2">
                                     <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:border-primary-200 dark:hover:border-primary-800 transition-colors">
                                         <input

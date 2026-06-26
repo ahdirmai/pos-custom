@@ -47,6 +47,11 @@ class PermissionSeeder extends Seeder
         $create('products-edit');
         $create('products-delete');
 
+        // permission stock management
+        $create('stocks-access');
+        $create('stocks-create');
+        $create('stocks-adjust');
+
         // permission customers
         $create('customers-access');
         $create('customers-create');
@@ -62,7 +67,7 @@ class PermissionSeeder extends Seeder
         $create('payables-access');
         $create('payables-pay');
         $create('suppliers-access');
-        
+
         // banners permissions
         $create('banners-access');
         $create('banners-create');

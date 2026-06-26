@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Apps;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -50,7 +51,7 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, StockService $stockService)
     {
         /**
          * validate
@@ -64,6 +65,7 @@ class ProductController extends Controller
             'buy_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
+            'expired_date' => 'nullable|date',
             'is_pph23' => 'nullable|boolean',
             'weight' => 'required|integer|min:1',
             'length' => 'nullable|integer|min:1',
@@ -74,7 +76,7 @@ class ProductController extends Controller
         $image = $request->file('image');
         $image->storeAs('public/products', $image->hashName());
 
-        // create product
+        // create product (stock starts at 0; synced from initial batch below)
         $product = Product::create([
             'image' => $image->hashName(),
             'barcode' => $request->barcode,
@@ -84,7 +86,7 @@ class ProductController extends Controller
             'category_id' => $request->category_id,
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
-            'stock' => $request->stock,
+            'stock' => 0,
             'is_pph23' => $request->is_pph23 ?? false,
         ]);
 
@@ -95,6 +97,16 @@ class ProductController extends Controller
             'width' => $request->width ?? 10,
             'height' => $request->height ?? 10,
         ]);
+
+        // create initial stock batch when an opening quantity is provided
+        if ((int) $request->stock > 0) {
+            $stockService->stockIn($product, [
+                'qty' => (int) $request->stock,
+                'buy_price' => (int) $request->buy_price,
+                'expired_date' => $request->expired_date,
+                'note' => 'Stok awal produk',
+            ]);
+        }
 
         // redirect
         return to_route('products.index');
@@ -138,7 +150,6 @@ class ProductController extends Controller
             'category_id' => 'required',
             'buy_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
             'is_pph23' => 'nullable|boolean',
             'weight' => 'required|integer|min:1',
             'length' => 'nullable|integer|min:1',
@@ -166,7 +177,6 @@ class ProductController extends Controller
                 'category_id' => $request->category_id,
                 'buy_price' => $request->buy_price,
                 'sell_price' => $request->sell_price,
-                'stock' => $request->stock,
                 'is_pph23' => $request->is_pph23 ?? false,
             ]);
 
@@ -180,11 +190,10 @@ class ProductController extends Controller
                 'category_id' => $request->category_id,
                 'buy_price' => $request->buy_price,
                 'sell_price' => $request->sell_price,
-                'stock' => $request->stock,
                 'is_pph23' => $request->is_pph23 ?? false,
             ]);
         }
-        
+
         // update product detail
         $product->productDetail()->updateOrCreate(
             ['product_id' => $product->id],

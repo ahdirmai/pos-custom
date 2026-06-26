@@ -6,6 +6,7 @@ use App\Http\Controllers\Apps\CustomerController;
 use App\Http\Controllers\Apps\FlashSaleController;
 use App\Http\Controllers\Apps\PaymentSettingController;
 use App\Http\Controllers\Apps\ProductController;
+use App\Http\Controllers\Apps\StockController;
 use App\Http\Controllers\Apps\TransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
@@ -71,6 +72,17 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
         ->middlewareFor(['create', 'store'], 'permission:products-create')
         ->middlewareFor(['edit', 'update'], 'permission:products-edit')
         ->middlewareFor('destroy', 'permission:products-delete');
+    // stock management (batch/lot, FIFO, expiry)
+    Route::get('/stocks', [StockController::class, 'index'])->middleware('permission:stocks-access')->name('stocks.index');
+    Route::get('/stocks-report/expiry', [StockController::class, 'expiryReport'])->middleware('permission:stocks-access')->name('stocks.expiry');
+    Route::get('/stocks-bulk', [StockController::class, 'bulkForm'])->middleware('permission:stocks-create')->name('stocks.bulk');
+    Route::post('/stocks-bulk', [StockController::class, 'bulkStore'])->middleware('permission:stocks-create')->name('stocks.bulk.store');
+    Route::post('/stocks-import', [StockController::class, 'import'])->middleware('permission:stocks-create')->name('stocks.import');
+    Route::get('/stocks-template', [StockController::class, 'template'])->middleware('permission:stocks-create')->name('stocks.template');
+    Route::get('/stocks/{product}', [StockController::class, 'show'])->middleware('permission:stocks-access')->name('stocks.show');
+    Route::post('/stocks/{product}/in', [StockController::class, 'storeIn'])->middleware('permission:stocks-create')->name('stocks.in');
+    Route::post('/stocks/{product}/adjust', [StockController::class, 'adjust'])->middleware('permission:stocks-adjust')->name('stocks.adjust');
+
     Route::resource('flash-sales', FlashSaleController::class)
         ->except('show')
         ->middlewareFor(['index'], 'permission:products-access')
@@ -91,7 +103,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
 
     // route transaction
     Route::get('/transactions', [TransactionController::class, 'index'])->middleware('permission:transactions-access')->name('transactions.index');
-    
+
     // route online orders (admin)
     Route::get('/transactions/orders', [TransactionController::class, 'orders'])->middleware('permission:transactions-access')->name('transactions.orders');
     Route::patch('/transactions/{transaction}/status', [TransactionController::class, 'updateStatus'])->middleware('permission:transactions-access')->name('transactions.updateStatus');

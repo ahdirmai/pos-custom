@@ -31,6 +31,7 @@ export default function Create({ categories }) {
         buy_price: "",
         sell_price: "",
         stock: "",
+        expired_date: "",
         is_pph23: false,
         weight: "",
         length: "10",
@@ -241,6 +242,13 @@ const autoBarcode = `${data.sku.toUpperCase()}-${randomDigits}`;
                                     value={data.stock}
                                     onChange={(e) => setData("stock", e.target.value)}
                                     placeholder="0"
+                                />
+                                <Input
+                                    type="date"
+                                    label="Tgl Kadaluarsa (Batch Awal)"
+                                    value={data.expired_date}
+                                    onChange={(e) => setData("expired_date", e.target.value)}
+                                    errors={errors.expired_date}
                                 />
                                 <div className="md:col-span-3 pt-2">
                                     <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:border-primary-200 dark:hover:border-primary-800 transition-colors">
