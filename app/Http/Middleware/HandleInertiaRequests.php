@@ -2,9 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Payable;
-use App\Models\Product;
-use App\Models\Receivable;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -41,9 +38,10 @@ class HandleInertiaRequests extends Middleware
                 ->get()
                 ->map(function ($n) {
                     $localData = is_string($n->data) ? json_decode($n->data, true) : $n->data;
+
                     return [
                         'id' => $n->id,
-                        'type' => str_contains($n->type, 'StockAlert') ? 'stock' : 
+                        'type' => str_contains($n->type, 'StockAlert') ? 'stock' :
                                  (str_contains($n->type, 'DebtAlert') && ($localData['type'] ?? '') === 'receivable' ? 'receivable' : 'payable'),
                         'data' => $localData,
                         'created_at' => $n->created_at->diffForHumans(),
@@ -82,17 +80,21 @@ class HandleInertiaRequests extends Middleware
             ],
             'notifications' => $notifications ?? [],
             'storeProfile' => $storeProfile,
+            'themePrimary' => app(\App\Services\ThemeService::class)->primaryHex(),
             'cart' => function () use ($request) {
-                if (!$request->user()) return ['items' => [], 'count' => 0, 'total' => 0];
-                
+                if (! $request->user()) {
+                    return ['items' => [], 'count' => 0, 'total' => 0];
+                }
+
                 $cart = \App\Models\Cart::with('product.category', 'product.activeFlashSaleItem.flashSale')
                     ->where('user_id', $request->user()->id)
                     ->whereNull('cashier_id')
                     ->get();
 
                 $items = $cart->map(function ($item) {
-                     $price = (float) $item->product->current_price;
-                     return [
+                    $price = (float) $item->product->current_price;
+
+                    return [
                         'id' => $item->id, // Cart ID (for update/delete)
                         'product_id' => $item->product_id,
                         'name' => $item->product->title,
@@ -102,13 +104,13 @@ class HandleInertiaRequests extends Middleware
                         'has_flash_sale' => (bool) $item->product->has_flash_sale,
                         'qty' => (int) $item->qty,
                         'category' => $item->product->category->name ?? 'Umum',
-                     ];
+                    ];
                 });
 
                 return [
                     'items' => $items,
                     'count' => $cart->sum('qty'),
-                    'total' => $cart->sum(fn($item) => $item->product->current_price * $item->qty),
+                    'total' => $cart->sum(fn ($item) => $item->product->current_price * $item->qty),
                 ];
             },
         ];

@@ -25,19 +25,19 @@ export default {
                 ],
             },
             colors: {
-                // Primary - Main (#cfaa08)
+                // Primary - dynamic via CSS vars (default gold #cfaa08, overridable in Settings > Tema)
                 primary: {
-                    50: "#fdfae6",
-                    100: "#fbf4c1",
-                    200: "#f7e889",
-                    300: "#f1d84b",
-                    400: "#ebc51e",
-                    500: "#dfaf12",
-                    600: "#cfaa08",
-                    700: "#a58005",
-                    800: "#87640b",
-                    900: "#71500e",
-                    950: "#412b04",
+                    50: "rgb(var(--color-primary-50) / <alpha-value>)",
+                    100: "rgb(var(--color-primary-100) / <alpha-value>)",
+                    200: "rgb(var(--color-primary-200) / <alpha-value>)",
+                    300: "rgb(var(--color-primary-300) / <alpha-value>)",
+                    400: "rgb(var(--color-primary-400) / <alpha-value>)",
+                    500: "rgb(var(--color-primary-500) / <alpha-value>)",
+                    600: "rgb(var(--color-primary-600) / <alpha-value>)",
+                    700: "rgb(var(--color-primary-700) / <alpha-value>)",
+                    800: "rgb(var(--color-primary-800) / <alpha-value>)",
+                    900: "rgb(var(--color-primary-900) / <alpha-value>)",
+                    950: "rgb(var(--color-primary-950) / <alpha-value>)",
                 },
                 // Accent - Cyan
                 accent: {

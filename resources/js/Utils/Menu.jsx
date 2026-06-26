@@ -33,6 +33,7 @@ import {
     IconPhoto,
     IconPackage,
     IconBolt,
+    IconPalette,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -292,6 +293,13 @@ export default function Menu() {
                     href: route("settings.flash-sale-style"),
                     active: url === "/dashboard/settings/flash-sale-style",
                     icon: <IconBolt size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["dashboard-access"]),
+                },
+                {
+                    title: "Tema Warna",
+                    href: route("settings.theme"),
+                    active: url === "/dashboard/settings/theme",
+                    icon: <IconPalette size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["dashboard-access"]),
                 },
             ],

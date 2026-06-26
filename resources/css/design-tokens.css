@@ -5,17 +5,18 @@
 
 /* === Color Palette === */
 :root {
-  /* Primary - Deep Blue/Indigo */
-  --color-primary-50: 238 242 255;
-  --color-primary-100: 224 231 255;
-  --color-primary-200: 199 210 254;
-  --color-primary-300: 165 180 252;
-  --color-primary-400: 129 140 248;
-  --color-primary-500: 99 102 241;
-  --color-primary-600: 79 70 229;
-  --color-primary-700: 67 56 202;
-  --color-primary-800: 55 48 163;
-  --color-primary-900: 49 46 129;
+  /* Primary - default gold (#cfaa08). Overridden at runtime from Settings > Tema. */
+  --color-primary-50: 253 250 230;
+  --color-primary-100: 251 244 193;
+  --color-primary-200: 247 232 137;
+  --color-primary-300: 241 216 75;
+  --color-primary-400: 235 197 30;
+  --color-primary-500: 223 175 18;
+  --color-primary-600: 207 170 8;
+  --color-primary-700: 165 128 5;
+  --color-primary-800: 135 100 11;
+  --color-primary-900: 113 80 14;
+  --color-primary-950: 65 43 4;
 
   /* Accent - Teal/Cyan */
   --color-accent-50: 236 254 255;

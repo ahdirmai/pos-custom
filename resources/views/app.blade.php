@@ -19,6 +19,8 @@
     @viteReactRefresh
     @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
     @inertiaHead
+    {{-- Dynamic primary color (Settings > Tema). Overrides defaults from design-tokens.css --}}
+    <style>{!! app(\App\Services\ThemeService::class)->cssVars() !!}</style>
     <style>
         body.dark {
             background-color: rgb(2 6 23);

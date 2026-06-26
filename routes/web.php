@@ -195,6 +195,8 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/settings/store', [\App\Http\Controllers\Apps\SettingController::class, 'updateStoreProfile'])->middleware('permission:dashboard-access')->name('settings.store.update');
     Route::get('/settings/flash-sale-style', [\App\Http\Controllers\Apps\SettingController::class, 'flashSaleStyle'])->middleware('permission:dashboard-access')->name('settings.flash-sale-style');
     Route::post('/settings/flash-sale-style', [\App\Http\Controllers\Apps\SettingController::class, 'updateFlashSaleStyle'])->middleware('permission:dashboard-access')->name('settings.flash-sale-style.update');
+    Route::get('/settings/theme', [\App\Http\Controllers\Apps\SettingController::class, 'theme'])->middleware('permission:dashboard-access')->name('settings.theme');
+    Route::post('/settings/theme', [\App\Http\Controllers\Apps\SettingController::class, 'updateTheme'])->middleware('permission:dashboard-access')->name('settings.theme.update');
     Route::get('/settings/shipping', [\App\Http\Controllers\Apps\SettingController::class, 'shipping'])->middleware('permission:dashboard-access')->name('settings.shipping');
     Route::post('/settings/shipping', [\App\Http\Controllers\Apps\SettingController::class, 'updateShipping'])->middleware('permission:dashboard-access')->name('settings.shipping.update');
 
