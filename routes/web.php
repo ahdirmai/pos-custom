@@ -239,6 +239,8 @@ Route::name('user.')->group(function () {
     // Article Detail
     Route::get('/article/{slug}', [\App\Http\Controllers\User\HomeController::class, 'articleShow'])->name('article.show');
     Route::get('/product/{slug}', [\App\Http\Controllers\User\ProductController::class, 'show'])->name('product.show');
+    // Lead capture (test drive booking / consultation) - additive to self-checkout
+    Route::post('/leads', [\App\Http\Controllers\User\LeadController::class, 'store'])->name('leads.store');
 });
 
 // end user page (customer) protected

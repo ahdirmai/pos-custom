@@ -4,113 +4,57 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\FlashSale;
 use App\Models\Product;
-use Inertia\Inertia;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class HomeController extends Controller
 {
+    /**
+     * Car-dealership example landing page (VinFast Limo Green hero +
+     * cross-sell catalog). Self-checkout stays fully active: hero &
+     * catalog products are plain `Product` records that go through the
+     * normal cart/checkout flow, with additional showcase data joined
+     * from the `product_cars` table via the `car` relation.
+     */
     public function index()
     {
-        // Fetch active banners
-        $heroBanners = \App\Models\Banner::where('type', 'hero')
-            ->where('is_active', true)
-            ->orderBy('order')
-            ->get();
+        $productAppends = ['current_price', 'original_price', 'has_flash_sale', 'discount_percentage'];
 
-        $promoBanners = \App\Models\Banner::where('type', 'promo')
-            ->where('is_active', true)
-            ->orderBy('order')
-            ->get();
+        $heroProduct = Product::query()
+            ->withActiveFlashSale()
+            ->with(['category', 'car'])
+            ->whereHas('car', function ($query) {
+                $query->where('is_featured', true);
+            })
+            ->withSum('transactionDetails as sold_count', 'qty')
+            ->withAvg('reviews as average_rating', 'rating')
+            ->first()
+            ?->append($productAppends);
+
+        $catalog = Product::query()
+            ->withActiveFlashSale()
+            ->with(['category', 'car'])
+            ->whereHas('car')
+            ->when($heroProduct, fn ($query) => $query->where('id', '!=', $heroProduct->id))
+            ->withSum('transactionDetails as sold_count', 'qty')
+            ->withAvg('reviews as average_rating', 'rating')
+            ->get()
+            ->each->append($productAppends);
 
         $productCategories = Category::all();
 
-        $products = Product::query()
-            ->withActiveFlashSale()
-            ->with('category')
-            ->withSum('transactionDetails as sold_count', 'qty')
-            ->withCount(['reviews as reviews_count' => function ($q) {
-                $q->where('is_hidden', false);
-            }])
-            ->withAvg('reviews as average_rating', 'rating')
-            ->orderByDesc('sold_count')
-            ->take(10)
-            ->get()
-            ->each
-            ->append(['current_price', 'original_price', 'has_flash_sale', 'discount_percentage']);
+        $whatsappNumber = Setting::get('store_whatsapp', '628111222333');
 
-        $activeFlashSale = FlashSale::query()
-            ->activeNow()
-            ->with(['items.product' => function ($query) {
-                $query->withActiveFlashSale()
-                    ->with('category')
-                    ->withSum('transactionDetails as sold_count', 'qty')
-                    ->withCount(['reviews as reviews_count' => function ($reviewQuery) {
-                        $reviewQuery->where('is_hidden', false);
-                    }])
-                    ->withAvg('reviews as average_rating', 'rating');
-            }])
-            ->latest('start_at')
-            ->first();
-
-        $flashSalePayload = null;
-
-        if ($activeFlashSale) {
-            $flashSalePayload = [
-                'id' => $activeFlashSale->id,
-                'name' => $activeFlashSale->name,
-                'description' => $activeFlashSale->description,
-                'start_at' => $activeFlashSale->start_at,
-                'end_at' => $activeFlashSale->end_at,
-                'products' => $activeFlashSale->items
-                    ->pluck('product')
-                    ->filter()
-                    ->values()
-                    ->each
-                    ->append(['current_price', 'original_price', 'has_flash_sale', 'discount_percentage']),
-            ];
-        }
-
-        $latestPosts = \App\Models\BlogPost::with('category')
-            ->where('is_active', true)
-            ->latest()
-            ->take(3)
-            ->get()
-            ->map(function ($post) {
-                return [
-                    'id' => $post->id,
-                    'slug' => $post->slug,
-                    'category' => $post->category ? $post->category->name : 'Uncategorized',
-                    'title' => $post->title,
-                    'excerpt' => $post->excerpt ?? \Illuminate\Support\Str::limit(strip_tags($post->content), 100),
-                    'date' => $post->created_at, // using accessor
-                    'image' => $post->image,
-                ];
-            });
-
-        $wishlistIds = Auth::check()
-            ? Auth::user()->wishlistedProducts()->pluck('products.id')->all()
-            : [];
-
-        $flashSaleStyle = [
-            'badge_text' => \App\Models\Setting::get('flash_sale_badge_text', 'Flash Sale'),
-            'bg_from' => \App\Models\Setting::get('flash_sale_bg_from', '#b91c1c'),
-            'bg_via' => \App\Models\Setting::get('flash_sale_bg_via', '#ea580c'),
-            'bg_to' => \App\Models\Setting::get('flash_sale_bg_to', '#f59e0b'),
-            'text_color' => \App\Models\Setting::get('flash_sale_text_color', '#ffffff'),
-            'muted_text_color' => \App\Models\Setting::get('flash_sale_muted_text_color', '#ffe7d6'),
-        ];
-
-        return Inertia::render('EndUser/Home/Index', [
-            'heroBanners' => $heroBanners,
-            'promoBanners' => $promoBanners,
+        return Inertia::render('EndUser/CarLanding/Index', [
+            'heroProduct' => $heroProduct,
+            'catalog' => $catalog,
             'productCategories' => $productCategories,
-            'products' => $products,
-            'activeFlashSale' => $flashSalePayload,
-            'flashSaleStyle' => $flashSaleStyle,
-            'latestPosts' => $latestPosts,
-            'wishlist_ids' => $wishlistIds,
+            'whatsappNumber' => $whatsappNumber,
+            'wishlist_ids' => Auth::check()
+                ? Auth::user()->wishlistedProducts()->pluck('products.id')->all()
+                : [],
         ]);
     }
 

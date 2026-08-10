@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory,SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     /**
      * fillable
@@ -20,16 +20,17 @@ class Product extends Model
      * @var array
      */
     protected $fillable = [
-        'image',
-        'is_pph23',
-        'barcode',
-        'sku',
-        'title',
-        'description',
-        'buy_price',
-        'sell_price',
-        'category_id',
-        'stock',
+        "image",
+        "is_pph23",
+        "barcode",
+        "sku",
+        "title",
+        "slug",
+        "description",
+        "buy_price",
+        "sell_price",
+        "category_id",
+        "stock",
     ];
 
     /**
@@ -73,9 +74,7 @@ class Product extends Model
      */
     protected function availableStock(): Attribute
     {
-        return Attribute::make(
-            get: fn () => (int) $this->stockBatches()->sum('qty_remaining'),
-        );
+        return Attribute::make(get: fn() => (int) $this->stockBatches()->sum("qty_remaining"));
     }
 
     /**
@@ -84,10 +83,10 @@ class Product extends Model
     protected function nearestExpiry(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->stockBatches()
+            get: fn() => $this->stockBatches()
                 ->available()
-                ->whereNotNull('expired_date')
-                ->min('expired_date'),
+                ->whereNotNull("expired_date")
+                ->min("expired_date"),
         );
     }
 
@@ -96,9 +95,7 @@ class Product extends Model
      */
     protected function image(): Attribute
     {
-        return Attribute::make(
-            get: fn ($value) => asset('/storage/products/'.$value),
-        );
+        return Attribute::make(get: fn($value) => asset("/storage/products/" . $value));
     }
 
     /**
@@ -109,6 +106,18 @@ class Product extends Model
     public function productDetail()
     {
         return $this->hasOne(ProductDetail::class);
+    }
+
+    /**
+     * car
+     *
+     * Optional 1:1 showcase data used by the car-dealership example
+     * storefront (specs, gallery, price range, WA CTA). Kept in a
+     * separate table so retail products are unaffected.
+     */
+    public function car(): HasOne
+    {
+        return $this->hasOne(ProductCar::class);
     }
 
     /**
@@ -140,40 +149,39 @@ class Product extends Model
 
     public function activeFlashSaleItem(): HasOne
     {
-        return $this->hasOne(FlashSaleProduct::class)
-            ->whereHas('flashSale', function ($query) {
-                $query->activeNow();
-            });
+        return $this->hasOne(FlashSaleProduct::class)->whereHas("flashSale", function ($query) {
+            $query->activeNow();
+        });
     }
 
     public function scopeWithActiveFlashSale(Builder $query): Builder
     {
         $activeFlashSaleProducts = FlashSaleProduct::query()
-            ->select('flash_sale_products.product_id', 'flash_sale_products.discount_price')
-            ->join('flash_sales', 'flash_sales.id', '=', 'flash_sale_products.flash_sale_id')
-            ->where('flash_sales.is_active', true)
-            ->where('flash_sales.start_at', '<=', now())
-            ->where('flash_sales.end_at', '>=', now());
+            ->select("flash_sale_products.product_id", "flash_sale_products.discount_price")
+            ->join("flash_sales", "flash_sales.id", "=", "flash_sale_products.flash_sale_id")
+            ->where("flash_sales.is_active", true)
+            ->where("flash_sales.start_at", "<=", now())
+            ->where("flash_sales.end_at", ">=", now());
 
         return $query
-            ->leftJoinSub($activeFlashSaleProducts, 'active_flash_sale_products', function ($join) {
-                $join->on('active_flash_sale_products.product_id', '=', 'products.id');
+            ->leftJoinSub($activeFlashSaleProducts, "active_flash_sale_products", function ($join) {
+                $join->on("active_flash_sale_products.product_id", "=", "products.id");
             })
-            ->select('products.*')
-            ->selectRaw('active_flash_sale_products.discount_price as flash_sale_price');
+            ->select("products.*")
+            ->selectRaw("active_flash_sale_products.discount_price as flash_sale_price");
     }
 
     protected function currentPrice(): Attribute
     {
         return Attribute::make(
             get: function () {
-                $price = $this->attributes['flash_sale_price'] ?? null;
+                $price = $this->attributes["flash_sale_price"] ?? null;
 
                 if ($price !== null) {
                     return (int) $price;
                 }
 
-                if ($this->relationLoaded('activeFlashSaleItem') && $this->activeFlashSaleItem) {
+                if ($this->relationLoaded("activeFlashSaleItem") && $this->activeFlashSaleItem) {
                     return (int) $this->activeFlashSaleItem->discount_price;
                 }
 
@@ -184,27 +192,25 @@ class Product extends Model
 
     protected function originalPrice(): Attribute
     {
-        return Attribute::make(
-            get: fn () => (int) $this->sell_price,
-        );
+        return Attribute::make(get: fn() => (int) $this->sell_price);
     }
 
     protected function hasFlashSale(): Attribute
     {
-        return Attribute::make(
-            get: fn () => $this->current_price < $this->original_price,
-        );
+        return Attribute::make(get: fn() => $this->current_price < $this->original_price);
     }
 
     protected function discountPercentage(): Attribute
     {
         return Attribute::make(
             get: function () {
-                if (! $this->has_flash_sale || $this->original_price <= 0) {
+                if (!$this->has_flash_sale || $this->original_price <= 0) {
                     return 0;
                 }
 
-                return (int) round((($this->original_price - $this->current_price) / $this->original_price) * 100);
+                return (int) round(
+                    (($this->original_price - $this->current_price) / $this->original_price) * 100,
+                );
             },
         );
     }
